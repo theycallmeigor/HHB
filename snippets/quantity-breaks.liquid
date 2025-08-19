@@ -1,5 +1,5 @@
 {% liquid
- assign item_count = 0
+  assign item_count = 0
   if block.settings.option_1_quantity != 0
     assign item_count = item_count | plus: 1
     assign last_offer_index = 1
@@ -34,9 +34,291 @@
 
   assign has_variants = false
   assign base_price = product.selected_or_first_available_variant.price
+  
+  # Check for subscription capability via cc_sub_id metafield
+  assign has_subscription = false
+  assign cc_sub_id = ''
+  
+  if product.metafields.custom.cc_sub_id != blank
+    assign has_subscription = true
+    assign cc_sub_id = product.metafields.custom.cc_sub_id
+  elsif product.metafields.checkoutchamp.cc_sub_id != blank
+    assign has_subscription = true
+    assign cc_sub_id = product.metafields.checkoutchamp.cc_sub_id
+  elsif product.metafields.cc.cc_sub_id != blank
+    assign has_subscription = true
+    assign cc_sub_id = product.metafields.cc.cc_sub_id
+  endif
+  
+  # Also check variant metafields
+  if product.selected_or_first_available_variant.metafields.custom.cc_sub_id != blank
+    assign has_subscription = true
+    assign cc_sub_id = product.selected_or_first_available_variant.metafields.custom.cc_sub_id
+  elsif product.selected_or_first_available_variant.metafields.checkoutchamp.cc_sub_id != blank
+    assign has_subscription = true
+    assign cc_sub_id = product.selected_or_first_available_variant.metafields.checkoutchamp.cc_sub_id
+  endif
+  
+  assign subscription_discount = block.settings.subscription_discount | default: 15
+  assign show_subscription = has_subscription or block.settings.always_show_subscription
 %}
+
+{%- comment -%} Purchase Type Toggle (One-time vs Subscribe & Save) {%- endcomment -%}
+{%- if show_subscription and block.settings.enable_subscription -%}
+  <div class="quantity-breaks__purchase-type" data-cc-sub-id="{{ cc_sub_id }}">
+    <div class="purchase-type__options">
+      <label class="purchase-type__option purchase-type__option--onetime">
+        <input 
+          type="radio" 
+          name="purchase_type_{{ section.id }}" 
+          value="onetime"
+          checked
+          class="purchase-type__input visually-hidden"
+          data-purchase-type="onetime"
+          form="{{ product_form_id }}"
+        >
+        <span class="purchase-type__button">
+          <span class="purchase-type__icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
+              <circle cx="10" cy="10" r="4" fill="currentColor" class="purchase-type__check"/>
+            </svg>
+          </span>
+          <span class="purchase-type__label">
+            {{ block.settings.onetime_label | default: 'One-time purchase' }}
+          </span>
+        </span>
+      </label>
+      
+      <label class="purchase-type__option purchase-type__option--subscribe">
+        <input 
+          type="radio" 
+          name="purchase_type_{{ section.id }}" 
+          value="subscribe"
+          class="purchase-type__input visually-hidden"
+          data-purchase-type="subscribe"
+          form="{{ product_form_id }}"
+        >
+        <span class="purchase-type__button">
+          <span class="purchase-type__icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
+              <circle cx="10" cy="10" r="4" fill="currentColor" class="purchase-type__check"/>
+            </svg>
+          </span>
+          <span class="purchase-type__label">
+            {{ block.settings.subscribe_label | default: 'Subscribe & Save' }}
+            <span class="purchase-type__badge color-{{ block.settings.subscription_badge_color | default: block.settings.color_scheme }}">
+              {{ block.settings.subscription_badge_text | default: 'Save [discount]%' | replace: '[discount]', subscription_discount }}
+            </span>
+          </span>
+        </span>
+      </label>
+    </div>
+    
+    <div class="purchase-type__details" data-subscription-details style="display: none;">
+      <div class="subscription-frequency">
+        <label for="subscription-frequency-{{ section.id }}" class="subscription-frequency__label">
+          {{ block.settings.frequency_label | default: 'Deliver every' }}
+        </label>
+        <select 
+          id="subscription-frequency-{{ section.id }}"
+          name="properties[subscription_frequency]"
+          class="subscription-frequency__select select__select"
+          form="{{ product_form_id }}"
+          data-subscription-frequency
+        >
+          <option value="15">15 days</option>
+          <option value="30" selected>30 days</option>
+          <option value="45">45 days</option>
+          <option value="60">60 days</option>
+          <option value="90">90 days</option>
+        </select>
+      </div>
+      
+      {%- if block.settings.show_subscription_benefits -%}
+        <ul class="subscription-benefits">
+          <li class="subscription-benefits__item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            {{ block.settings.benefit_1 | default: 'Free shipping on all orders' }}
+          </li>
+          <li class="subscription-benefits__item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            {{ block.settings.benefit_2 | default: 'Cancel or pause anytime' }}
+          </li>
+          <li class="subscription-benefits__item">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            {{ block.settings.benefit_3 | default: 'Exclusive subscriber offers' }}
+          </li>
+        </ul>
+      {%- endif -%}
+    </div>
+    
+    {%- comment -%} Hidden inputs for CheckoutChamp integration {%- endcomment -%}
+    <input type="hidden" name="properties[_subscription_enabled]" value="false" data-subscription-enabled form="{{ product_form_id }}">
+    <input type="hidden" name="properties[_cc_sub_id]" value="{{ cc_sub_id }}" data-cc-sub-id form="{{ product_form_id }}">
+    <input type="hidden" name="properties[_subscription_discount]" value="{{ subscription_discount }}" data-subscription-discount form="{{ product_form_id }}">
+  </div>
+  
+  <style>
+    /* Purchase Type Styles - Integrated with quantity breaks design */
+    .quantity-breaks__purchase-type {
+      margin-bottom: calc(var(--margin-bottom) + 0.5rem);
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(var(--color-foreground), 0.08);
+    }
+    
+    .purchase-type__options {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    
+    .purchase-type__option {
+      flex: 1;
+      position: relative;
+    }
+    
+    .purchase-type__button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem;
+      border: var(--border-width) solid rgba(var(--color-foreground), 0.2);
+      border-radius: var(--border-radius);
+      background: rgba(var(--color-background), 1);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    
+    .purchase-type__input:checked + .purchase-type__button {
+      border-color: var(--text-accent-color);
+      background: rgba(var(--color-foreground), 0.03);
+    }
+    
+    .purchase-type__input:checked + .purchase-type__button .purchase-type__check {
+      opacity: 1;
+    }
+    
+    .purchase-type__button:hover {
+      border-color: var(--text-accent-color);
+    }
+    
+    .purchase-type__icon svg {
+      display: block;
+      color: var(--text-accent-color);
+    }
+    
+    .purchase-type__check {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .purchase-type__label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      font-weight: 600;
+    }
+    
+    .purchase-type__badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 0.25rem;
+      text-transform: uppercase;
+    }
+    
+    /* Subscription Details */
+    .purchase-type__details {
+      padding: 1rem;
+      background: rgba(var(--color-foreground), 0.03);
+      border-radius: var(--border-radius);
+      animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .subscription-frequency {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .subscription-frequency__label {
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    .subscription-frequency__select {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid rgba(var(--color-foreground), 0.2);
+      border-radius: calc(var(--border-radius) * 0.5);
+      background: rgba(var(--color-background), 1);
+      font-size: 1rem;
+    }
+    
+    .subscription-benefits {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .subscription-benefits__item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .subscription-benefits__item svg {
+      flex-shrink: 0;
+      color: var(--text-accent-color);
+    }
+    
+    /* Responsive */
+    @media screen and (max-width: 749px) {
+      .purchase-type__options {
+        flex-direction: column;
+      }
+    }
+    
+    /* Style variations */
+    .quantity-breaks--compact .quantity-breaks__purchase-type {
+      margin-bottom: 1rem;
+    }
+    
+    .quantity-breaks--vertical .purchase-type__options {
+      flex-direction: column;
+    }
+  </style>
+{%- endif -%}
+
 <quantity-breaks
-  class="quantity-breaks quantity-breaks--{{ block.settings.style }} accent-color-{{ block.settings.color_scheme }}{% if block.settings.space_images %} quantity-breaks--space-images{% endif %}{% if has_badge %} quantity-breaks--has-badge{% endif %}{% if block.settings.full_width_pickers %} quantity-breaks-full-width-pickers{% endif %} quantity-breaks--vertical-image-{{ block.settings.vertical_images_position }}{% if block.settings.display_selected_indicator %} quantity-breaks--show-indicator{% endif %}{% if block.settings.indicator_top == false %} quantity-breaks--indicator-bottom{% endif %}{% if block.settings.image_width == 100 %} quantity-breaks--max-width-images{% endif %}"
+  class="quantity-breaks quantity-breaks--{{ block.settings.style }} accent-color-{{ block.settings.color_scheme }}{% if block.settings.space_images %} quantity-breaks--space-images{% endif %}{% if has_badge %} quantity-breaks--has-badge{% endif %}{% if block.settings.full_width_pickers %} quantity-breaks-full-width-pickers{% endif %} quantity-breaks--vertical-image-{{ block.settings.vertical_images_position }}{% if block.settings.display_selected_indicator %} quantity-breaks--show-indicator{% endif %}{% if block.settings.indicator_top == false %} quantity-breaks--indicator-bottom{% endif %}{% if block.settings.image_width == 100 %} quantity-breaks--max-width-images{% endif %}{% if show_subscription and block.settings.enable_subscription %} quantity-breaks--has-subscription{% endif %}"
   id="quantity-breaks-{{ section.id }}"
   data-section="{{ section.id }}"
   data-items="{{ item_count }}"
@@ -51,6 +333,11 @@
   data-skip-unavailable="{{ block.settings.skip_unavailable }}"
   {% if block.settings.scroll_media_gallery == false %}
     data-prevent-gallery-scroll="true"
+  {% endif %}
+  {% if show_subscription %}
+    data-subscription-enabled="{{ block.settings.enable_subscription }}"
+    data-subscription-discount="{{ subscription_discount }}"
+    data-cc-sub-id="{{ cc_sub_id }}"
   {% endif %}
   style="--items-count:{{ item_count }};--image-width:{{ block.settings.image_width }}%;--border-radius:{{ block.settings.border_radius | divided_by: 10.0 }}rem;--border-width:{{ block.settings.border_width | divided_by: 10.0 }}rem;--text-accent-color:var(--color-base-{{ block.settings.accent_color }});--vertical-items-align:{{ block.settings.vertical_items_align }};{% if block.settings.hide_pickers_overlay %}--pickers-overlay-opacity:0;--pickers-hover-overlay-opacity:0;{% endif %}--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;"
   {{ block.shopify_attributes }}
@@ -184,6 +471,7 @@
             checked
           {% endif %}
           data-input="input_{{ i }}"
+          data-subscription-compatible="true"
         >
         <label
           for="quantity{{ i }}-{{ section.id }}"
@@ -194,6 +482,8 @@
           data-percentage-left="{{ percentage_left }}"
           data-fixed-discount="{{ fixed_discount }}"
           data-compare-mode="{{ compare_mode }}"
+          data-original-price="{{ price }}"
+          data-original-compare="{{ compare_total }}"
         >
           <div class="quantity-break__wrapper">
             {% if badge != blank %}
@@ -275,7 +565,7 @@
           
                 <div class="quantity-break__right quantity-break__right--{{ block.settings.prices_layout }} dynamic-price">
                   {% if price_text != blank %}
-                    <span class="quantity-break__price variant-price-update" data-text="{{ price_text }}">
+                    <span class="quantity-break__price variant-price-update" data-text="{{ price_text }}" data-subscription-price>
                       {% render 'text-with-price',
                         text: price_text,
                         quantity: qty,
@@ -602,3 +892,89 @@
     {{ product.variants | json }}
   </script>
 </quantity-breaks>
+
+<script>
+  // Subscription integration for quantity breaks
+  document.addEventListener('DOMContentLoaded', function() {
+    const quantityBreaks = document.querySelector('#quantity-breaks-{{ section.id }}');
+    const purchaseTypeInputs = document.querySelectorAll('[data-purchase-type]');
+    const subscriptionDetails = document.querySelector('[data-subscription-details]');
+    const subscriptionEnabled = document.querySelector('[data-subscription-enabled]');
+    
+    if (!quantityBreaks || !purchaseTypeInputs.length) return;
+    
+    const subscriptionDiscount = parseFloat(quantityBreaks.dataset.subscriptionDiscount) || 15;
+    const ccSubId = quantityBreaks.dataset.ccSubId;
+    
+    // Handle purchase type toggle
+    purchaseTypeInputs.forEach(input => {
+      input.addEventListener('change', function() {
+        const isSubscription = this.value === 'subscribe';
+        
+        if (subscriptionDetails) {
+          subscriptionDetails.style.display = isSubscription ? 'block' : 'none';
+        }
+        
+        if (subscriptionEnabled) {
+          subscriptionEnabled.value = isSubscription ? 'true' : 'false';
+        }
+        
+        // Update prices with subscription discount
+        updatePricesForSubscription(isSubscription);
+        
+        // Notify CheckoutChamp
+        if (window.CC || window.CheckoutChamp) {
+          const cc = window.CC || window.CheckoutChamp;
+          if (isSubscription && ccSubId && cc.setSubscription) {
+            cc.setSubscription({
+              enabled: true,
+              id: ccSubId,
+              frequency: document.querySelector('[data-subscription-frequency]')?.value || 30,
+              discount: subscriptionDiscount
+            });
+          }
+        }
+      });
+    });
+    
+    function updatePricesForSubscription(isSubscription) {
+      const priceElements = quantityBreaks.querySelectorAll('[data-subscription-price]');
+      
+      priceElements.forEach(element => {
+        const parent = element.closest('.quantity-break');
+        if (!parent) return;
+        
+        const originalPrice = parseFloat(parent.dataset.originalPrice);
+        if (!originalPrice) return;
+        
+        if (isSubscription) {
+          const discountedPrice = originalPrice * (1 - subscriptionDiscount / 100);
+          // Update the displayed price with subscription discount
+          updatePriceDisplay(element, discountedPrice);
+        } else {
+          // Restore original price
+          updatePriceDisplay(element, originalPrice);
+        }
+      });
+    }
+    
+    function updatePriceDisplay(element, price) {
+      const moneyFormat = quantityBreaks.dataset.moneyFormat || '${{amount}}';
+      const formattedPrice = formatMoney(price, moneyFormat);
+      
+      // Update the price text while preserving the structure
+      const text = element.dataset.text;
+      if (text) {
+        element.innerHTML = text.replace(/\[price\]/g, formattedPrice);
+      }
+    }
+    
+    function formatMoney(cents, format) {
+      if (window.Shopify && window.Shopify.formatMoney) {
+        return window.Shopify.formatMoney(cents, format);
+      }
+      const dollars = (cents / 100).toFixed(2);
+      return format.replace('{{amount}}', dollars);
+    }
+  });
+</script>
