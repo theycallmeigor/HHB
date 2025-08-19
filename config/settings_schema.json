@@ -28,6 +28,38 @@
     ]
   },
   {
+  "name": "Subscription Settings",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Subscribe & Save Configuration"
+    },
+    {
+      "type": "range",
+      "id": "subscription_discount",
+      "label": "Subscription Discount Percentage",
+      "min": 5,
+      "max": 30,
+      "step": 5,
+      "unit": "%",
+      "default": 15
+    },
+    {
+      "type": "checkbox",
+      "id": "subscription_free_shipping",
+      "label": "Free Shipping for Subscriptions",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "subscription_badge_text",
+      "label": "Subscription Badge Text",
+      "default": "Save",
+      "info": "Text shown in the subscription badge"
+    }
+  ]
+},
+  {
     "name": "Security",
     "settings": [
       {
