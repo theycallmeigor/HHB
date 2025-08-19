@@ -1,0 +1,771 @@
+<section class="huzi-owner-section huzi-flex section-{{ section.id }}">
+  <div class="huzi-col-50 huzi-content-col">
+    <div class="huzi-os-warp">
+      {% if section.settings.sub_title != blank %}
+        <h4 class="huzi-h4 huzi-mrb15">{{ section.settings.sub_title }}</h4>
+      {% endif %}
+      {% if section.settings.title != blank %}
+        <h3 class="huzi-h3 huzi-mrb15">{{ section.settings.title }}</h3>
+      {% endif %}
+      {% if section.settings.para != blank %}
+        <p class="huzi-p">{{ section.settings.para }}</p>
+      {% endif %}
+      {% if section.settings.img != blank %}
+        <img src="{{ section.settings.img | img_url: 'master' }}" 
+             alt="{{ section.settings.signature_alt | default: 'Signature' }}"
+             class="huzi-signature-img"
+             loading="lazy">
+      {% endif %}
+    </div>  
+  </div>
+  <div class="huzi-img-warp huzi-col-50">
+    {% if section.settings.bg_img != blank %}
+      <img src="{{ section.settings.bg_img | img_url: 'master' }}" 
+           alt="{{ section.settings.bg_img_alt | default: section.settings.title | escape }}"
+           loading="lazy">
+    {% endif %}
+  </div>
+</section>
+
+<style>
+  /* Preserve all original CSS variables and base styles */
+  .section-{{ section.id }} {
+    --text: #222222;
+    --bg: #ffffff;
+    --primary: #fd01de;
+    --secondary: #2fffff;
+    --f_weight: 400;
+    --f_fallback: sans-serif;
+    --f_style: normal;
+    --f_family: Manrope;
+  }
+
+  /* Main section container - preserving original flexbox layout */
+  .huzi-owner-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: {{ section.settings.section_min_height | default: 500 }}px;
+    background-color: {{ section.settings.section_bg_color | default: '#ffffff' }};
+    padding: {{ section.settings.section_padding_top | default: 60 }}px {{ section.settings.section_padding_sides | default: 0 }}px {{ section.settings.section_padding_bottom | default: 60 }}px;
+    margin: {{ section.settings.section_margin_top | default: 0 }}px 0 {{ section.settings.section_margin_bottom | default: 0 }}px;
+    font-family: "interstate", var(--f_family), var(--f_fallback);
+    font-style: var(--f_style);
+    color: var(--text);
+    font-size: 1.4rem;
+    line-height: 1.86;
+    -webkit-font-smoothing: antialiased;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Preserve flexbox layout */
+  .huzi-flex {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  /* Column styling - preserved 50/50 split */
+  .huzi-col-50 {
+    flex: 0 0 50%;
+    max-width: 50%;
+    box-sizing: border-box;
+    position: relative;
+  }
+  
+  /* Content column specific styling */
+  .huzi-content-col {
+    display: flex;
+    align-items: center;
+    justify-content: {{ section.settings.content_alignment | default: 'center' }};
+    padding: {{ section.settings.content_padding | default: 40 }}px;
+    {% if section.settings.content_bg_color != blank %}
+    background-color: {{ section.settings.content_bg_color }};
+    {% endif %}
+  }
+  
+  /* Content wrapper - preserving original structure */
+  .huzi-os-warp {
+    width: 100%;
+    max-width: {{ section.settings.content_max_width | default: 600 }}px;
+    text-align: {{ section.settings.text_alignment | default: 'left' }};
+  }
+  
+  /* Heading 4 - subtitle styling */
+  .huzi-h4 {
+    font-size: {{ section.settings.subtitle_size | default: 14 }}px;
+    font-weight: {{ section.settings.subtitle_weight | default: 500 }};
+    color: {{ section.settings.subtitle_color | default: '#666666' }};
+    text-transform: {{ section.settings.subtitle_transform | default: 'uppercase' }};
+    letter-spacing: {{ section.settings.subtitle_letter_spacing | default: 1 }}px;
+    line-height: 1.4;
+    font-family: "interstate", var(--f_family), var(--f_fallback);
+  }
+  
+  /* Heading 3 - main title styling */
+  .huzi-h3 {
+    font-size: {{ section.settings.title_size | default: 28 }}px;
+    font-weight: {{ section.settings.title_weight | default: 400 }};
+    color: {{ section.settings.title_color | default: '#000000' }};
+    line-height: {{ section.settings.title_line_height | default: 1.3 }};
+    letter-spacing: {{ section.settings.title_letter_spacing | default: 0 }}px;
+    font-family: "interstate", var(--f_family), var(--f_fallback);
+  }
+  
+  .huzi-h3 b {
+    font-weight: 700;
+    color: {{ section.settings.title_bold_color | default: 'inherit' }};
+  }
+  
+  /* Paragraph styling */
+  .huzi-p {
+    font-size: {{ section.settings.para_size | default: 16 }}px;
+    color: {{ section.settings.para_color | default: '#222222' }};
+    line-height: {{ section.settings.para_line_height | default: 1.8 }};
+    margin-bottom: {{ section.settings.para_margin_bottom | default: 30 }}px;
+    font-family: "interstate", var(--f_family), var(--f_fallback);
+  }
+  
+  /* Margin bottom utility class */
+  .huzi-mrb15 {
+    margin-bottom: 15px;
+  }
+  
+  /* Signature image styling */
+  .huzi-signature-img {
+    display: inline-block;
+    max-width: {{ section.settings.signature_max_width | default: 200 }}px;
+    height: auto;
+    margin-top: {{ section.settings.signature_margin_top | default: 20 }}px;
+  }
+  
+  /* Image wrapper column */
+  .huzi-img-warp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    {% if section.settings.image_bg_color != blank %}
+    background-color: {{ section.settings.image_bg_color }};
+    {% endif %}
+  }
+  
+  .huzi-img-warp img {
+    width: 100%;
+    height: 100%;
+    object-fit: {{ section.settings.image_fit | default: 'cover' }};
+    display: block;
+    {% if section.settings.image_border_radius > 0 %}
+    border-radius: {{ section.settings.image_border_radius }}px;
+    {% endif %}
+  }
+  
+  /* Reverse layout option */
+  {% if section.settings.reverse_layout %}
+  .section-{{ section.id }} .huzi-content-col {
+    order: 2;
+  }
+  .section-{{ section.id }} .huzi-img-warp {
+    order: 1;
+  }
+  {% endif %}
+  
+  /* Tablet responsive (1024px and below) */
+  @media screen and (max-width: 1024px) {
+    .huzi-owner-section {
+      min-height: {{ section.settings.section_min_height_tablet | default: 400 }}px;
+      padding: {{ section.settings.section_padding_top | divided_by: 1.5 | default: 40 }}px {{ section.settings.section_padding_sides | divided_by: 2 | default: 0 }}px {{ section.settings.section_padding_bottom | divided_by: 1.5 | default: 40 }}px;
+    }
+    
+    .huzi-content-col {
+      padding: {{ section.settings.content_padding | divided_by: 1.5 | default: 30 }}px;
+    }
+    
+    .huzi-h3 {
+      font-size: {{ section.settings.title_size | times: 0.85 | default: 24 }}px;
+    }
+    
+    .huzi-p {
+      font-size: {{ section.settings.para_size | times: 0.9 | default: 15 }}px;
+    }
+  }
+  
+  /* Mobile responsive (768px and below) */
+  @media screen and (max-width: 768px) {
+    .huzi-owner-section {
+      min-height: auto;
+      padding: {{ section.settings.mobile_padding_top | default: 30 }}px {{ section.settings.mobile_padding_sides | default: 15 }}px {{ section.settings.mobile_padding_bottom | default: 30 }}px;
+    }
+    
+    .huzi-col-50 {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+    
+    .huzi-content-col {
+      padding: {{ section.settings.mobile_content_padding | default: 20 }}px;
+      {% if section.settings.mobile_content_first %}
+      order: 1;
+      {% else %}
+      order: 2;
+      {% endif %}
+    }
+    
+    .huzi-img-warp {
+      {% if section.settings.mobile_content_first %}
+      order: 2;
+      {% else %}
+      order: 1;
+      {% endif %}
+      min-height: {{ section.settings.mobile_image_height | default: 300 }}px;
+      margin-bottom: {{ section.settings.mobile_image_margin_bottom | default: 20 }}px;
+    }
+    
+    .huzi-os-warp {
+      text-align: {{ section.settings.mobile_text_alignment | default: 'center' }};
+      max-width: 100%;
+    }
+    
+    .huzi-h4 {
+      font-size: {{ section.settings.mobile_subtitle_size | default: 12 }}px;
+    }
+    
+    .huzi-h3 {
+      font-size: {{ section.settings.mobile_title_size | default: 22 }}px;
+    }
+    
+    .huzi-p {
+      font-size: {{ section.settings.mobile_para_size | default: 14 }}px;
+      line-height: {{ section.settings.mobile_para_line_height | default: 1.6 }};
+    }
+    
+    .huzi-signature-img {
+      max-width: {{ section.settings.mobile_signature_width | default: 150 }}px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Founder Section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "sub_title",
+      "label": "Subtitle"
+    },
+    {
+      "type": "richtext",
+      "id": "title",
+      "label": "Title",
+      "default": "<p>HEAR FROM OUR FOUNDER: <b>TIFFANYROSE</b></p>"
+    },
+    {
+      "type": "richtext",
+      "id": "para",
+      "label": "Paragraph",
+      "default": "<p>\"Why Cover up the problem when you can fix it? I am helping women and children grow their hair naturally. Every day I am blown away by how many lives I am affecting and changing with my amazing beauty products.\"<br><br>\"This is a total dream come true!\"<br><br>TiffanyRose, CEO & Founder</p>"
+    },
+    {
+      "type": "image_picker",
+      "id": "img",
+      "label": "Signature Image"
+    },
+    {
+      "type": "text",
+      "id": "signature_alt",
+      "label": "Signature Alt Text",
+      "default": "Founder Signature"
+    },
+    {
+      "type": "image_picker",
+      "id": "bg_img",
+      "label": "Background/Portrait Image"
+    },
+    {
+      "type": "text",
+      "id": "bg_img_alt",
+      "label": "Portrait Image Alt Text"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "checkbox",
+      "id": "reverse_layout",
+      "label": "Reverse Layout",
+      "info": "Show image on left, content on right"
+    },
+    {
+      "type": "select",
+      "id": "content_alignment",
+      "label": "Content Vertical Alignment",
+      "options": [
+        { "value": "flex-start", "label": "Top" },
+        { "value": "center", "label": "Center" },
+        { "value": "flex-end", "label": "Bottom" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "select",
+      "id": "text_alignment",
+      "label": "Text Alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "select",
+      "id": "image_fit",
+      "label": "Image Fit",
+      "options": [
+        { "value": "cover", "label": "Cover" },
+        { "value": "contain", "label": "Contain" },
+        { "value": "fill", "label": "Fill" }
+      ],
+      "default": "cover"
+    },
+    {
+      "type": "range",
+      "id": "content_max_width",
+      "min": 400,
+      "max": 800,
+      "step": 50,
+      "unit": "px",
+      "label": "Content Max Width",
+      "default": 600
+    },
+    {
+      "type": "range",
+      "id": "section_min_height",
+      "min": 300,
+      "max": 800,
+      "step": 50,
+      "unit": "px",
+      "label": "Section Min Height",
+      "default": 500
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "section_bg_color",
+      "label": "Section Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "content_bg_color",
+      "label": "Content Background",
+      "info": "Leave blank for transparent"
+    },
+    {
+      "type": "color",
+      "id": "image_bg_color",
+      "label": "Image Column Background",
+      "info": "Leave blank for transparent"
+    },
+    {
+      "type": "color",
+      "id": "subtitle_color",
+      "label": "Subtitle Color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "title_bold_color",
+      "label": "Title Bold Text Color",
+      "info": "Color for bold text in title"
+    },
+    {
+      "type": "color",
+      "id": "para_color",
+      "label": "Paragraph Color",
+      "default": "#222222"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "subtitle_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Subtitle Size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "subtitle_weight",
+      "min": 300,
+      "max": 700,
+      "step": 100,
+      "label": "Subtitle Weight",
+      "default": 500
+    },
+    {
+      "type": "select",
+      "id": "subtitle_transform",
+      "label": "Subtitle Transform",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "uppercase", "label": "Uppercase" },
+        { "value": "lowercase", "label": "Lowercase" },
+        { "value": "capitalize", "label": "Capitalize" }
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "range",
+      "id": "subtitle_letter_spacing",
+      "min": 0,
+      "max": 3,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Subtitle Letter Spacing",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "min": 20,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "label": "Title Size",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "title_weight",
+      "min": 300,
+      "max": 700,
+      "step": 100,
+      "label": "Title Weight",
+      "default": 400
+    },
+    {
+      "type": "range",
+      "id": "title_line_height",
+      "min": 1,
+      "max": 2,
+      "step": 0.1,
+      "label": "Title Line Height",
+      "default": 1.3
+    },
+    {
+      "type": "range",
+      "id": "title_letter_spacing",
+      "min": -1,
+      "max": 3,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Title Letter Spacing",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "para_size",
+      "min": 14,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Paragraph Size",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "para_line_height",
+      "min": 1.2,
+      "max": 2.2,
+      "step": 0.1,
+      "label": "Paragraph Line Height",
+      "default": 1.8
+    },
+    {
+      "type": "range",
+      "id": "para_margin_bottom",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Paragraph Bottom Margin",
+      "default": 30
+    },
+    {
+      "type": "header",
+      "content": "Signature Image"
+    },
+    {
+      "type": "range",
+      "id": "signature_max_width",
+      "min": 100,
+      "max": 400,
+      "step": 20,
+      "unit": "px",
+      "label": "Signature Max Width",
+      "default": 200
+    },
+    {
+      "type": "range",
+      "id": "signature_margin_top",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Signature Top Margin",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "unit": "px",
+      "label": "Section Padding Top",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "unit": "px",
+      "label": "Section Padding Bottom",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "section_padding_sides",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "label": "Section Padding Sides",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "content_padding",
+      "min": 20,
+      "max": 80,
+      "step": 10,
+      "unit": "px",
+      "label": "Content Padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "section_margin_top",
+      "min": 0,
+      "max": 100,
+      "step": 10,
+      "unit": "px",
+      "label": "Section Margin Top",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "section_margin_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 10,
+      "unit": "px",
+      "label": "Section Margin Bottom",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "image_border_radius",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Image Border Radius",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Tablet Settings"
+    },
+    {
+      "type": "range",
+      "id": "section_min_height_tablet",
+      "min": 300,
+      "max": 600,
+      "step": 50,
+      "unit": "px",
+      "label": "Tablet Min Height",
+      "default": 400
+    },
+    {
+      "type": "header",
+      "content": "Mobile Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "mobile_content_first",
+      "label": "Show Content First on Mobile",
+      "default": false,
+      "info": "When checked, content appears before image on mobile"
+    },
+    {
+      "type": "select",
+      "id": "mobile_text_alignment",
+      "label": "Mobile Text Alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "mobile_padding_top",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Padding Top",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "mobile_padding_bottom",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Padding Bottom",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "mobile_padding_sides",
+      "min": 0,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Padding Sides",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "mobile_content_padding",
+      "min": 10,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Content Padding",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "mobile_image_height",
+      "min": 200,
+      "max": 500,
+      "step": 50,
+      "unit": "px",
+      "label": "Mobile Image Height",
+      "default": 300
+    },
+    {
+      "type": "range",
+      "id": "mobile_image_margin_bottom",
+      "min": 0,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Image Bottom Margin",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "mobile_subtitle_size",
+      "min": 10,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "label": "Mobile Subtitle Size",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "mobile_title_size",
+      "min": 18,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "label": "Mobile Title Size",
+      "default": 22
+    },
+    {
+      "type": "range",
+      "id": "mobile_para_size",
+      "min": 12,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "label": "Mobile Paragraph Size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "mobile_para_line_height",
+      "min": 1.2,
+      "max": 2,
+      "step": 0.1,
+      "label": "Mobile Paragraph Line Height",
+      "default": 1.6
+    },
+    {
+      "type": "range",
+      "id": "mobile_signature_width",
+      "min": 80,
+      "max": 250,
+      "step": 10,
+      "unit": "px",
+      "label": "Mobile Signature Width",
+      "default": 150
+    }
+  ],
+  "presets": [
+    {
+      "name": "Founder Section",
+      "category": "02. Section Banner",
+      "settings": {
+        "title": "<p>HEAR FROM OUR FOUNDER: <b>TIFFANYROSE</b></p>",
+        "para": "<p>\"Why Cover up the problem when you can fix it? I am helping women and children grow their hair naturally. Every day I am blown away by how many lives I am affecting and changing with my amazing beauty products.\"<br><br>\"This is a total dream come true!\"<br><br>TiffanyRose, CEO & Founder</p>"
+      }
+    }
+  ]
+}
+{% endschema %}

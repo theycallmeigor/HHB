@@ -1,0 +1,185 @@
+{%- comment %}
+  Enhanced redirect cart that properly passes products to checkout
+  @param cart (cart, mandatory)
+  @param checkout_url (string, mandatory) the checkout url
+  @param checkout_button_selector (string) the query selector for the checkout button
+{% endcomment -%}
+
+{% unless checkout_url %}
+  {% assign checkout_url = 'https://checkout.hollywoodhairbar.co/checkout' %}
+{% endunless %}
+
+{% unless checkout_button_selector %}
+  {% assign checkout_button_selector = '.upez-btn--checkout, [type="submit"][name="checkout"]' %}
+{% endunless %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var debug = true ? console.log.bind(console, '[DEBUG][RedirectCart]') : function () {};
+
+  debug('Script loaded - Enhanced Version');
+
+  window.RedirectCart = function (options) {
+    var self = {};
+
+    function init() {     
+      self.options = Object.assign({
+        checkoutButtonSelector: '{{ checkout_button_selector }}',
+        checkoutUrl: '{{ checkout_url }}'
+      }, options);
+
+      debug('Initialized with options', self.options);
+      inject();
+    }
+
+    function inject() {
+      debug('Injecting event listeners');
+      
+      // Use vanilla JS for better compatibility
+      document.querySelectorAll(self.options.checkoutButtonSelector).forEach(function(button) {
+        button.addEventListener('click', checkout);
+        debug('Added listener to button:', button);
+      });
+
+      // Also catch dynamically added buttons
+      document.addEventListener('click', function(event) {
+        if (event.target.matches(self.options.checkoutButtonSelector) || 
+            event.target.closest(self.options.checkoutButtonSelector)) {
+          checkout(event);
+        }
+      });
+    }
+
+    function checkout(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      debug('Checkout triggered');
+      
+      // First try the meta-data view, fallback to regular cart.json
+      fetchCartData()
+        .then(function(data) {
+          var checkoutUrl = getCheckoutURL(data);
+          debug('Checkout URL:', checkoutUrl);
+          window.location.href = checkoutUrl;
+        })
+        .catch(function(error) {
+          console.error('[RedirectCart] Error:', error);
+          // Fallback to basic redirect
+          window.location.href = self.options.checkoutUrl;
+        });
+    }
+
+    function fetchCartData() {
+      // Try custom view first, then fallback to standard cart
+      return fetch('/cart?view=meta-data.json')
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error('Meta-data view not found');
+          }
+          return response.json();
+        })
+        .then(function(data) {
+          debug('Meta-data cart loaded:', data);
+          return { type: 'meta', data: data };
+        })
+        .catch(function() {
+          debug('Falling back to standard cart.json');
+          return fetch('/cart.json')
+            .then(function(response) { return response.json(); })
+            .then(function(cart) {
+              debug('Standard cart loaded:', cart);
+              return { type: 'standard', data: cart };
+            });
+        });
+    }
+
+    function getCheckoutURL(cartData) {
+      var cookie = getCartCookie('cart');
+      var affId = getCartCookie('affId') || getUrlParam('affId');
+      var urlLineItems = '';
+      
+      if (cartData.type === 'meta' && cartData.data.meta_product_id_array) {
+        // Use meta-data format
+        urlLineItems = Object.keys(cartData.data.meta_product_id_array).reduce(function (output, productId) {
+          var item = cartData.data.meta_product_id_array[productId];
+          return output.concat([item.id + ':' + item.quantity]);
+        }, []).join(';');
+      } else if (cartData.type === 'standard' && cartData.data.items) {
+        // Use standard cart format with variant IDs
+        urlLineItems = cartData.data.items.map(function(item) {
+          // Try multiple ID fields for compatibility
+          var productId = item.variant_id || item.id || item.product_id;
+          var quantity = item.quantity;
+          
+          // If selling plan exists, append it
+          if (item.selling_plan_allocation && item.selling_plan_allocation.selling_plan) {
+            productId = productId + '|' + item.selling_plan_allocation.selling_plan.id;
+          }
+          
+          return productId + ':' + quantity;
+        }).join(';');
+      } else {
+        // Fallback: try to extract from current cart items
+        urlLineItems = extractFromCartItems();
+      }
+
+      debug('Line items for checkout:', urlLineItems);
+
+      // Build URL with parameters
+      var params = new URLSearchParams();
+      
+      if (urlLineItems) {
+        params.append('products', urlLineItems);
+      }
+      
+      if (cookie) {
+        params.append('cartId', cookie);
+      }
+      
+      if (affId) {
+        params.append('affId', affId);
+      }
+      
+      // Add discount code if present
+      if (cartData.data && cartData.data.discount_applications && cartData.data.discount_applications.length > 0) {
+        params.append('discount', cartData.data.discount_applications[0].title);
+      } else if (cartData.data && cartData.data.cart_level_discount_applications && cartData.data.cart_level_discount_applications.length > 0) {
+        params.append('discount', cartData.data.cart_level_discount_applications[0].title);
+      }
+
+      var finalUrl = self.options.checkoutUrl + '?' + params.toString();
+      return finalUrl;
+    }
+
+    function extractFromCartItems() {
+      // Fallback method using Liquid to generate product list
+      var items = [];
+      {%- for item in cart.items -%}
+        {%- if item.variant_id -%}
+          items.push('{{ item.variant_id }}:{{ item.quantity }}');
+        {%- elsif item.id -%}
+          items.push('{{ item.id }}:{{ item.quantity }}');
+        {%- endif -%}
+      {%- endfor -%}
+      return items.join(';');
+    }
+
+    function getCartCookie(name) {
+      var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? match[2] : null;
+    }
+
+    function getUrlParam(name) {
+      var params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+
+    init();
+    return self;
+  };
+
+  // Create instance
+  var instance = new RedirectCart();
+});
+</script>

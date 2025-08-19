@@ -1,0 +1,48 @@
+<section class="huzi-new-hero-slider">
+  <div class="huzi-new-inner-hero-slider" >
+    {% for block in section.blocks %}
+      <div class="huzi-new-col-slide" >
+         <a href="{{ block.settings.btn_url }}" >
+            <img class="desktop_img {% if block.settings.mobile_img != blank %}none-mb-nws{% endif %}" src="{{ block.settings.desktop_img | img_url: '2560x1258' }}" />
+            {% if block.settings.mobile_img != blank %}<img class="mobile_img" src="{{ block.settings.mobile_img | img_url: '800x800' }}" />{% endif %}
+         </a>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% schema %}
+  {
+    "name": "NWS New Slider",
+    "settings": [],
+    "blocks": [
+        {
+          "type": "text",
+          "name": "Slide",
+          "settings": [
+         	{
+              "type": "image_picker",
+              "id": "desktop_img",
+              "label": "Desktop Image"
+            },
+            {
+              "type": "image_picker",
+              "id": "mobile_img",
+              "label": "Mobile Image"
+            },
+            {
+              "type": "url",
+              "id": "btn_url",
+              "label": "Slide Link"
+            }
+          ]
+        }
+    ],
+    "presets": [
+        {
+          "name": "NWS New Slider",
+          "category": "02. Section Banner"
+        }
+    ]
+}
+{% endschema %}

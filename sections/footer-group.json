@@ -1,0 +1,245 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "name": "t:sections.footer.name",
+  "type": "footer",
+  "sections": {
+    "insta_banner_zAAwpe": {
+      "type": "insta-banner",
+      "name": "Instagram Slider",
+      "settings": {
+        "follow_text": "Follow Us on Insta:",
+        "instagram_handle": "@HOLLYWOODHAIRBAR",
+        "instagram_link": "https://www.instagram.com/hollywoodhairbar/",
+        "feed_type": "foursixty",
+        "foursixty_script_url": "//foursixty.com/media/scripts/fs.slider.v2.5.js",
+        "foursixty_feed_id": "hollywood-hair-bar",
+        "foursixty_theme": "slider_v2_5",
+        "connector_filter": "43930",
+        "cell_size": "20%",
+        "mobile_cell_size": "",
+        "open_links_same_page": false,
+        "custom_feed_html": "",
+        "header_background": "linear-gradient(169deg, rgba(253, 1, 222, 1) 100%, rgba(168, 255, 251, 1) 100%)",
+        "header_text_color": "#000000",
+        "handle_color": "#000000",
+        "handle_hover_color": "#333333",
+        "header_font_size": 14,
+        "mobile_header_font_size": 13,
+        "header_font_weight": "600",
+        "handle_font_weight": "700",
+        "header_text_transform": "uppercase",
+        "header_letter_spacing": 1,
+        "header_font_family": "helvetica_n4",
+        "header_padding": 15,
+        "mobile_header_padding": 12,
+        "handle_spacing": 5,
+        "handle_text_decoration": "none",
+        "handle_hover_decoration": "underline",
+        "feed_overlay_bg": "#fd01de",
+        "feed_text_color": "#ffffff",
+        "feed_text_margin": 0,
+        "feed_item_spacing": 8,
+        "hide_date": true,
+        "hide_title": true,
+        "hide_links": true,
+        "nav_arrow_color": "#222222",
+        "nav_arrow_width": 1,
+        "nav_button_bg": "transparent",
+        "nav_button_radius": 0,
+        "nav_button_opacity": 0.8,
+        "section_background": "transparent",
+        "section_padding_top": 0,
+        "section_padding_bottom": 0,
+        "section_padding_sides": 0,
+        "section_margin_top": 0,
+        "section_margin_bottom": 0,
+        "mobile_padding_top": 0,
+        "mobile_padding_bottom": 0,
+        "mobile_padding_sides": 0,
+        "custom_css": ""
+      }
+    },
+    "gooted_mid_4nzP6x": {
+      "type": "gooted-mid",
+      "name": "Footer Middle",
+      "settings": {
+        "newsletter_title": "JOIN OUR CLIQUE",
+        "newsletter_description": "Get Exclusive Discounts, Plus Tips & Tricks on how to Grow your Hair! Our Top \"Hollywood\" Celebrity Hair Stylists will personally email you!",
+        "newsletter_button_text": "JOIN OUR CLIQUE",
+        "newsletter_button_link": "https://www.instagram.com/hollywoodskinbar",
+        "newsletter_button_target": "_blank",
+        "enable_attentive_script": false,
+        "attentive_desktop_id": "",
+        "attentive_mobile_id": "",
+        "hhb_logo": "shopify://shop_images/HHB_39a78a12-a413-4620-bde0-f6eebbe0fedf_1.webp",
+        "hhb_follow_text": "FOLLOW HOLLYWOOD HAIR BAR",
+        "hhb_facebook": "https://www.facebook.com/HollywoodHairBar/",
+        "hhb_instagram": "https://www.instagram.com/hollywoodhairbar",
+        "hhb_twitter": "https://twitter.com/hollywoodhairb1?lang=en",
+        "hhb_youtube": "https://www.youtube.com/channel/UCFYyKJ1ivgiJYzKHvnJwG9w",
+        "hsb_logo": "shopify://shop_images/HSB_0991768c-dce7-48cf-bf74-acc841b0d4ee_1.webp",
+        "hsb_follow_text": "FOLLOW HOLLYWOOD SKIN BAR",
+        "hsb_facebook": "https://www.facebook.com/HollywoodHairBar/",
+        "hsb_instagram": "https://www.instagram.com/hollywoodskinbar",
+        "hsb_twitter": "https://twitter.com/hollywoodhairb1?lang=en",
+        "hsb_youtube": "https://www.youtube.com/channel/UCFYyKJ1ivgiJYzKHvnJwG9w",
+        "app_section_title": "Download Our App",
+        "google_play_image": "shopify://shop_images/google.png",
+        "google_play_link": "https://play.google.com/store/apps/details?id=co.tapcart.app.id_oSOmjOEHbs",
+        "app_store_image": "shopify://shop_images/apple.png",
+        "app_store_link": "https://apps.apple.com/us/app/hollywood-hair-bar/id1601315075",
+        "section_background": "#121212",
+        "max_width": 1200,
+        "section_padding_top": 10,
+        "section_padding_bottom": 10,
+        "section_padding_sides": 20,
+        "newsletter_max_width": 600,
+        "newsletter_margin_bottom": 60,
+        "newsletter_title_color": "#FFFFFF",
+        "newsletter_title_size": 24,
+        "newsletter_title_weight": "700",
+        "newsletter_title_transform": "uppercase",
+        "newsletter_title_spacing": 2,
+        "newsletter_title_margin": 20,
+        "newsletter_text_color": "#CCCCCC",
+        "newsletter_text_size": 14,
+        "newsletter_text_line_height": 1.6,
+        "newsletter_text_margin": 30,
+        "button_background": "#FF00FF",
+        "button_hover_background": "#E600E6",
+        "button_text_color": "#FFFFFF",
+        "button_hover_text_color": "#FFFFFF",
+        "button_padding": "15px 40px",
+        "button_font_size": 14,
+        "button_font_weight": "700",
+        "button_text_transform": "uppercase",
+        "button_letter_spacing": 1.5,
+        "button_border": "none",
+        "button_border_radius": 0,
+        "button_shadow_color": "rgba(255, 0, 255, 0.3)",
+        "social_gap": 80,
+        "social_margin_bottom": 50,
+        "logo_width": 60,
+        "logo_text_gap": 10,
+        "logo_margin_bottom": 15,
+        "social_text_color": "#FFFFFF",
+        "social_text_size": 12,
+        "social_text_weight": "600",
+        "social_text_transform": "uppercase",
+        "social_text_spacing": 1,
+        "social_text_line_height": 1.4,
+        "social_icon_size": 32,
+        "social_icon_spacing": 8,
+        "app_section_margin": 40,
+        "app_title_color": "#FFFFFF",
+        "app_title_size": 16,
+        "app_title_weight": "700",
+        "app_title_transform": "uppercase",
+        "app_title_spacing": 1,
+        "app_title_margin": 20,
+        "app_buttons_gap": 15,
+        "app_button_height": 52,
+        "mobile_padding_top": 40,
+        "mobile_padding_bottom": 40,
+        "mobile_padding_sides": 15,
+        "mobile_social_gap": 40,
+        "mobile_newsletter_title_size": 20,
+        "mobile_newsletter_text_size": 13,
+        "mobile_button_font_size": 13,
+        "mobile_button_padding": "12px 30px",
+        "mobile_logo_direction": "row",
+        "custom_css": ""
+      }
+    },
+    "footer": {
+      "type": "footer",
+      "blocks": {
+        "text_acWRrn": {
+          "type": "text",
+          "settings": {
+            "heading": "OUR STORY",
+            "subtext": "<p>Tiffany Rose was inspired to create Hollywood Hair Bar, Hollywood Skin Bar & Hollywood Bath Bar after years of looking for the perfect beauty products that really worked and were formulated with all natural ingredients—and still seeing a void in the industry for products that performed!</p>",
+            "width_desktop": 6,
+            "width_mobile": "2"
+          }
+        },
+        "link_list_mKikrd": {
+          "type": "link_list",
+          "settings": {
+            "heading": "Hair Care",
+            "menu": "hair-care",
+            "width_desktop": 2,
+            "width_mobile": "2"
+          }
+        },
+        "link_list_zPjeD4": {
+          "type": "link_list",
+          "settings": {
+            "heading": "Policies",
+            "menu": "policies",
+            "width_desktop": 2,
+            "width_mobile": "1"
+          }
+        },
+        "link_list_LY67cx": {
+          "type": "link_list",
+          "settings": {
+            "heading": "STAY CONNECTED",
+            "menu": "stay-connected",
+            "width_desktop": 2,
+            "width_mobile": "1"
+          }
+        },
+        "text_MrYgjN": {
+          "type": "text",
+          "settings": {
+            "heading": "CONTACT US",
+            "subtext": "<p>424-901-3629<br/><a href=\"mailto:heylove@hollywoodhairbar.com\">heylove@hollywoodhairbar.com</a></p><p><strong>Customer Service Hours:</strong><br/>24/7 Via Email</p>",
+            "width_desktop": 5,
+            "width_mobile": "2"
+          }
+        }
+      },
+      "block_order": [
+        "text_acWRrn",
+        "link_list_mKikrd",
+        "link_list_zPjeD4",
+        "link_list_LY67cx",
+        "text_MrYgjN"
+      ],
+      "settings": {
+        "color_scheme": "custom",
+        "enable_follow_on_shop": false,
+        "show_social": true,
+        "enable_country_selector": true,
+        "enable_language_selector": true,
+        "payment_enable": true,
+        "enabled_payment_types": "",
+        "show_policy": true,
+        "branding_text": "",
+        "margin_top": 0,
+        "padding_top": 36,
+        "padding_bottom": 36,
+        "custom_colors_background": "#121212",
+        "custom_gradient_background": "",
+        "custom_colors_text": "#ffffff",
+        "custom_colors_solid_button_background": "#ffffff",
+        "custom_colors_solid_button_text": "#121212",
+        "custom_colors_outline_button": "#ffffff"
+      }
+    }
+  },
+  "order": [
+    "insta_banner_zAAwpe",
+    "gooted_mid_4nzP6x",
+    "footer"
+  ]
+}

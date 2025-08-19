@@ -1,0 +1,197 @@
+
+
+{%- assign cc_map = nil -%}
+{%- if product.metafields.checkoutchamp and product.metafields.checkoutchamp.mapping -%}
+  {%- assign cc_map = product.metafields.checkoutchamp.mapping.value -%}
+{%- elsif product.metafields.cc and product.metafields.cc.mapping -%}
+  {%- assign cc_map = product.metafields.cc.mapping.value -%}
+{%- elsif product.metafields.custom and product.metafields.custom.checkoutchamp_mapping -%}
+  {%- assign cc_map = product.metafields.custom.checkoutchamp_mapping.value -%}
+{%- endif -%}
+
+{%- assign cc_ot_override = cc_map.one_time_id | default: cc_map.onetime_id | default: '' -%}
+{%- assign cc_sub_override = cc_map.subscription_id | default: '' -%}
+{%- assign sub_obj        = cc_map.subscription | default: blank -%}
+
+{%- comment -%}
+  Detect Shopify selling plans (optional). If none, we won’t output selling_plan.
+{%- endcomment -%}
+{%- assign has_shopify_sub = false -%}
+{%- if product.selling_plan_groups and product.selling_plan_groups.size > 0 -%}
+  {%- assign has_shopify_sub = true -%}
+{%- endif -%}
+
+{%- comment -%}
+  Choose a default selection: if subscription override exists, default to onetime unless configured otherwise.
+{%- endcomment -%}
+{%- assign default_selection = 'onetime' -%}
+{%- if cc_sub_override != '' -%}
+  {%- assign default_selection = 'onetime' -%}
+{%- endif -%}
+
+<div class="ccu-wrapper" data-ccu-root>
+  <!-- Hidden, canonical fields (single source of truth) -->
+  <input type="hidden" name="properties[purchase_option]" value="{{ default_selection }}" data-ccu-field="purchase_option">
+  <input type="hidden" name="properties[cc_override_id]" value="{{ default_selection == 'subscription' and cc_sub_override or cc_ot_override }}" data-ccu-field="cc_override_id">
+  {%- if has_shopify_sub -%}
+    <!-- Only present if the shop actually uses Shopify subscriptions -->
+    {%- assign default_plan_id = '' -%}
+    {%- for group in product.selling_plan_groups -%}
+      {%- if group.selling_plans.size > 0 -%}
+        {%- assign default_plan_id = group.selling_plans.first.id -%}
+        {%- break -%}
+      {%- endif -%}
+    {%- endfor -%}
+    <input type="hidden" name="selling_plan" value="" data-ccu-field="selling_plan" data-default-plan="{{ default_plan_id }}">
+  {%- endif -%}
+
+  <!-- Purchase options UI (single, unified) -->
+  <fieldset class="ccu-purchase-options" aria-label="Purchase options">
+    <legend class="ccu-legend">Purchase options</legend>
+    <label class="ccu-option-pill" data-ccu-option="onetime">
+      <input class="ccu-radio" type="radio" name="ccu_purchase" value="onetime" {% if default_selection == 'onetime' %}checked{% endif %}>
+      <span class="ccu-title">One‑time purchase</span>
+      <span class="ccu-subtle" data-ccu-onetime-caption>Buy once</span>
+    </label>
+
+    {%- if cc_sub_override != '' or has_shopify_sub -%}
+    <label class="ccu-option-pill" data-ccu-option="subscription">
+      <input class="ccu-radio" type="radio" name="ccu_purchase" value="subscription" {% if default_selection == 'subscription' %}checked{% endif %}>
+      <span class="ccu-title">Subscribe & Save</span>
+      <span class="ccu-subtle" data-ccu-subs-caption>
+        {%- if sub_obj and sub_obj.discount -%}
+          Save {{ sub_obj.discount }}
+        {%- else -%}
+          Best value, cancel anytime
+        {%- endif -%}
+      </span>
+    </label>
+    {%- endif -%}
+  </fieldset>
+
+  <!-- Quantity breaks (radios do NOT use name="quantity") -->
+  <fieldset class="ccu-qty-breaks" aria-label="Quantity">
+    <legend class="ccu-legend">Choose quantity</legend>
+    <div class="ccu-qty-grid">
+      {%- assign qb_options = section.settings.qb_options | default: '1,2,3,5' -%}
+      {%- assign qb_list = qb_options | split: ',' -%}
+      {%- for q in qb_list -%}
+        {%- assign qty = q | strip | plus: 0 -%}
+        <label class="ccu-qty-pill" data-qty="{{ qty }}">
+          <input type="radio" class="ccu-qty-radio" name="properties[qty_break]" value="{{ qty }}" {% if forloop.first %}checked{% endif %}>
+          <span class="ccu-qty">{{ qty }}</span>
+          <span class="ccu-qty-caption">units</span>
+        </label>
+      {%- endfor -%}
+    </div>
+  </fieldset>
+
+  <!-- Ensure there is exactly ONE real quantity input and keep it synced -->
+  <input type="hidden" name="quantity" value="{{ qb_list.first | strip | plus: 0 }}" data-ccu-field="quantity">
+
+  <!-- (Optional) live pricing summary container; you can bind prices via JS if desired -->
+  <div class="ccu-price-summary" aria-live="polite" data-ccu-price-summary></div>
+</div>
+
+<style>
+  .ccu-wrapper{display:grid;gap:.75rem}
+  .ccu-legend{font-weight:600;margin-bottom:.25rem}
+  .ccu-option-pill,.ccu-qty-pill{display:flex;align-items:center;gap:.5rem;border:1px solid rgba(0,0,0,.1);border-radius:999px;padding:.5rem .75rem;cursor:pointer}
+  .ccu-option-pill input,.ccu-qty-pill input{position:absolute;opacity:0;pointer-events:none}
+  .ccu-option-pill[aria-checked="true"],.ccu-qty-pill[aria-checked="true"]{box-shadow:0 0 0 2px rgb(0 0 0 / .2) inset}
+  .ccu-title{font-weight:600}
+  .ccu-subtle{font-size:.875rem;opacity:.8}
+  .ccu-qty-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}
+  @media (max-width: 480px){.ccu-qty-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+
+<script>
+(function(){
+  var root = document.currentScript.closest('[data-ccu-root]');
+  if(!root) return;
+  var form = root.closest('form');
+  if(!form) return;
+
+  var fldPurchase = root.querySelector('[data-ccu-field="purchase_option"]');
+  var fldOverride  = root.querySelector('[data-ccu-field="cc_override_id"]');
+  var fldSP        = root.querySelector('[data-ccu-field="selling_plan"]');
+  var fldQty       = root.querySelector('[data-ccu-field="quantity"]');
+
+  var subOverride  = {{ cc_sub_override | json }};
+  var otOverride   = {{ cc_ot_override  | json }};
+  var hasShopifySP = {{ has_shopify_sub | json }};
+
+  // If the theme or another block injected duplicate fields, remove them now.
+  dedupeField('properties[purchase_option]', fldPurchase);
+  dedupeField('properties[cc_override_id]',  fldOverride);
+  if(fldSP){ dedupeField('selling_plan', fldSP); }
+  dedupeField('quantity', fldQty);
+
+  // Bind purchase option clicks
+  root.querySelectorAll('input.ccu-radio').forEach(function(r){
+    r.addEventListener('change', function(){
+      var mode = r.value; // onetime | subscription
+      fldPurchase.value = mode;
+
+      if(mode === 'subscription'){
+        if(subOverride && subOverride.length){ fldOverride.value = subOverride; }
+        if(hasShopifySP && fldSP){ fldSP.value = fldSP.getAttribute('data-default-plan') || ''; }
+      } else {
+        fldOverride.value = otOverride || '';
+        if(fldSP){ fldSP.value = ''; }
+      }
+      reflectAriaState();
+    });
+  });
+
+  // Bind qty-break clicks → sync single quantity input
+  root.querySelectorAll('input.ccu-qty-radio').forEach(function(r){
+    r.addEventListener('change', function(){
+      var qty = r.value || '1';
+      fldQty.value = qty;
+      reflectAriaState();
+      // Optional: update price summary if your theme exposes unit price
+      updatePriceSummary();
+    });
+  });
+
+  function reflectAriaState(){
+    // Toggle selection rings
+    root.querySelectorAll('[data-ccu-option]').forEach(function(el){
+      var val = el.getAttribute('data-ccu-option');
+      var checked = !!root.querySelector('input.ccu-radio[value="'+val+'"]:checked');
+      el.setAttribute('aria-checked', checked ? 'true' : 'false');
+    });
+    root.querySelectorAll('.ccu-qty-pill').forEach(function(el){
+      var val = el.getAttribute('data-qty');
+      var checked = !!root.querySelector('input.ccu-qty-radio[value="'+val+'"]:checked');
+      el.setAttribute('aria-checked', checked ? 'true' : 'false');
+    });
+  }
+
+  function updatePriceSummary(){
+    var box = root.querySelector('[data-ccu-price-summary]');
+    if(!box) return;
+    var qty = parseInt(fldQty.value || '1', 10);
+    // If your theme exposes a data-price attribute with the current unit price in cents
+    // you can compute and render a total here. Leave as no-op otherwise.
+    var unit = root.getAttribute('data-unit-price-cents');
+    if(!unit){ box.textContent = ''; return; }
+    var cents = parseInt(unit, 10) * qty;
+    box.textContent = formatMoney(cents);
+  }
+
+  function formatMoney(cents){
+    // Basic formatter; consider replacing with Shopify.formatMoney if available on the theme
+    return (cents/100).toLocaleString(undefined, {style:'currency', currency: (window.Shopify && Shopify.currency && Shopify.currency.active) || 'USD'});
+  }
+
+  function dedupeField(name, keep){
+    var dupes = form.querySelectorAll('input[name="'+CSS.escape(name)+'"]');
+    dupes.forEach(function(n){ if(n!==keep) n.parentNode.removeChild(n); });
+  }
+
+  // Initialize ARIA state
+  reflectAriaState();
+})();
+</script>

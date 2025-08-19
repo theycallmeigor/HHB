@@ -1,0 +1,585 @@
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  /* Original Huzi Styles */
+  .huzi-flex {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .huzi-feature-img {
+    position: relative;
+    min-height: 500px;
+    overflow: hidden;
+  }
+
+  .huzi-feature-img.has-bg-desktop {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  .huzi-feature-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  /* Desktop only background */
+  @media screen and (min-width: 750px) {
+    .huzi-feature-img.has-bg-desktop img {
+      display: none;
+    }
+  }
+
+  /* Mobile only image */
+  @media screen and (max-width: 749px) {
+    .huzi-feature-img.has-bg-mobile {
+      background: none !important;
+    }
+    
+    .huzi-feature-img.has-bg-mobile img.huzi-show-desk {
+      display: none;
+    }
+    
+    .huzi-feature-img.has-bg-mobile img.huzi-show-mob {
+      display: block;
+    }
+  }
+
+  .huzi-show-desk { display: block; }
+  .huzi-show-mob { display: none; }
+
+  .huzi-col-60 {
+    width: 60%;
+    flex: 0 0 60%;
+  }
+
+  .huzi-col-40 {
+    width: 40%;
+    flex: 0 0 40%;
+    padding: 40px;
+    position: relative;
+  }
+
+  .huzi-pro-content {
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .huzi-h3 {
+    font-size: calc(var(--font-heading-scale) * 2.4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 15px;
+  }
+
+  .huzi-h4 {
+    font-size: calc(var(--font-heading-scale) * 1.8rem);
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 15px;
+  }
+
+  .huzi-p {
+    font-size: 1.6rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+  }
+
+  .huzi-fff { color: #fff; }
+  .huzi-mrb15 { margin-bottom: 15px; }
+
+  .huzi-block-img {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .huzi-block-img img {
+    max-width: 255px;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+    position: static;
+  }
+
+  .huzi-fpro-btns {
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  .huzi-fb-btn {
+    background-color: rgb(var(--color-button));
+    color: rgb(var(--color-button-text));
+    border: none;
+    padding: 1.5rem 3rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    border-radius: var(--buttons-radius);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    transition: all 0.3s ease;
+    line-height: 1;
+  }
+  .huzi-fb-btn:hover { opacity: 0.9; transform: scale(1.02); }
+  .huzi-fb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Optional button presets */
+  .huzi-fb-btn.btn-style--outline {
+    background: transparent;
+    color: rgb(var(--color-button));
+    border: 2px solid rgb(var(--color-button));
+  }
+  .huzi-fb-btn.btn-style--secondary {
+    background: rgba(0,0,0,0.08);
+    color: rgb(var(--color-button-text));
+  }
+
+  .shopify-payment-button__btn {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    padding: 1.5rem 3rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    border-radius: var(--buttons-radius);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    width: 100%;
+    transition: all 0.3s ease;
+  }
+  .shopify-payment-button__btn:hover { opacity: 0.9; transform: scale(1.02); }
+
+  /* Price styling - UPDATED FOR CENTERING */
+  .entry-price { 
+    font-size: 2rem; 
+    margin-bottom: 10px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .entry-price ins { 
+    text-decoration: none; 
+    font-weight: 700; 
+    display: inline-block;
+  }
+  .entry-price del { 
+    opacity: 0.6; 
+    font-weight: 400;
+    display: inline-block;
+  }
+  .product__policies { 
+    font-size: 1.2rem; 
+    opacity: 0.8; 
+    margin-top: 5px;
+    text-align: center;
+    width: 100%;
+  }
+  .product__policies a { text-decoration: underline; }
+
+  /* Contain background color to the content column height (no bleed) */
+  .product-page { align-items: stretch !important; }
+  {% if section.settings.section_bg != blank %}
+  .content_{{ section.id }} .huzi-col-40.bg-contained::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: {{ section.settings.section_bg }};
+    opacity: {{ section.settings.section_bg_op }};
+    pointer-events: none;
+    z-index: 0;
+  }
+  .content_{{ section.id }} .huzi-col-40.bg-contained > * { position: relative; z-index: 1; }
+  {% endif %}
+
+  /* Responsive */
+  @media screen and (max-width: 749px) {
+    .product-page { flex-direction: column !important; }
+    .huzi-col-60,
+    .huzi-col-40 {
+      width: 100%;
+      flex: 0 0 100%;
+    }
+    .huzi-col-40 { padding: 20px; }
+    .huzi-h3 { font-size: calc(var(--font-heading-scale) * 1.8rem); }
+    .huzi-h4 { font-size: calc(var(--font-heading-scale) * 1.5rem); }
+    .huzi-p { font-size: 1.4rem; }
+    .huzi-feature-img { min-height: 300px; }
+  }
+
+  /* Custom margin/padding responsive */
+  {% if section.settings.section_margin_top != blank %}
+    {% assign margins = section.settings.section_margin_top | split: '|' %}
+    .content_{{ section.id }} { margin-top: {{ margins[0] }}; }
+    {% if margins.size > 1 %}
+      @media screen and (min-width: 750px) {
+        .content_{{ section.id }} { margin-top: {{ margins[1] }}; }
+      }
+    {% endif %}
+  {% endif %}
+
+  {% if section.settings.section_margin_bottom != blank %}
+    {% assign margins = section.settings.section_margin_bottom | split: '|' %}
+    .content_{{ section.id }} { margin-bottom: {{ margins[0] }}; }
+    {% if margins.size > 1 %}
+      @media screen and (min-width: 750px) {
+        .content_{{ section.id }} { margin-bottom: {{ margins[1] }}; }
+      }
+    {% endif %}
+  {% endif %}
+
+  {% if section.settings.section_padding != blank %}
+    .content_{{ section.id }} { padding: {{ section.settings.section_padding }}; }
+  {% endif %}
+{%- endstyle -%}
+
+{%- liquid
+  assign product = all_products[section.blocks[0].settings.featured_product]
+  
+  unless product == empty
+    assign current_variant = product.selected_or_first_available_variant
+    assign featured_image = current_variant.featured_image | default: product.featured_image
+  endunless
+
+  case section.settings.width_section
+    when 'container'
+      assign section_width = 'page-width'
+    when 'container-fluid wide'
+      assign section_width = 'page-width page-width--wide'
+    when 'w-100'
+      assign section_width = 'full-width'
+  endcase
+-%}
+
+<div class="color-{{ section.settings.color_scheme }} gradient">
+  <div class="{{ section_width }} {% if section.settings.off_mobile %}hide-mobile{% endif %} {% if section.settings.off_desktop %}hide-desktop{% endif %}">
+    <div class="content_{{ section.id }} section-{{ section.id }}-padding {% if section.settings.image %}bg-image{% endif %}"
+         {% if section.settings.image %}
+         style="background-image: url('{{ section.settings.image | img_url: 'master' }}'); background-size: cover; background-position: center;"
+         {% endif %}>
+      
+      <div class="{% if section.settings.width_content %}page-width{% endif %}">
+        {% if section.blocks.size > 0 and product != empty %}
+          {%- assign block = section.blocks[0] -%}
+          
+          <div id="ProductSection-{{ section.id }}" 
+               class="product-page product-inner layout-featured_product_1 huzi-flex {{ section.settings.huzi_custom_class }}"
+               style="flex-direction: {{ section.settings.huzi_direction }};"
+               data-section-id="{{ section.id }}"
+               data-product-id="{{ product.id }}">
+            
+            {%- if block.settings.cpf_img == blank -%}
+              <div class="huzi-feature-img huzi-col-60">
+                <img loading="lazy" src="{{ featured_image | img_url: 'master' }}" alt="{{ product.title }}">
+              </div>
+            {%- else -%}
+              {%- if block.settings.mob_img != blank -%}
+                {%- assign has_mobile = true -%}
+              {%- else -%}
+                {%- assign has_mobile = false -%}
+              {%- endif -%}
+              
+              <div class="huzi-feature-img huzi-col-60 {% if has_mobile %}has-bg-desktop has-bg-mobile{% endif %}"
+                   {% if has_mobile %}
+                   style="background-image: url('{{ block.settings.cpf_img | img_url: 'master' }}');"
+                   {% endif %}>
+                
+                {%- if has_mobile -%}
+                  <img loading="lazy" class="huzi-show-mob" 
+                       src="{{ block.settings.mob_img | img_url: 'master' }}" 
+                       alt="{{ product.title }}">
+                {%- else -%}
+                  <img loading="lazy" 
+                       src="{{ block.settings.cpf_img | img_url: 'master' }}" 
+                       alt="{{ product.title }}">
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+            
+            <div class="huzi-col-40 huzi-pro-content huzi-flex {% if section.settings.section_bg != blank %}bg-contained{% endif %}">
+              <div class="product-addtocart">
+                <div id="callBackVariant--{{ section.id }}" style="text-align: {{ section.settings.huzi_content_align }}">
+                  {%- assign product_form_id = 'product-form-' | append: section.id -%}
+                  
+                  {%- form 'product', product, id: product_form_id, class: 'form', novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+                    <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}" disabled>
+                    
+                    {%- comment -%} Trust badges above text (optional) {%- endcomment -%}
+                    {% if block.settings.f_img != blank and section.settings.trust_badges_position == 'above_text' %}
+                      <div class="huzi-block-img">
+                        <img loading="lazy" src="{{ block.settings.f_img | img_url: '255x86' }}" alt="Trust badges">
+                      </div>
+                    {% endif %}
+                    
+                    {%- unless product.has_only_default_variant -%}
+                      <div class="product-form__input product-form__input--dropdown">
+                        <label class="form__label" for="Option-{{ section.id }}-0" style="color: {{ section.settings.text_color | default: '#ffffff' }}">
+                          {{ product.options_first }}
+                        </label>
+                        <div class="select">
+                          <select id="Option-{{ section.id }}-0" 
+                                  class="select__select" 
+                                  name="options[{{ product.options_first }}]"
+                                  form="{{ product_form_id }}">
+                            {%- for value in product.options_with_values.first.values -%}
+                              <option value="{{ value | escape }}"
+                                {% if product.selected_or_first_available_variant.option1 == value %}selected="selected"{% endif %}>
+                                {{ value }}
+                              </option>
+                            {%- endfor -%}
+                          </select>
+                        </div>
+                      </div>
+                    {%- endunless -%}
+                    
+                    {%- if block.settings.sub_title != blank -%}
+                      <h4 class="huzi-h4 huzi-mrb15" style="color: {{ section.settings.subtitle_color | default: '#ffffff' }}">
+                        {{ block.settings.sub_title }}
+                      </h4>
+                    {%- endif -%}
+                    
+                    <a href="{{ product.url }}">
+                      <h3 class="huzi-h3 huzi-mrb15" style="color: {{ section.settings.title_color | default: '#ffffff' }}">
+                        {%- if block.settings.title != blank -%}
+                          {{ block.settings.title }}
+                        {%- else -%}
+                          {{ product.title }}
+                        {%- endif -%}
+                      </h3>
+                    </a>
+                    
+                    <div class="entry-short-description huzi-p huzi-mrb15" style="color: {{ section.settings.text_color | default: '#ffffff' }}">
+                      {%- if section.settings.short_description != blank -%}
+                        {{ section.settings.short_description }}
+                      {%- else -%}
+                        {{ product.description | strip_html | truncatewords: 20 }}
+                      {%- endif -%}
+                    </div>
+
+                    {%- comment -%} Trust badges below text (default) {%- endcomment -%}
+                    {% if block.settings.f_img != blank and section.settings.trust_badges_position != 'above_text' %}
+                      <div class="huzi-block-img">
+                        <img loading="lazy" src="{{ block.settings.f_img | img_url: '255x86' }}" alt="Trust badges">
+                      </div>
+                    {% endif %}
+                    
+                    <input type="hidden" name="quantity" value="1" min="1">
+                    
+                    <div class="entry-buttons-button w-100">
+                      <div class="entry-price price" style="color: {{ section.settings.price_color | default: '#ffffff' }}">
+                        <ins class="ProductPrice-{{ section.id }}" style="color: {{ section.settings.price_color | default: '#ffffff' }}">
+                          {{ product.selected_or_first_available_variant.price | money }}
+                        </ins>
+
+                        {%- unless section.settings.show_only_price -%}
+                          {%- if product.selected_or_first_available_variant.compare_at_price > product.selected_or_first_available_variant.price -%}
+                            <del class="ComparePrice-{{ section.id }}" style="color: {{ section.settings.compare_price_color | default: '#ffffff' }}">
+                              {{ product.selected_or_first_available_variant.compare_at_price | money }}
+                            </del>
+                          {%- endif -%}
+                          <div class="product__policies" style="color: {{ section.settings.text_color | default: '#ffffff' }}">
+                            <a style="color: {{ section.settings.text_color | default: '#ffffff' }}" href="{{ shop.policies.shipping_policy.url }}">{{ 'products.product.shipping_policy_html' | t }}</a>
+                          </div>
+                        {%- endunless -%}
+                      </div>
+                      
+                      <div class="huzi-fpro-btns">
+                        {%- capture btn_classes -%}
+                          huzi-fb-btn
+                          {%- if section.settings.button_style == 'outline' -%} btn-style--outline{%- endif -%}
+                          {%- if section.settings.button_style == 'secondary' -%} btn-style--secondary{%- endif -%}
+                        {%- endcapture -%}
+                        <button type="submit" 
+                                name="add" 
+                                id="AddToCart-{{ section.id }}" 
+                                class="{{ btn_classes | strip }}"
+                                style="{% if section.settings.button_uppercase %}text-transform: uppercase;{% endif %}"
+                                {% unless product.selected_or_first_available_variant.available %}disabled{% endunless %}>
+                          <span id="AddToCartText-{{ section.id }}">
+                            {%- if product.selected_or_first_available_variant.available -%}
+                              {{ section.settings.button_label | default: 'ADD TO CART' }}
+                            {%- else -%}
+                              {{ 'products.product.sold_out' | t }}
+                            {%- endif -%}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  {%- endform -%}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <script type="application/json" id="ProductJson-{{ section.id }}">
+            {{ product | json }}
+          </script>
+        {%- else -%}
+          <div class="placeholder-content" style="text-align: center; padding: 60px 20px;">
+            <h3>{{ 'sections.featured_product.title' | t }}</h3>
+            <p>{{ 'sections.featured_product.paragraph' | t }}</p>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "NWS Feature Product",
+  "tag": "section",
+  "class": "huzi_featured_product_1",
+  "disabled_on": { "groups": ["header", "footer"] },
+  "settings": [
+    {
+      "type": "select",
+      "id": "huzi_direction",
+      "label": "Image position",
+      "options": [
+        { "value": "row-reverse", "label": "Right" },
+        { "value": "row", "label": "Left" }
+      ],
+      "default": "row"
+    },
+    {
+      "type": "select",
+      "id": "huzi_content_align",
+      "label": "Content alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    { "type": "text", "id": "huzi_custom_class", "label": "Custom CSS class" },
+    { "type": "checkbox", "id": "off_mobile", "label": "Hide on mobile", "default": false },
+    { "type": "checkbox", "id": "off_desktop", "label": "Hide on desktop", "default": false },
+
+    { "type": "header", "content": "Layout" },
+    {
+      "type": "select",
+      "id": "width_section",
+      "label": "Section width",
+      "options": [
+        { "value": "container", "label": "Container (1200px)" },
+        { "value": "container-fluid wide", "label": "Wide" },
+        { "value": "w-100", "label": "Full width" }
+      ],
+      "default": "container"
+    },
+    { "type": "checkbox", "id": "width_content", "label": "Limit content width", "default": false },
+    { "type": "text", "id": "section_margin_top", "label": "Margin top", "info": "Format: mobile|desktop (e.g., 2rem|4rem)" },
+    { "type": "text", "id": "section_margin_bottom", "label": "Margin bottom", "info": "Format: mobile|desktop (e.g., 2rem|4rem)" },
+    { "type": "text", "id": "section_padding", "label": "Padding", "info": "Format: top right bottom left (e.g., 2rem 1rem 2rem 1rem)" },
+    { "type": "textarea", "id": "short_description", "label": "Product description override" },
+
+    { "type": "header", "content": "Background" },
+    { "type": "color", "id": "section_bg", "label": "Background color" },
+    { "type": "range", "id": "section_bg_op", "min": 0, "max": 1, "step": 0.1, "label": "Background opacity", "default": 1 },
+    { "type": "image_picker", "id": "image", "label": "Background image" },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "title_color", "label": "Title color", "default": "#ffffff" },
+    { "type": "color", "id": "subtitle_color", "label": "Subtitle color", "default": "#ffffff" },
+    { "type": "color", "id": "text_color", "label": "Body text color", "default": "#ffffff" },
+    { "type": "color", "id": "price_color", "label": "Price color", "default": "#ffffff" },
+    { "type": "color", "id": "compare_price_color", "label": "Compare-at price color", "default": "#ffffff" },
+
+    { "type": "header", "content": "Price display" },
+    { "type": "checkbox", "id": "show_only_price", "label": "Show only product price (hide compare price and shipping text)", "default": true },
+
+    { "type": "header", "content": "Button" },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "Button style preset",
+      "default": "default",
+      "options": [
+        { "value": "default", "label": "Filled (theme color)" },
+        { "value": "outline", "label": "Outline (theme color)" },
+        { "value": "secondary", "label": "Secondary" }
+      ]
+    },
+    { "type": "checkbox", "id": "button_uppercase", "label": "Uppercase button label", "default": true },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "ADD TO CART" },
+
+    { "type": "header", "content": "Trust badges" },
+    {
+      "type": "select",
+      "id": "trust_badges_position",
+      "label": "Trust badges position",
+      "default": "below_text",
+      "options": [
+        { "value": "above_text", "label": "Above text" },
+        { "value": "below_text", "label": "Below text (default)" }
+      ]
+    },
+
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "options": [
+        { "value": "accent-1", "label": "t:sections.all.colors.accent_1.label" },
+        { "value": "accent-2", "label": "t:sections.all.colors.accent_2.label" },
+        { "value": "background-1", "label": "t:sections.all.colors.background_1.label" },
+        { "value": "background-2", "label": "t:sections.all.colors.background_2.label" },
+        { "value": "inverse", "label": "t:sections.all.colors.inverse.label" }
+      ],
+      "default": "inverse",
+      "label": "t:sections.all.colors.label"
+    },
+    { "type": "range", "id": "padding_top", "min": 0, "max": 100, "step": 4, "unit": "px", "label": "t:sections.all.padding.padding_top", "default": 0 },
+    { "type": "range", "id": "padding_bottom", "min": 0, "max": 100, "step": 4, "unit": "px", "label": "t:sections.all.padding.padding_bottom", "default": 0 }
+  ],
+  "blocks": [
+    {
+      "type": "1",
+      "name": "Product",
+      "limit": 1,
+      "settings": [
+        { "type": "header", "content": "Product settings" },
+        { "type": "product", "id": "featured_product", "label": "Product" },
+        { "type": "image_picker", "id": "cpf_img", "label": "Custom desktop image", "info": "Override the product's featured image" },
+        { "type": "image_picker", "id": "mob_img", "label": "Custom mobile image" },
+        { "type": "image_picker", "id": "f_img", "label": "Trust badges image" },
+        { "type": "text", "id": "sub_title", "label": "Subtitle" },
+        { "type": "text", "id": "title", "label": "Custom title", "info": "Override the product title" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "NWS Feature Product",
+      "blocks": [ { "type": "1" } ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,644 @@
+<!-- Instagram Slider Section -->
+<section class="huzi-instagam section-{{ section.id }}">
+  <div class="huzi-insta-user">
+    {{ section.settings.follow_text }}
+    <a href="{{ section.settings.instagram_link }}" target="_blank">{{ section.settings.instagram_handle }}</a>
+  </div>
+  
+  <div class="huzi-instagram-feed">
+    {% if section.settings.feed_type == 'foursixty' %}
+      <!-- FourSixty Instagram Feed -->
+      <script 
+        src="{{ section.settings.foursixty_script_url }}" 
+        data-feed-id="{{ section.settings.foursixty_feed_id }}" 
+        data-theme="{{ section.settings.foursixty_theme }}" 
+        data-open-links-in-same-page="{{ section.settings.open_links_same_page }}" 
+        data-connector-filter="{{ section.settings.connector_filter }}" 
+        data-cell-size="{{ section.settings.cell_size }}">
+      </script>
+    {% elsif section.settings.feed_type == 'custom_html' %}
+      <!-- Custom HTML Feed -->
+      {{ section.settings.custom_feed_html }}
+    {% endif %}
+  </div>
+</section>
+
+<style>
+  /* Preserve all original Instagram section styling */
+  .section-{{ section.id }} {
+    width: 100%;
+    position: relative;
+    background: {{ section.settings.section_background | default: 'transparent' }};
+    padding: {{ section.settings.section_padding_top }}px {{ section.settings.section_padding_sides }}px {{ section.settings.section_padding_bottom }}px;
+    margin: {{ section.settings.section_margin_top }}px 0 {{ section.settings.section_margin_bottom }}px;
+  }
+  
+  /* Instagram header bar styling */
+  .section-{{ section.id }} .huzi-insta-user {
+    text-align: center;
+    padding: {{ section.settings.header_padding }}px 0;
+    background: {{ section.settings.header_background }};
+    font-size: {{ section.settings.header_font_size }}px;
+    font-weight: {{ section.settings.header_font_weight }};
+    color: {{ section.settings.header_text_color }};
+    text-transform: {{ section.settings.header_text_transform }};
+    letter-spacing: {{ section.settings.header_letter_spacing }}px;
+    font-family: {{ section.settings.header_font_family }};
+  }
+  
+  .section-{{ section.id }} .huzi-insta-user a {
+    color: {{ section.settings.handle_color }};
+    text-decoration: {{ section.settings.handle_text_decoration }};
+    font-weight: {{ section.settings.handle_font_weight }};
+    margin-left: {{ section.settings.handle_spacing }}px;
+    transition: all 0.3s ease;
+  }
+  
+  .section-{{ section.id }} .huzi-insta-user a:hover {
+    color: {{ section.settings.handle_hover_color }};
+    text-decoration: {{ section.settings.handle_hover_decoration }};
+  }
+  
+  /* FourSixty Feed Styling - Preserved from original */
+  .fs-wrapper { 
+    height: auto !important;
+  }
+  
+  .fs-entry-container { 
+    height: 0 !important; 
+    width: {{ section.settings.cell_size }} !important; 
+    padding-top: {{ section.settings.cell_size }} !important;
+  }
+  
+  .fs-slider_v2_5 .fs-entry-container { 
+    height: 0 !important;
+    width: {{ section.settings.cell_size }} !important;
+    padding-top: {{ section.settings.cell_size }} !important;
+  }
+  
+  /* Text styling for feed */
+  .fs-wrapper div.fs-text-container .fs-entry-title, 
+  div.fs-detail-title { 
+    font-family: {{ section.settings.feed_title_font | default: 'Times New Roman, serif' }};
+    font-style: {{ section.settings.feed_title_style | default: 'normal' }};
+    font-weight: {{ section.settings.feed_title_weight | default: 'normal' }};
+    font-size: {{ section.settings.feed_title_size | default: 14 }}px;
+  }
+  
+  div.fs-text-container .fs-entry-date, 
+  div.fs-detail-container .fs-post-info, 
+  div.fs-wrapper div.fs-has-links::after, 
+  .fs-text-product, 
+  .fs-overlink-text { 
+    font-family: {{ section.settings.feed_text_font | default: 'Helvetica Neue, Helvetica, Arial, sans-serif' }};
+    font-style: {{ section.settings.feed_text_style | default: 'normal' }};
+    font-weight: {{ section.settings.feed_text_weight | default: 'normal' }};
+    font-size: {{ section.settings.feed_text_size | default: 14 }}px;
+  }
+  
+  .fs-wrapper div.fs-text-container * { 
+    color: {{ section.settings.feed_text_color | default: '#ffffff' }};
+  }
+  
+  .fs-wrapper div.fs-text-container { 
+    background-color: {{ section.settings.feed_overlay_bg | default: 'rgba(200,65,227,0.4)' }};
+    margin: {{ section.settings.feed_text_margin | default: 0 }}px;
+  }
+  
+  /* Hide elements as per original */
+  {% if section.settings.hide_date %}
+  div.fs-entry-date { 
+    display: none !important;
+  }
+  {% endif %}
+  
+  {% if section.settings.hide_title %}
+  div.fs-entry-title { 
+    display: none !important;
+  }
+  {% endif %}
+  
+  {% if section.settings.hide_links %}
+  .fs-has-links { 
+    display: none !important;
+  }
+  {% endif %}
+  
+  /* Feed entry spacing */
+  .fs-slider_v2_5 .fs-wrapper div.fs-timeline-entry { 
+    margin: {{ section.settings.feed_item_spacing | default: 8 }}px;
+  }
+  
+  /* Slider navigation buttons */
+  .fs-slider-prev-button,
+  .fs-slider-next-button {
+    background: {{ section.settings.nav_button_bg | default: 'transparent' }};
+    border-radius: {{ section.settings.nav_button_radius }}px;
+    opacity: {{ section.settings.nav_button_opacity }};
+    transition: opacity 0.3s ease;
+  }
+  
+  .fs-slider-prev-button:hover,
+  .fs-slider-next-button:hover {
+    opacity: 1;
+  }
+  
+  .fs-arrow {
+    stroke: {{ section.settings.nav_arrow_color | default: '#222' }} !important;
+    stroke-width: {{ section.settings.nav_arrow_width | default: 1 }}px !important;
+  }
+  
+  /* Mobile responsive adjustments */
+  @media screen and (max-width: 768px) {
+    .section-{{ section.id }} {
+      padding: {{ section.settings.mobile_padding_top | default: section.settings.section_padding_top }}px 
+               {{ section.settings.mobile_padding_sides | default: section.settings.section_padding_sides }}px 
+               {{ section.settings.mobile_padding_bottom | default: section.settings.section_padding_bottom }}px;
+    }
+    
+    .section-{{ section.id }} .huzi-insta-user {
+      font-size: {{ section.settings.mobile_header_font_size | default: section.settings.header_font_size }}px;
+      padding: {{ section.settings.mobile_header_padding | default: section.settings.header_padding }}px 0;
+    }
+    
+    {% if section.settings.mobile_cell_size %}
+    .fs-entry-container,
+    .fs-slider_v2_5 .fs-entry-container { 
+      width: {{ section.settings.mobile_cell_size }} !important;
+      padding-top: {{ section.settings.mobile_cell_size }} !important;
+    }
+    {% endif %}
+  }
+  
+  /* Additional custom styles */
+  {{ section.settings.custom_css }}
+</style>
+
+{% schema %}
+{
+  "name": "Instagram Slider",
+  "class": "huzi-instagram-slider",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Instagram Header"
+    },
+    {
+      "type": "text",
+      "id": "follow_text",
+      "label": "Follow Text",
+      "default": "Follow Us on Insta:"
+    },
+    {
+      "type": "text",
+      "id": "instagram_handle",
+      "label": "Instagram Handle",
+      "default": "@HOLLYWOODHAIRBAR"
+    },
+    {
+      "type": "text",
+      "id": "instagram_link",
+      "label": "Instagram Profile URL",
+      "default": "https://www.instagram.com/hollywoodhairbar/"
+    },
+    {
+      "type": "header",
+      "content": "Feed Settings"
+    },
+    {
+      "type": "select",
+      "id": "feed_type",
+      "label": "Feed Type",
+      "options": [
+        {
+          "value": "foursixty",
+          "label": "FourSixty Feed"
+        },
+        {
+          "value": "custom_html",
+          "label": "Custom HTML"
+        }
+      ],
+      "default": "foursixty"
+    },
+    {
+      "type": "text",
+      "id": "foursixty_script_url",
+      "label": "FourSixty Script URL",
+      "default": "//foursixty.com/media/scripts/fs.slider.v2.5.js"
+    },
+    {
+      "type": "text",
+      "id": "foursixty_feed_id",
+      "label": "FourSixty Feed ID",
+      "default": "hollywood-hair-bar"
+    },
+    {
+      "type": "text",
+      "id": "foursixty_theme",
+      "label": "FourSixty Theme",
+      "default": "slider_v2_5"
+    },
+    {
+      "type": "text",
+      "id": "connector_filter",
+      "label": "Connector Filter",
+      "default": "43930"
+    },
+    {
+      "type": "text",
+      "id": "cell_size",
+      "label": "Cell Size",
+      "default": "20%",
+      "info": "Width and height of each Instagram post"
+    },
+    {
+      "type": "text",
+      "id": "mobile_cell_size",
+      "label": "Mobile Cell Size",
+      "info": "Leave blank to use desktop size"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_links_same_page",
+      "label": "Open Links in Same Page",
+      "default": true
+    },
+    {
+      "type": "html",
+      "id": "custom_feed_html",
+      "label": "Custom Feed HTML",
+      "info": "Paste custom Instagram feed HTML here if not using FourSixty"
+    },
+    {
+      "type": "header",
+      "content": "Header Styling"
+    },
+    {
+      "type": "color_background",
+      "id": "header_background",
+      "label": "Header Background",
+      "default": "linear-gradient(90deg, #FF00FF 0%, #00FFFF 100%)"
+    },
+    {
+      "type": "color",
+      "id": "header_text_color",
+      "label": "Header Text Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "handle_color",
+      "label": "Handle Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "handle_hover_color",
+      "label": "Handle Hover Color",
+      "default": "#333333"
+    },
+    {
+      "type": "range",
+      "id": "header_font_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Header Font Size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "mobile_header_font_size",
+      "min": 10,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Mobile Header Font Size",
+      "default": 13
+    },
+    {
+      "type": "select",
+      "id": "header_font_weight",
+      "label": "Header Font Weight",
+      "options": [
+        {"value": "300", "label": "Light"},
+        {"value": "400", "label": "Normal"},
+        {"value": "500", "label": "Medium"},
+        {"value": "600", "label": "Semi-Bold"},
+        {"value": "700", "label": "Bold"}
+      ],
+      "default": "600"
+    },
+    {
+      "type": "select",
+      "id": "handle_font_weight",
+      "label": "Handle Font Weight",
+      "options": [
+        {"value": "400", "label": "Normal"},
+        {"value": "500", "label": "Medium"},
+        {"value": "600", "label": "Semi-Bold"},
+        {"value": "700", "label": "Bold"}
+      ],
+      "default": "700"
+    },
+    {
+      "type": "select",
+      "id": "header_text_transform",
+      "label": "Text Transform",
+      "options": [
+        {"value": "none", "label": "None"},
+        {"value": "uppercase", "label": "Uppercase"},
+        {"value": "lowercase", "label": "Lowercase"},
+        {"value": "capitalize", "label": "Capitalize"}
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "range",
+      "id": "header_letter_spacing",
+      "min": 0,
+      "max": 5,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Letter Spacing",
+      "default": 1
+    },
+    {
+      "type": "font_picker",
+      "id": "header_font_family",
+      "label": "Header Font",
+      "default": "helvetica_n4"
+    },
+    {
+      "type": "range",
+      "id": "header_padding",
+      "min": 5,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "label": "Header Padding",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "mobile_header_padding",
+      "min": 5,
+      "max": 25,
+      "step": 1,
+      "unit": "px",
+      "label": "Mobile Header Padding",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "handle_spacing",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Handle Spacing",
+      "default": 5
+    },
+    {
+      "type": "select",
+      "id": "handle_text_decoration",
+      "label": "Handle Text Decoration",
+      "options": [
+        {"value": "none", "label": "None"},
+        {"value": "underline", "label": "Underline"}
+      ],
+      "default": "none"
+    },
+    {
+      "type": "select",
+      "id": "handle_hover_decoration",
+      "label": "Handle Hover Decoration",
+      "options": [
+        {"value": "none", "label": "None"},
+        {"value": "underline", "label": "Underline"}
+      ],
+      "default": "underline"
+    },
+    {
+      "type": "header",
+      "content": "Feed Overlay Styling"
+    },
+    {
+      "type": "color",
+      "id": "feed_overlay_bg",
+      "label": "Overlay Background",
+      "default": "rgba(200, 65, 227, 0.4)"
+    },
+    {
+      "type": "color",
+      "id": "feed_text_color",
+      "label": "Feed Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "feed_text_margin",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Text Container Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "feed_item_spacing",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Feed Item Spacing",
+      "default": 8
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_date",
+      "label": "Hide Post Date",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_title",
+      "label": "Hide Post Title",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_links",
+      "label": "Hide Post Links",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Navigation Styling"
+    },
+    {
+      "type": "color",
+      "id": "nav_arrow_color",
+      "label": "Arrow Color",
+      "default": "#222222"
+    },
+    {
+      "type": "range",
+      "id": "nav_arrow_width",
+      "min": 1,
+      "max": 3,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Arrow Stroke Width",
+      "default": 1
+    },
+    {
+      "type": "color",
+      "id": "nav_button_bg",
+      "label": "Button Background",
+      "default": "transparent"
+    },
+    {
+      "type": "range",
+      "id": "nav_button_radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "label": "Button Border Radius",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "nav_button_opacity",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "label": "Button Opacity",
+      "default": 0.8
+    },
+    {
+      "type": "header",
+      "content": "Section Spacing"
+    },
+    {
+      "type": "color",
+      "id": "section_background",
+      "label": "Section Background",
+      "default": "transparent"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Padding Top",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Padding Bottom",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "section_padding_sides",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Padding Sides",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "section_margin_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Margin Top",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "section_margin_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Margin Bottom",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Mobile Settings"
+    },
+    {
+      "type": "range",
+      "id": "mobile_padding_top",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Padding Top",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "mobile_padding_bottom",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Padding Bottom",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "mobile_padding_sides",
+      "min": 0,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Padding Sides",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Advanced"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_css",
+      "label": "Custom CSS",
+      "info": "Add any additional CSS styling here"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Instagram Slider",
+      "settings": {
+        "follow_text": "Follow Us on Insta:",
+        "instagram_handle": "@HOLLYWOODHAIRBAR",
+        "instagram_link": "https://www.instagram.com/hollywoodhairbar/",
+        "header_background": "linear-gradient(90deg, #FF00FF 0%, #00FFFF 100%)",
+        "cell_size": "20%",
+        "hide_date": true,
+        "hide_title": true,
+        "hide_links": true
+      }
+    }
+  ]
+}
+{% endschema %}

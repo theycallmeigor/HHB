@@ -1,0 +1,329 @@
+<div style="background-color: {{ section.settings.bg_color | default: '#fff9fe' }};">
+  <div class="huzi-product-info">
+    <div class="huzi-product-info-flex">
+      <div class="huzi-col-50">
+        {% if product.description != blank %}
+        <div class="huzi-accordion-warp">
+          <div class="huzi-ac-item huzi-ac-first-open">
+            <h3 class="huzi-ac-title">DESCRIPTION</h3>
+            <div class="huzi-ac-body">{{ product.description }}</div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if product.metafields.ingredients.ingredients_key != blank %}
+        <div class="huzi-accordion-warp">
+          <div class="huzi-ac-item">
+            <h3 class="huzi-ac-title">INGREDIENTS + BENEFITS</h3>
+            <div class="huzi-ac-body">{{ product.metafields.ingredients.ingredients_key }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      
+      <div class="huzi-col-50">
+        {% if product.metafields.INSTRUCTIONS.INSTRUCTIONS != blank %}
+        <div class="huzi-accordion-warp">
+          <div class="huzi-ac-item">
+            <h3 class="huzi-ac-title">INSTRUCTIONS</h3>
+            <div class="huzi-ac-body">{{ product.metafields.INSTRUCTIONS.INSTRUCTIONS }}</div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if product.metafields.EARTH-CONSCIOUS_DETA.EARTH-CONSCIOUS_DETA != blank %}
+        <div class="huzi-accordion-warp">
+          <div class="huzi-ac-item">
+            <h3 class="huzi-ac-title">EARTH-CONSCIOUS DETAILS</h3>
+            <div class="huzi-ac-body">{{ product.metafields.EARTH-CONSCIOUS_DETA.EARTH-CONSCIOUS_DETA }}</div>
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if product.metafields.TIFFANYS_INSPO.TIFFANYS_INSPO != blank %}
+        <div class="huzi-accordion-warp">
+          <div class="huzi-ac-item">
+            <h3 class="huzi-ac-title">TIFFANY'S INSPO</h3>
+            <div class="huzi-ac-body">{{ product.metafields.TIFFANYS_INSPO.TIFFANYS_INSPO }}</div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if product.metafields.video_link.video_link_key != blank %}
+        <h4 class="huzi-14px huzi-htu">HOW TO USE</h4>
+        <div class="huzi-videoWrapper">
+          <iframe src="https://www.youtube.com/embed/{{ product.metafields.video_link.video_link_key }}" 
+                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen="" 
+                  width="560" 
+                  height="315" 
+                  frameborder="0"></iframe>
+        </div>
+        {% if product.metafields.video_link_2.video_link_key_2 != blank %}
+        <div class="huzi-videoWrapper how-two-video">
+          <iframe src="https://www.youtube.com/embed/{{ product.metafields.video_link_2.video_link_key_2 }}" 
+                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen="" 
+                  width="560" 
+                  height="315" 
+                  frameborder="0"></iframe>
+        </div>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Product Info Section Base Styles */
+  .huzi-product-info {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  
+  .huzi-product-info-flex {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  
+  .huzi-col-50 {
+    flex: 1 1 calc(50% - 20px);
+    min-width: 300px;
+  }
+  
+  /* Accordion Wrapper and Items */
+  .huzi-accordion-warp {
+    margin-bottom: 15px;
+  }
+  
+  .huzi-ac-item {
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  /* Accordion Title */
+  .huzi-ac-title {
+    margin: 0;
+    padding: 15px 20px;
+    background: #f8f8f8;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.3s ease;
+    font-family: var(--font-heading-family, 'Helvetica Neue', Arial, sans-serif);
+    color: #000;
+    line-height: 1.4;
+  }
+  
+  .huzi-ac-title:hover {
+    background: #f0f0f0;
+  }
+  
+  /* Accordion Title Arrow/Icon */
+  .huzi-ac-title::after {
+    content: '+';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    font-weight: 300;
+    transition: transform 0.3s ease;
+    line-height: 1;
+  }
+  
+  .huzi-ac-title.active::after {
+    content: '−';
+  }
+  
+  /* Accordion Body */
+  .huzi-ac-body {
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    line-height: 1.8;
+    font-size: 14px;
+    color: #333;
+    font-family: var(--font-body-family, 'Helvetica Neue', Arial, sans-serif);
+  }
+  
+  /* Active State */
+  .huzi-ac-item.active .huzi-ac-body,
+  .huzi-ac-item.huzi-ac-first-open .huzi-ac-body {
+    padding: 20px;
+    max-height: 2000px; /* Large value to accommodate content */
+  }
+  
+  /* Active accordion title */
+  .huzi-ac-item.active .huzi-ac-title,
+  .huzi-ac-item.huzi-ac-first-open .huzi-ac-title {
+    background: #f0f0f0;
+  }
+  
+  /* Body content styles */
+  .huzi-ac-body p {
+    margin: 0 0 15px;
+    line-height: 1.8;
+  }
+  
+  .huzi-ac-body p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .huzi-ac-body strong {
+    font-weight: 600;
+    color: #000;
+  }
+  
+  /* Video Section Styles */
+  .huzi-14px.huzi-htu {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin: 30px 0 15px;
+    color: #000;
+    font-family: var(--font-heading-family, 'Helvetica Neue', Arial, sans-serif);
+  }
+  
+  .huzi-videoWrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: #f8f8f8;
+  }
+  
+  .huzi-videoWrapper.how-two-video {
+    margin-top: 20px;
+  }
+  
+  .huzi-videoWrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  
+  /* Mobile Responsive */
+  @media screen and (max-width: 768px) {
+    .huzi-product-info {
+      padding: 30px 15px;
+    }
+    
+    .huzi-product-info-flex {
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .huzi-col-50 {
+      flex: 1 1 100%;
+      min-width: 100%;
+    }
+    
+    .huzi-ac-title {
+      font-size: 12px;
+      padding: 12px 15px;
+    }
+    
+    .huzi-ac-title::after {
+      right: 15px;
+      font-size: 18px;
+    }
+    
+    .huzi-ac-body {
+      font-size: 13px;
+    }
+    
+    .huzi-ac-item.active .huzi-ac-body,
+    .huzi-ac-item.huzi-ac-first-open .huzi-ac-body {
+      padding: 15px;
+    }
+    
+    .huzi-14px.huzi-htu {
+      font-size: 12px;
+      margin: 20px 0 10px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get all accordion items
+    const accordionItems = document.querySelectorAll('.huzi-ac-item');
+    
+    // Initialize first item as open if it has the class
+    accordionItems.forEach(item => {
+      if (item.classList.contains('huzi-ac-first-open')) {
+        item.classList.add('active');
+        const title = item.querySelector('.huzi-ac-title');
+        const body = item.querySelector('.huzi-ac-body');
+        if (title) title.classList.add('active');
+        if (body) {
+          body.classList.add('active');
+          body.style.display = 'block';
+        }
+      }
+    });
+    
+    // Add click event to all accordion titles
+    accordionItems.forEach(item => {
+      const title = item.querySelector('.huzi-ac-title');
+      const body = item.querySelector('.huzi-ac-body');
+      
+      if (title && body) {
+        title.addEventListener('click', function() {
+          // Toggle active class on item
+          const isActive = item.classList.contains('active');
+          
+          if (isActive) {
+            // Close accordion
+            item.classList.remove('active');
+            title.classList.remove('active');
+            body.classList.remove('active');
+            body.style.display = 'none';
+          } else {
+            // Open accordion
+            item.classList.add('active');
+            title.classList.add('active');
+            body.classList.add('active');
+            body.style.display = 'block';
+          }
+        });
+      }
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Product Information",
+  "settings": [
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background Color",
+      "default": "#fff9fe"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Information",
+      "category": "Product"
+    }
+  ]
+}
+{% endschema %}

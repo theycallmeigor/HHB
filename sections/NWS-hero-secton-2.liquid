@@ -1,0 +1,473 @@
+<section class="nws-hero-section huzi-3-col-sec-2 nws-middle-same {{ section.settings.custom_class }}">
+  <div class="nws-hero-100">
+    <div class="nws-hero-33 huzi-hero-1" 
+         {% if section.settings.side-left != blank %}
+         style="background-image: url('{{ section.settings.side-left | img_url: "600x905" }}');"
+         {% endif %}>
+      <div class="mobile-reviews-badge">★ REVIEWS</div>
+    </div>
+    <div class="nws-hero-33 with-txt huzi-hero-2">
+      <div class="middle-with-txt">
+        <div class="middle_txt huzi-middle-txt">
+          {% if section.settings.sub-heading != blank %}
+            <h3>{{ section.settings.sub-heading }}</h3>
+          {% endif %}
+          
+          {% if section.settings.heading != blank %}
+            <h2>{{ section.settings.heading }}</h2>
+          {% endif %}
+          
+          {% if section.settings.Promo-code != blank %}
+            <b>{{ section.settings.Promo-code }}</b>
+          {% endif %}
+          
+          {% if section.settings.logo-id != blank %}
+          <div class="huzi-hero-logo">
+            <img src="{{ section.settings.logo-id | img_url: "master" }}" alt="Logo" />
+          </div>
+          {% endif %}
+          
+          {% if section.settings.btn-shop != blank %}
+            <a href="{{ section.settings.btn-shop-link | default: '#' }}" class="hero-cta-btn">{{ section.settings.btn-shop }}</a>
+          {% endif %}
+        </div>
+        
+        {% if section.settings.shop-code != blank %}
+        <div class="bottom_txt">
+          <b>{{ section.settings.shop-code }} {% if section.settings.shop-icon != blank %}<img src="{{ section.settings.shop-icon | img_url: "50x50" }}" alt="Icon" />{% endif %}</b>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="nws-hero-33 huzi-hero-3" 
+         {% if section.settings.side-right != blank %}
+         style="background-image: url('{{ section.settings.side-right | img_url: "600x905" }}');"
+         {% endif %}>
+    </div>
+  </div>
+  
+</section>
+
+<style>
+  /* Reset and Base Styles */
+  .shopify-section.three_boxes_hero {
+    width: 100%;
+    display: block;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .nws-hero-section {
+    width: 100%;
+    position: relative;
+    display: block;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Desktop Layout - Three Columns */
+  .nws-hero-100 {
+    display: flex;
+    width: 100%;
+    min-height: 600px;
+    align-items: stretch;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .nws-hero-33 {
+    width: 33.333%;
+    position: relative;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    flex: 0 0 33.333%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Side Image Columns */
+  .nws-hero-33.huzi-hero-1,
+  .nws-hero-33.huzi-hero-3 {
+    min-height: 600px;
+    background-color: #f8f8f8;
+  }
+  
+  /* Center Content Column */
+  .nws-hero-33.with-txt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    padding: 40px 30px;
+    box-sizing: border-box;
+  }
+  
+  .nws-hero-33.with-txt.huzi-hero-2 {
+    text-align: center;
+    border-left: 1px solid rgba(0,0,0,0.05);
+    border-right: 1px solid rgba(0,0,0,0.05);
+  }
+  
+  .middle-with-txt {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    max-width: 400px;
+  }
+  
+  .middle_txt.huzi-middle-txt {
+    width: 100%;
+    text-align: center;
+  }
+  
+  /* Typography */
+  .middle_txt h3 {
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 0 0 15px 0;
+    color: #000;
+    font-family: var(--font-heading-family, 'Helvetica Neue', Arial, sans-serif);
+  }
+  
+  .middle_txt h2 {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 25px 0;
+    color: #000;
+    text-transform: uppercase;
+    font-family: var(--font-heading-family, 'Helvetica Neue', Arial, sans-serif);
+  }
+  
+  .middle_txt b {
+    display: block;
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    color: #000;
+    font-weight: 600;
+  }
+  
+  /* Logo */
+  .huzi-hero-logo {
+    margin: 25px 0;
+    display: block;
+  }
+  
+  .huzi-hero-logo img {
+    max-width: 200px;
+    height: auto;
+    display: inline-block;
+  }
+  
+  /* CTA Button */
+  .middle_txt a,
+  .middle_txt a.hero-cta-btn {
+    display: inline-block;
+    padding: 14px 35px;
+    background-color: transparent;
+    color: #000;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+    border: 2px solid #000;
+    cursor: pointer;
+  }
+  
+  .middle_txt a:hover,
+  .middle_txt a.hero-cta-btn:hover {
+    background-color: #000;
+    color: #fff;
+  }
+  
+  /* Bottom Text */
+  .bottom_txt {
+    margin-top: auto;
+    padding-top: 20px;
+    text-align: center;
+  }
+  
+  .bottom_txt b {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .bottom_txt img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+  
+  /* Mobile Elements Hidden on Desktop */
+  .mobile-reviews-badge,
+  .mobile-bottom-text {
+    display: none;
+  }
+  
+  /* Tablet Responsive */
+  @media screen and (max-width: 1024px) {
+    .nws-hero-100 {
+      min-height: 500px;
+    }
+    
+    .nws-hero-33.huzi-hero-1,
+    .nws-hero-33.huzi-hero-3 {
+      min-height: 500px;
+    }
+    
+    .middle_txt h2 {
+      font-size: 28px;
+    }
+  }
+  
+  /* Mobile Layout - Two Images Side by Side + Content Below */
+  @media screen and (max-width: 768px) {
+    .nws-hero-section {
+      position: relative;
+      background: #fff;
+    }
+    
+    .nws-hero-100 {
+      flex-wrap: wrap;
+      min-height: auto;
+    }
+    
+    /* Images Side by Side on Mobile */
+    .nws-hero-33.huzi-hero-1,
+    .nws-hero-33.huzi-hero-3 {
+      width: 50% !important;
+      flex: 0 0 50%;
+      min-height: 400px;
+      height: 400px;
+      position: relative;
+      background-size: cover;
+      background-position: center center;
+      display: block !important;
+    }
+    
+    /* Reviews Badge */
+    .mobile-reviews-badge {
+      display: block;
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%) rotate(-90deg);
+      transform-origin: left center;
+      background: #000;
+      color: #fff;
+      padding: 8px 20px;
+      font-size: 12px;
+      letter-spacing: 2px;
+      font-weight: 600;
+      white-space: nowrap;
+      margin-left: -35px;
+      z-index: 10;
+    }
+    
+    /* Content Section Full Width Below */
+    .nws-hero-33.with-txt {
+      width: 100% !important;
+      flex: 0 0 100%;
+      min-height: auto;
+      padding: 50px 30px;
+      background-color: #fff;
+      order: 3;
+      border: none;
+    }
+    
+    .middle-with-txt {
+      max-width: 100%;
+      background: transparent;
+      padding: 0;
+    }
+    
+    .middle_txt h3 {
+      font-size: 12px;
+      color: #000;
+      margin-bottom: 15px;
+      letter-spacing: 3px;
+    }
+    
+    .middle_txt h2 {
+      font-size: 28px;
+      color: #000;
+      margin-bottom: 25px;
+      line-height: 1.3;
+    }
+    
+    .middle_txt b {
+      font-size: 14px;
+      color: #000;
+      margin-bottom: 20px;
+      line-height: 1.8;
+      font-weight: 400;
+    }
+    
+    .huzi-hero-logo {
+      margin: 20px 0;
+    }
+    
+    .huzi-hero-logo img {
+      max-width: 160px;
+    }
+    
+    .middle_txt a,
+    .middle_txt a.hero-cta-btn {
+      padding: 14px 40px;
+      font-size: 13px;
+      margin-top: 15px;
+    }
+    
+    /* Bottom Text Mobile */
+    .mobile-bottom-text {
+      display: block;
+      text-align: center;
+      padding: 30px 20px;
+      background: #fff;
+      width: 100%;
+    }
+    
+    .mobile-bottom-text h3 {
+      font-size: 14px;
+      letter-spacing: 3px;
+      font-weight: 600;
+      color: #000;
+      margin: 0;
+    }
+  }
+  
+  /* Small Mobile */
+  @media screen and (max-width: 480px) {
+    .nws-hero-33.huzi-hero-1,
+    .nws-hero-33.huzi-hero-3 {
+      min-height: 300px;
+      height: 300px;
+    }
+    
+    .nws-hero-33.with-txt {
+      padding: 40px 20px;
+    }
+    
+    .middle_txt h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    
+    .middle_txt h3 {
+      font-size: 11px;
+    }
+    
+    .middle_txt b {
+      font-size: 13px;
+    }
+    
+    .huzi-hero-logo img {
+      max-width: 140px;
+    }
+    
+    .middle_txt a,
+    .middle_txt a.hero-cta-btn {
+      padding: 12px 35px;
+      font-size: 12px;
+    }
+    
+    .mobile-reviews-badge {
+      font-size: 11px;
+      padding: 6px 15px;
+      margin-left: -30px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Three Boxes Hero 2",
+  "class": "three_boxes_hero",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo-id",
+      "label": "Logo"
+    },
+    {
+      "type": "text",
+      "id": "sub-heading",
+      "label": "Sub Heading",
+      "default": "INTRODUCING..."
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "THE BIGGEST THING IN SKINCARE"
+    },
+    {
+      "type": "html",
+      "id": "Promo-code",
+      "label": "Promo Code",
+      "default": "THE \"GLOW UP\" HAS FINALLY<br>ARRIVED XOXO"
+    },
+    {
+      "type": "text",
+      "id": "btn-shop",
+      "label": "Button",
+      "default": "SHOP SKINCARE"
+    },
+    {
+      "type": "url",
+      "id": "btn-shop-link",
+      "label": "Button Link"
+    },
+    {
+      "type": "text",
+      "id": "shop-code",
+      "label": "Shop Code Text"
+    },
+    {
+      "type": "image_picker",
+      "id": "shop-icon",
+      "label": "Shop Code Icon"
+    },
+    {
+      "type": "header",
+      "content": "Side Images"
+    },
+    {
+      "type": "image_picker",
+      "id": "side-left",
+      "label": "Left Image (Woman with product)"
+    },
+    {
+      "type": "image_picker",
+      "id": "side-right",
+      "label": "Right Image (Pink background with products)"
+    },
+    {
+      "type": "text",
+      "id": "custom_class",
+      "label": "Add Custom Class"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Three Boxes Hero 2",
+      "category": "05. Element"
+    }
+  ]
+}
+{% endschema %}

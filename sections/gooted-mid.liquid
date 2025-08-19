@@ -1,0 +1,1106 @@
+<!-- Footer Middle Section -->
+<div class="footer-middle section-{{ section.id }}">
+  <!-- Newsletter Section -->
+  <div class="huzi-newsleter">
+    {% if section.settings.newsletter_title != blank %}
+      <h4>{{ section.settings.newsletter_title }}</h4>
+    {% endif %}
+    {% if section.settings.newsletter_description != blank %}
+      <p>{{ section.settings.newsletter_description }}</p>
+    {% endif %}
+    
+    {% if section.settings.enable_attentive_script %}
+      <script>
+        if(window.innerWidth >= 760){
+          // Call the desktop creative
+          window.__attentive.trigger(null, null, null, {{ section.settings.attentive_desktop_id }})
+        } else {
+          // Call the mobile creative
+          window.__attentive.trigger(null, null, null, {{ section.settings.attentive_mobile_id }})
+        }
+      </script>
+    {% endif %}
+    
+    <a class="btn nws-join-col-btn" 
+       target="{{ section.settings.newsletter_button_target }}" 
+       href="{{ section.settings.newsletter_button_link }}">
+      {{ section.settings.newsletter_button_text }}
+    </a>
+  </div>
+  
+  <!-- Social Media Section -->
+  <div class="huzi-social">
+    <!-- Hollywood Hair Bar Social -->
+    <div class="huzi-hhb">
+      <div class="huzi-h-text">
+        {% if section.settings.hhb_logo != blank %}
+          {{ section.settings.hhb_logo | image_url: width: 716 | image_tag:
+             loading: 'lazy',
+             widths: '358, 716',
+             alt: section.settings.hhb_logo.alt | default: 'Hollywood Hair Bar'
+          }}
+        {% endif %}
+        <span class="huzi-hhb-text">{{ section.settings.hhb_follow_text }}</span>
+      </div>
+      <div>
+        {% if section.settings.hhb_facebook != blank %}
+          <a target="_blank" href="{{ section.settings.hhb_facebook }}" aria-label="Facebook">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24 12C24 5.373 18.627 0 12 0C5.373 0 0 5.373 0 12C0 17.99 4.388 22.954 10.125 23.854V15.469H7.078V11.999H10.125V9.357C10.125 6.35 11.917 4.688 14.658 4.688C15.97 4.688 17.344 4.923 17.344 4.923V7.876H15.83C14.339 7.876 13.874 8.801 13.874 9.75V12H17.202L16.67 15.47H13.874V23.855C19.612 22.954 24 17.989 24 12Z" fill="#FD01DE"/>
+            </svg>
+          </a>  
+        {% endif %}
+        
+        {% if section.settings.hhb_instagram != blank %}
+          <a target="_blank" href="{{ section.settings.hhb_instagram }}" aria-label="Instagram">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6.11111 0C4.49034 0 2.93596 0.643847 1.7899 1.7899C0.643847 2.93596 0 4.49034 0 6.11111V15.8889C0 17.5097 0.643847 19.064 1.7899 20.2101C2.93596 21.3562 4.49034 22 6.11111 22H15.8889C17.5097 22 19.064 21.3562 20.2101 20.2101C21.3562 19.064 22 17.5097 22 15.8889V6.11111C22 4.49034 21.3562 2.93596 20.2101 1.7899C19.064 0.643847 17.5097 0 15.8889 0H6.11111ZM18.3333 2.44444C19.0056 2.44444 19.5556 2.99444 19.5556 3.66667C19.5556 4.33889 19.0056 4.88889 18.3333 4.88889C17.6611 4.88889 17.1111 4.33889 17.1111 3.66667C17.1111 2.99444 17.6611 2.44444 18.3333 2.44444ZM11 4.88889C12.6208 4.88889 14.1752 5.53274 15.3212 6.67879C16.4673 7.82485 17.1111 9.37923 17.1111 11C17.1111 12.6208 16.4673 14.1752 15.3212 15.3212C14.1752 16.4673 12.6208 17.1111 11 17.1111C9.37923 17.1111 7.82485 16.4673 6.67879 15.3212C5.53274 14.1752 4.88889 12.6208 4.88889 11C4.88889 9.37923 5.53274 7.82485 6.67879 6.67879C7.82485 5.53274 9.37923 4.88889 11 4.88889ZM11 7.33333C10.5183 7.33349 10.0414 7.42852 9.59645 7.613C9.15151 7.79748 8.74725 8.06779 8.40677 8.4085C8.06629 8.74921 7.79625 9.15364 7.61207 9.59871C7.42789 10.0438 7.33317 10.5208 7.33333 11.0024C7.33349 11.4841 7.42852 11.961 7.613 12.406C7.79748 12.8509 8.06779 13.2552 8.4085 13.5957C8.74921 13.9362 9.15364 14.2062 9.59871 14.3904C10.0438 14.5746 10.5208 14.6693 11.0024 14.6691C11.9752 14.6688 12.908 14.282 13.5957 13.5939C14.2833 12.9059 14.6694 11.9728 14.6691 11C14.6688 10.0272 14.282 9.0944 13.5939 8.40677C12.9059 7.71914 11.9728 7.33301 11 7.33333Z" fill="#FD01DE"/>
+            </svg>
+          </a>
+        {% endif %}
+        
+        {% if section.settings.hhb_twitter != blank %}
+          <a target="_blank" href="{{ section.settings.hhb_twitter }}" aria-label="Twitter">
+            <svg width="24" height="20" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M23.953 2.49685C23.0545 2.89245 22.1026 3.15358 21.128 3.27184C22.1541 2.6551 22.9224 1.68789 23.291 0.548845C22.34 1.10385 21.286 1.50784 20.164 1.73284C19.4238 0.941274 18.4429 0.416266 17.3736 0.239346C16.3044 0.0624265 15.2067 0.243495 14.2509 0.754436C13.2952 1.26538 12.5349 2.0776 12.0881 3.06497C11.6412 4.05234 11.533 5.15961 11.78 6.21485C7.69 6.02185 4.067 4.05684 1.64 1.08884C1.19879 1.83866 0.968664 2.69387 0.974 3.56385C0.974 5.27385 1.844 6.77684 3.162 7.65984C2.38086 7.63498 1.61697 7.42378 0.934 7.04384V7.10385C0.933557 8.24024 1.32627 9.34178 2.04551 10.2216C2.76474 11.1014 3.76621 11.7053 4.88 11.9308C4.1583 12.1242 3.40241 12.1533 2.668 12.0158C2.98412 12.9939 3.59766 13.8488 4.42301 14.4613C5.24837 15.0739 6.24435 15.4135 7.272 15.4328C5.53153 16.7988 3.38248 17.5401 1.17 17.5378C0.78 17.5378 0.391 17.5148 0 17.4708C2.25571 18.9152 4.87851 19.6818 7.557 19.6798C16.61 19.6798 21.555 12.1838 21.555 5.69485C21.555 5.48485 21.555 5.27485 21.54 5.06485C22.506 4.36971 23.3392 3.50666 24 2.51685L23.953 2.49685Z" fill="#FD01DE"/>
+            </svg>
+          </a>
+        {% endif %}
+        
+        {% if section.settings.hhb_youtube != blank %}
+          <a target="_blank" href="{{ section.settings.hhb_youtube }}" aria-label="YouTube">
+            <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M23.498 3.11268C23.3624 2.60195 23.095 2.13582 22.7226 1.76094C22.3502 1.38607 21.8858 1.11562 21.376 0.97668C19.505 0.47168 12 0.47168 12 0.47168C12 0.47168 4.495 0.47168 2.623 0.97668C2.11341 1.11587 1.64929 1.38641 1.27708 1.76126C0.904861 2.13611 0.637591 2.60212 0.502 3.11268C0 4.99668 0 8.92668 0 8.92668C0 8.92668 0 12.8567 0.502 14.7407C0.637586 15.2514 0.904975 15.7175 1.27739 16.0924C1.64981 16.4673 2.11418 16.7377 2.624 16.8767C4.495 17.3817 12 17.3817 12 17.3817C12 17.3817 19.505 17.3817 21.377 16.8767C21.8869 16.7378 22.3513 16.4674 22.7237 16.0925C23.0961 15.7176 23.3635 15.2514 23.499 14.7407C24 12.8567 24 8.92668 24 8.92668C24 8.92668 24 4.99668 23.498 3.11268ZM9.545 12.4947V5.35868L15.818 8.92668L9.545 12.4947Z" fill="#FD01DE"/>
+            </svg>
+          </a>
+        {% endif %}
+      </div>  
+    </div>
+    
+    <!-- Hollywood Skin Bar Social -->
+    <div class="huzi-hsb">
+      <div class="huzi-h-text">
+        {% if section.settings.hsb_logo != blank %}
+          {{ section.settings.hsb_logo | image_url: width: 716 | image_tag:
+             loading: 'lazy',
+             widths: '358, 716',
+             alt: section.settings.hsb_logo.alt | default: 'Hollywood Skin Bar'
+          }}
+        {% endif %}
+        <span class="huzi-hsb-text">{{ section.settings.hsb_follow_text }}</span>
+      </div>  
+      <div>
+        {% if section.settings.hsb_facebook != blank %}
+          <a target="_blank" href="{{ section.settings.hsb_facebook }}" aria-label="Facebook">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24 12C24 5.373 18.627 0 12 0C5.373 0 0 5.373 0 12C0 17.99 4.388 22.954 10.125 23.854V15.469H7.078V11.999H10.125V9.357C10.125 6.35 11.917 4.688 14.658 4.688C15.97 4.688 17.344 4.923 17.344 4.923V7.876H15.83C14.339 7.876 13.874 8.801 13.874 9.75V12H17.202L16.67 15.47H13.874V23.855C19.612 22.954 24 17.989 24 12Z" fill="#2FFFFF"/>
+            </svg>
+          </a>
+        {% endif %}
+        
+        {% if section.settings.hsb_instagram != blank %}
+          <a target="_blank" href="{{ section.settings.hsb_instagram }}" aria-label="Instagram">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6.11111 0C4.49034 0 2.93596 0.643847 1.7899 1.7899C0.643847 2.93596 0 4.49034 0 6.11111V15.8889C0 17.5097 0.643847 19.064 1.7899 20.2101C2.93596 21.3562 4.49034 22 6.11111 22H15.8889C17.5097 22 19.064 21.3562 20.2101 20.2101C21.3562 19.064 22 17.5097 22 15.8889V6.11111C22 4.49034 21.3562 2.93596 20.2101 1.7899C19.064 0.643847 17.5097 0 15.8889 0H6.11111ZM18.3333 2.44444C19.0056 2.44444 19.5556 2.99444 19.5556 3.66667C19.5556 4.33889 19.0056 4.88889 18.3333 4.88889C17.6611 4.88889 17.1111 4.33889 17.1111 3.66667C17.1111 2.99444 17.6611 2.44444 18.3333 2.44444ZM11 4.88889C12.6208 4.88889 14.1752 5.53274 15.3212 6.67879C16.4673 7.82485 17.1111 9.37923 17.1111 11C17.1111 12.6208 16.4673 14.1752 15.3212 15.3212C14.1752 16.4673 12.6208 17.1111 11 17.1111C9.37923 17.1111 7.82485 16.4673 6.67879 15.3212C5.53274 14.1752 4.88889 12.6208 4.88889 11C4.88889 9.37923 5.53274 7.82485 6.67879 6.67879C7.82485 5.53274 9.37923 4.88889 11 4.88889ZM11 7.33333C10.5183 7.33349 10.0414 7.42852 9.59645 7.613C9.15151 7.79748 8.74725 8.06779 8.40677 8.4085C8.06629 8.74921 7.79625 9.15364 7.61207 9.59871C7.42789 10.0438 7.33317 10.5208 7.33333 11.0024C7.33349 11.4841 7.42852 11.961 7.613 12.406C7.79748 12.8509 8.06779 13.2552 8.4085 13.5957C8.74921 13.9362 9.15364 14.2062 9.59871 14.3904C10.0438 14.5746 10.5208 14.6693 11.0024 14.6691C11.9752 14.6688 12.908 14.282 13.5957 13.5939C14.2833 12.9059 14.6694 11.9728 14.6691 11C14.6688 10.0272 14.282 9.0944 13.5939 8.40677C12.9059 7.71914 11.9728 7.33301 11 7.33333Z" fill="#2FFFFF"/>
+            </svg>
+          </a>
+        {% endif %}
+        
+        {% if section.settings.hsb_twitter != blank %}
+          <a target="_blank" href="{{ section.settings.hsb_twitter }}" aria-label="Twitter">
+            <svg width="24" height="20" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M23.953 2.49685C23.0545 2.89245 22.1026 3.15358 21.128 3.27184C22.1541 2.6551 22.9224 1.68789 23.291 0.548845C22.34 1.10385 21.286 1.50784 20.164 1.73284C19.4238 0.941274 18.4429 0.416266 17.3736 0.239346C16.3044 0.0624265 15.2067 0.243495 14.2509 0.754436C13.2952 1.26538 12.5349 2.0776 12.0881 3.06497C11.6412 4.05234 11.533 5.15961 11.78 6.21485C7.69 6.02185 4.067 4.05684 1.64 1.08884C1.19879 1.83866 0.968664 2.69387 0.974 3.56385C0.974 5.27385 1.844 6.77684 3.162 7.65984C2.38086 7.63498 1.61697 7.42378 0.934 7.04384V7.10385C0.933557 8.24024 1.32627 9.34178 2.04551 10.2216C2.76474 11.1014 3.76621 11.7053 4.88 11.9308C4.1583 12.1242 3.40241 12.1533 2.668 12.0158C2.98412 12.9939 3.59766 13.8488 4.42301 14.4613C5.24837 15.0739 6.24435 15.4135 7.272 15.4328C5.53153 16.7988 3.38248 17.5401 1.17 17.5378C0.78 17.5378 0.391 17.5148 0 17.4708C2.25571 18.9152 4.87851 19.6818 7.557 19.6798C16.61 19.6798 21.555 12.1838 21.555 5.69485C21.555 5.48485 21.555 5.27485 21.54 5.06485C22.506 4.36971 23.3392 3.50666 24 2.51685L23.953 2.49685Z" fill="#2FFFFF"/>
+            </svg>
+          </a>
+        {% endif %}
+        
+        {% if section.settings.hsb_youtube != blank %}
+          <a target="_blank" href="{{ section.settings.hsb_youtube }}" aria-label="YouTube">
+            <svg width="24" height="18" viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M23.498 3.11268C23.3624 2.60195 23.095 2.13582 22.7226 1.76094C22.3502 1.38607 21.8858 1.11562 21.376 0.97668C19.505 0.47168 12 0.47168 12 0.47168C12 0.47168 4.495 0.47168 2.623 0.97668C2.11341 1.11587 1.64929 1.38641 1.27708 1.76126C0.904861 2.13611 0.637591 2.60212 0.502 3.11268C0 4.99668 0 8.92668 0 8.92668C0 8.92668 0 12.8567 0.502 14.7407C0.637586 15.2514 0.904975 15.7175 1.27739 16.0924C1.64981 16.4673 2.11418 16.7377 2.624 16.8767C4.495 17.3817 12 17.3817 12 17.3817C12 17.3817 19.505 17.3817 21.377 16.8767C21.8869 16.7378 22.3513 16.4674 22.7237 16.0925C23.0961 15.7176 23.3635 15.2514 23.499 14.7407C24 12.8567 24 8.92668 24 8.92668C24 8.92668 24 4.99668 23.498 3.11268ZM9.545 12.4947V5.35868L15.818 8.92668L9.545 12.4947Z" fill="#2FFFFF"/>
+            </svg>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <!-- App Download Section -->
+  <div class="huzi-app_icons">
+    {% if section.settings.app_section_title != blank %}
+      <h4>{{ section.settings.app_section_title }}</h4>
+    {% endif %}
+    <div class="inner_app_icons">
+      {% if section.settings.google_play_image != blank %}
+        <a href="{{ section.settings.google_play_link }}" target="_blank" aria-label="Download on Google Play">
+          {{ section.settings.google_play_image | image_url: width: 159 | image_tag:
+             loading: 'lazy',
+             width: 159,
+             height: 52,
+             alt: 'Get it on Google Play'
+          }}
+        </a>
+      {% endif %}
+      {% if section.settings.app_store_image != blank %}
+        <a href="{{ section.settings.app_store_link }}" target="_blank" aria-label="Download on App Store">
+          {{ section.settings.app_store_image | image_url: width: 159 | image_tag:
+             loading: 'lazy',
+             width: 159,
+             height: 52,
+             alt: 'Download on the App Store'
+          }}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Preserve all original footer middle styling */
+  .section-{{ section.id }} {
+    background: {{ section.settings.section_background | default: '#000000' }};
+    padding: {{ section.settings.section_padding_top }}px {{ section.settings.section_padding_sides }}px {{ section.settings.section_padding_bottom }}px;
+    font-family: inherit;
+  }
+  
+  .section-{{ section.id }} .footer-middle {
+    max-width: {{ section.settings.max_width }}px;
+    margin: 0 auto;
+  }
+  
+  /* Newsletter Section - Original Styling Preserved */
+  .section-{{ section.id }} .huzi-newsleter {
+    text-align: center;
+    max-width: {{ section.settings.newsletter_max_width }}px;
+    margin: 0 auto {{ section.settings.newsletter_margin_bottom }}px;
+  }
+  
+  .section-{{ section.id }} .huzi-newsleter h4 {
+    font-size: {{ section.settings.newsletter_title_size }}px;
+    font-weight: {{ section.settings.newsletter_title_weight }};
+    text-transform: {{ section.settings.newsletter_title_transform }};
+    letter-spacing: {{ section.settings.newsletter_title_spacing }}px;
+    margin-bottom: {{ section.settings.newsletter_title_margin }}px;
+    color: {{ section.settings.newsletter_title_color }};
+    line-height: 1.2;
+  }
+  
+  .section-{{ section.id }} .huzi-newsleter p {
+    font-size: {{ section.settings.newsletter_text_size }}px;
+    line-height: {{ section.settings.newsletter_text_line_height }};
+    margin-bottom: {{ section.settings.newsletter_text_margin }}px;
+    color: {{ section.settings.newsletter_text_color }};
+  }
+  
+  .section-{{ section.id }} .nws-join-col-btn {
+    display: inline-block;
+    background: {{ section.settings.button_background }};
+    color: {{ section.settings.button_text_color }} !important;
+    padding: {{ section.settings.button_padding }};
+    text-decoration: none;
+    text-transform: {{ section.settings.button_text_transform }};
+    font-weight: {{ section.settings.button_font_weight }};
+    letter-spacing: {{ section.settings.button_letter_spacing }}px;
+    font-size: {{ section.settings.button_font_size }}px;
+    border: {{ section.settings.button_border }};
+    border-radius: {{ section.settings.button_border_radius }}px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .section-{{ section.id }} .nws-join-col-btn:hover {
+    background: {{ section.settings.button_hover_background }};
+    color: {{ section.settings.button_hover_text_color }} !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px {{ section.settings.button_shadow_color }};
+    text-decoration: none;
+  }
+  
+  /* Social Media Section - Original Styling Preserved */
+  .section-{{ section.id }} .huzi-social {
+    display: flex;
+    justify-content: center;
+    gap: {{ section.settings.social_gap }}px;
+    margin-bottom: {{ section.settings.social_margin_bottom }}px;
+    flex-wrap: wrap;
+  }
+  
+  .section-{{ section.id }} .huzi-hhb,
+  .section-{{ section.id }} .huzi-hsb {
+    text-align: center;
+  }
+  
+  .section-{{ section.id }} .huzi-h-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: {{ section.settings.logo_text_gap }}px;
+    margin-bottom: {{ section.settings.logo_margin_bottom }}px;
+  }
+  
+  .section-{{ section.id }} .huzi-h-text img {
+    width: {{ section.settings.logo_width }}px;
+    height: auto;
+  }
+  
+  .section-{{ section.id }} .huzi-hhb-text,
+  .section-{{ section.id }} .huzi-hsb-text {
+    font-size: {{ section.settings.social_text_size }}px;
+    text-transform: {{ section.settings.social_text_transform }};
+    letter-spacing: {{ section.settings.social_text_spacing }}px;
+    font-weight: {{ section.settings.social_text_weight }};
+    color: {{ section.settings.social_text_color }};
+    line-height: {{ section.settings.social_text_line_height }};
+  }
+  
+  .section-{{ section.id }} .huzi-social svg {
+    width: {{ section.settings.social_icon_size }}px;
+    height: auto;
+    margin: 0 {{ section.settings.social_icon_spacing }}px;
+    transition: transform 0.3s ease;
+  }
+  
+  .section-{{ section.id }} .huzi-social a:hover svg {
+    transform: translateY(-3px);
+  }
+  
+  /* App Download Section - Original Styling Preserved */
+  .section-{{ section.id }} .huzi-app_icons {
+    text-align: center;
+    margin: {{ section.settings.app_section_margin }}px 0;
+  }
+  
+  .section-{{ section.id }} .huzi-app_icons h4 {
+    font-size: {{ section.settings.app_title_size }}px;
+    font-weight: {{ section.settings.app_title_weight }};
+    text-transform: {{ section.settings.app_title_transform }};
+    letter-spacing: {{ section.settings.app_title_spacing }}px;
+    margin-bottom: {{ section.settings.app_title_margin }}px;
+    color: {{ section.settings.app_title_color }};
+  }
+  
+  .section-{{ section.id }} .inner_app_icons {
+    display: flex;
+    justify-content: center;
+    gap: {{ section.settings.app_buttons_gap }}px;
+    flex-wrap: wrap;
+  }
+  
+  .section-{{ section.id }} .inner_app_icons img {
+    height: {{ section.settings.app_button_height }}px;
+    width: auto;
+  }
+  
+  /* Mobile Responsive - Original Styling Preserved */
+  @media screen and (max-width: 768px) {
+    .section-{{ section.id }} {
+      padding: {{ section.settings.mobile_padding_top }}px {{ section.settings.mobile_padding_sides }}px {{ section.settings.mobile_padding_bottom }}px;
+    }
+    
+    .section-{{ section.id }} .huzi-social {
+      gap: {{ section.settings.mobile_social_gap }}px;
+    }
+    
+    .section-{{ section.id }} .huzi-newsleter h4 {
+      font-size: {{ section.settings.mobile_newsletter_title_size }}px;
+    }
+    
+    .section-{{ section.id }} .huzi-newsleter p {
+      font-size: {{ section.settings.mobile_newsletter_text_size }}px;
+    }
+    
+    .section-{{ section.id }} .nws-join-col-btn {
+      font-size: {{ section.settings.mobile_button_font_size }}px;
+      padding: {{ section.settings.mobile_button_padding }};
+    }
+    
+    .section-{{ section.id }} .huzi-h-text {
+      flex-direction: {{ section.settings.mobile_logo_direction }};
+    }
+    
+    .section-{{ section.id }} .inner_app_icons {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+  
+  /* Additional custom styles */
+  {{ section.settings.custom_css }}
+</style>
+
+{% schema %}
+{
+  "name": "Footer Middle",
+  "class": "footer-middle-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Newsletter Settings"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_title",
+      "label": "Newsletter Title",
+      "default": "JOIN OUR CLIQUE"
+    },
+    {
+      "type": "textarea",
+      "id": "newsletter_description",
+      "label": "Newsletter Description",
+      "default": "Get Exclusive Discounts, Plus Tips & Tricks on how to Grow your Hair! Our Top \"Hollywood\" Celebrity Hair Stylists will personally email you!"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_button_text",
+      "label": "Button Text",
+      "default": "JOIN OUR CLIQUE"
+    },
+    {
+      "type": "url",
+      "id": "newsletter_button_link",
+      "label": "Button Link",
+      "default": "/"
+    },
+    {
+      "type": "select",
+      "id": "newsletter_button_target",
+      "label": "Button Target",
+      "options": [
+        {"value": "_self", "label": "Same Window"},
+        {"value": "_blank", "label": "New Window"}
+      ],
+      "default": "_blank"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_attentive_script",
+      "label": "Enable Attentive Script",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "attentive_desktop_id",
+      "label": "Attentive Desktop Creative ID"
+    },
+    {
+      "type": "text",
+      "id": "attentive_mobile_id",
+      "label": "Attentive Mobile Creative ID"
+    },
+    {
+      "type": "header",
+      "content": "Hollywood Hair Bar Social"
+    },
+    {
+      "type": "image_picker",
+      "id": "hhb_logo",
+      "label": "HHB Logo"
+    },
+    {
+      "type": "text",
+      "id": "hhb_follow_text",
+      "label": "Follow Text",
+      "default": "FOLLOW HOLLYWOOD<br> HAIR BAR"
+    },
+    {
+      "type": "url",
+      "id": "hhb_facebook",
+      "label": "Facebook URL",
+      "default": "/"
+    },
+    {
+      "type": "url",
+      "id": "hhb_instagram",
+      "label": "Instagram URL",
+      "default": "/"
+    },
+    {
+      "type": "url",
+      "id": "hhb_twitter",
+      "label": "Twitter URL",
+      "default": "/"
+    },
+    {
+      "type": "url",
+      "id": "hhb_youtube",
+      "label": "YouTube URL",
+      "default": "/"
+    },
+    {
+      "type": "header",
+      "content": "Hollywood Skin Bar Social"
+    },
+    {
+      "type": "image_picker",
+      "id": "hsb_logo",
+      "label": "HSB Logo"
+    },
+    {
+      "type": "text",
+      "id": "hsb_follow_text",
+      "label": "Follow Text",
+      "default": "FOLLOW HOLLYWOOD<br> SKIN BAR"
+    },
+    {
+      "type": "url",
+      "id": "hsb_facebook",
+      "label": "Facebook URL",
+      "default": "/"
+    },
+    {
+      "type": "url",
+      "id": "hsb_instagram",
+      "label": "Instagram URL",
+      "default": "/"
+    },
+    {
+      "type": "url",
+      "id": "hsb_twitter",
+      "label": "Twitter URL"
+    },
+    {
+      "type": "url",
+      "id": "hsb_youtube",
+      "label": "YouTube URL"
+    },
+    {
+      "type": "header",
+      "content": "App Download"
+    },
+    {
+      "type": "text",
+      "id": "app_section_title",
+      "label": "App Section Title",
+      "default": "Download Our App"
+    },
+    {
+      "type": "image_picker",
+      "id": "google_play_image",
+      "label": "Google Play Badge"
+    },
+    {
+      "type": "url",
+      "id": "google_play_link",
+      "label": "Google Play Link",
+    },
+    {
+      "type": "image_picker",
+      "id": "app_store_image",
+      "label": "App Store Badge"
+    },
+    {
+      "type": "url",
+      "id": "app_store_link",
+      "label": "App Store Link",
+    },
+    {
+      "type": "header",
+      "content": "Layout & Styling"
+    },
+    {
+      "type": "color",
+      "id": "section_background",
+      "label": "Section Background",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "min": 800,
+      "max": 1600,
+      "step": 50,
+      "unit": "px",
+      "label": "Max Width",
+      "default": 1200
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Padding Top",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Padding Bottom",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "section_padding_sides",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Padding Sides",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Newsletter Styling"
+    },
+    {
+      "type": "range",
+      "id": "newsletter_max_width",
+      "min": 400,
+      "max": 800,
+      "step": 50,
+      "unit": "px",
+      "label": "Newsletter Max Width",
+      "default": 600
+    },
+    {
+      "type": "range",
+      "id": "newsletter_margin_bottom",
+      "min": 20,
+      "max": 100,
+      "step": 10,
+      "unit": "px",
+      "label": "Newsletter Bottom Margin",
+      "default": 60
+    },
+    {
+      "type": "color",
+      "id": "newsletter_title_color",
+      "label": "Title Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "range",
+      "id": "newsletter_title_size",
+      "min": 18,
+      "max": 36,
+      "step": 2,
+      "unit": "px",
+      "label": "Title Size",
+      "default": 24
+    },
+    {
+      "type": "select",
+      "id": "newsletter_title_weight",
+      "label": "Title Weight",
+      "options": [
+        {"value": "400", "label": "Normal"},
+        {"value": "500", "label": "Medium"},
+        {"value": "600", "label": "Semi Bold"},
+        {"value": "700", "label": "Bold"}
+      ],
+      "default": "700"
+    },
+    {
+      "type": "select",
+      "id": "newsletter_title_transform",
+      "label": "Title Transform",
+      "options": [
+        {"value": "none", "label": "None"},
+        {"value": "uppercase", "label": "Uppercase"},
+        {"value": "lowercase", "label": "Lowercase"},
+        {"value": "capitalize", "label": "Capitalize"}
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "range",
+      "id": "newsletter_title_spacing",
+      "min": 0,
+      "max": 5,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Title Letter Spacing",
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "newsletter_title_margin",
+      "min": 10,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "label": "Title Bottom Margin",
+      "default": 20
+    },
+    {
+      "type": "color",
+      "id": "newsletter_text_color",
+      "label": "Text Color",
+      "default": "#CCCCCC"
+    },
+    {
+      "type": "range",
+      "id": "newsletter_text_size",
+      "min": 12,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "label": "Text Size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "newsletter_text_line_height",
+      "min": 1.2,
+      "max": 2,
+      "step": 0.1,
+      "label": "Text Line Height",
+      "default": 1.6
+    },
+    {
+      "type": "range",
+      "id": "newsletter_text_margin",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Bottom Margin",
+      "default": 30
+    },
+    {
+      "type": "header",
+      "content": "Button Styling"
+    },
+    {
+      "type": "color",
+      "id": "button_background",
+      "label": "Button Background",
+      "default": "#FF00FF"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_background",
+      "label": "Button Hover Background",
+      "default": "#E600E6"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button Text Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_text_color",
+      "label": "Button Hover Text Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "text",
+      "id": "button_padding",
+      "label": "Button Padding",
+      "default": "15px 40px"
+    },
+    {
+      "type": "range",
+      "id": "button_font_size",
+      "min": 12,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "label": "Button Font Size",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "button_font_weight",
+      "label": "Button Font Weight",
+      "options": [
+        {"value": "400", "label": "Normal"},
+        {"value": "500", "label": "Medium"},
+        {"value": "600", "label": "Semi Bold"},
+        {"value": "700", "label": "Bold"}
+      ],
+      "default": "700"
+    },
+    {
+      "type": "select",
+      "id": "button_text_transform",
+      "label": "Button Text Transform",
+      "options": [
+        {"value": "none", "label": "None"},
+        {"value": "uppercase", "label": "Uppercase"},
+        {"value": "lowercase", "label": "Lowercase"},
+        {"value": "capitalize", "label": "Capitalize"}
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "range",
+      "id": "button_letter_spacing",
+      "min": 0,
+      "max": 3,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Button Letter Spacing",
+      "default": 1.5
+    },
+    {
+      "type": "text",
+      "id": "button_border",
+      "label": "Button Border",
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "label": "Button Border Radius",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "button_shadow_color",
+      "label": "Button Shadow Color",
+      "default": "rgba(255, 0, 255, 0.3)"
+    },
+    {
+      "type": "header",
+      "content": "Social Media Styling"
+    },
+    {
+      "type": "range",
+      "id": "social_gap",
+      "min": 20,
+      "max": 120,
+      "step": 10,
+      "unit": "px",
+      "label": "Social Sections Gap",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "social_margin_bottom",
+      "min": 20,
+      "max": 80,
+      "step": 10,
+      "unit": "px",
+      "label": "Social Bottom Margin",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "min": 20,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "label": "Logo Width",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "logo_text_gap",
+      "min": 5,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Logo Text Gap",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "logo_margin_bottom",
+      "min": 5,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "label": "Logo Bottom Margin",
+      "default": 15
+    },
+    {
+      "type": "color",
+      "id": "social_text_color",
+      "label": "Social Text Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "range",
+      "id": "social_text_size",
+      "min": 10,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "label": "Social Text Size",
+      "default": 12
+    },
+    {
+      "type": "select",
+      "id": "social_text_weight",
+      "label": "Social Text Weight",
+      "options": [
+        {"value": "400", "label": "Normal"},
+        {"value": "500", "label": "Medium"},
+        {"value": "600", "label": "Semi Bold"},
+        {"value": "700", "label": "Bold"}
+      ],
+      "default": "600"
+    },
+    {
+      "type": "select",
+      "id": "social_text_transform",
+      "label": "Social Text Transform",
+      "options": [
+        {"value": "none", "label": "None"},
+        {"value": "uppercase", "label": "Uppercase"},
+        {"value": "lowercase", "label": "Lowercase"},
+        {"value": "capitalize", "label": "Capitalize"}
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "range",
+      "id": "social_text_spacing",
+      "min": 0,
+      "max": 2,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Social Text Letter Spacing",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "social_text_line_height",
+      "min": 1,
+      "max": 2,
+      "step": 0.1,
+      "label": "Social Text Line Height",
+      "default": 1.4
+    },
+    {
+      "type": "range",
+      "id": "social_icon_size",
+      "min": 18,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "label": "Social Icon Size",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "social_icon_spacing",
+      "min": 4,
+      "max": 16,
+      "step": 2,
+      "unit": "px",
+      "label": "Social Icon Spacing",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "App Section Styling"
+    },
+    {
+      "type": "range",
+      "id": "app_section_margin",
+      "min": 20,
+      "max": 60,
+      "step": 10,
+      "unit": "px",
+      "label": "App Section Margin",
+      "default": 40
+    },
+    {
+      "type": "color",
+      "id": "app_title_color",
+      "label": "App Title Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "range",
+      "id": "app_title_size",
+      "min": 14,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "App Title Size",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "app_title_weight",
+      "label": "App Title Weight",
+      "options": [
+        {"value": "400", "label": "Normal"},
+        {"value": "500", "label": "Medium"},
+        {"value": "600", "label": "Semi Bold"},
+        {"value": "700", "label": "Bold"}
+      ],
+      "default": "700"
+    },
+    {
+      "type": "select",
+      "id": "app_title_transform",
+      "label": "App Title Transform",
+      "options": [
+        {"value": "none", "label": "None"},
+        {"value": "uppercase", "label": "Uppercase"},
+        {"value": "lowercase", "label": "Lowercase"},
+        {"value": "capitalize", "label": "Capitalize"}
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "range",
+      "id": "app_title_spacing",
+      "min": 0,
+      "max": 2,
+      "step": 0.5,
+      "unit": "px",
+      "label": "App Title Letter Spacing",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "app_title_margin",
+      "min": 10,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "label": "App Title Bottom Margin",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "app_buttons_gap",
+      "min": 10,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "label": "App Buttons Gap",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "app_button_height",
+      "min": 40,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "App Button Height",
+      "default": 52
+    },
+    {
+      "type": "header",
+      "content": "Mobile Settings"
+    },
+    {
+      "type": "range",
+      "id": "mobile_padding_top",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Padding Top",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "mobile_padding_bottom",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Padding Bottom",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "mobile_padding_sides",
+      "min": 0,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile Padding Sides",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "mobile_social_gap",
+      "min": 20,
+      "max": 60,
+      "step": 10,
+      "unit": "px",
+      "label": "Mobile Social Gap",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "mobile_newsletter_title_size",
+      "min": 16,
+      "max": 28,
+      "step": 2,
+      "unit": "px",
+      "label": "Mobile Title Size",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "mobile_newsletter_text_size",
+      "min": 12,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "label": "Mobile Text Size",
+      "default": 13
+    },
+    {
+      "type": "range",
+      "id": "mobile_button_font_size",
+      "min": 12,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "label": "Mobile Button Font Size",
+      "default": 13
+    },
+    {
+      "type": "text",
+      "id": "mobile_button_padding",
+      "label": "Mobile Button Padding",
+      "default": "12px 30px"
+    },
+    {
+      "type": "select",
+      "id": "mobile_logo_direction",
+      "label": "Mobile Logo Direction",
+      "options": [
+        {"value": "row", "label": "Horizontal"},
+        {"value": "column", "label": "Vertical"}
+      ],
+      "default": "row"
+    },
+    {
+      "type": "header",
+      "content": "Advanced"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_css",
+      "label": "Custom CSS"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Footer Middle",
+      "settings": {
+        "newsletter_title": "JOIN OUR CLIQUE",
+        "newsletter_description": "Get Exclusive Discounts, Plus Tips & Tricks on how to Grow your Hair! Our Top \"Hollywood\" Celebrity Hair Stylists will personally email you!",
+        "newsletter_button_text": "JOIN OUR CLIQUE",
+        "hhb_follow_text": "FOLLOW HOLLYWOOD<br> HAIR BAR",
+        "hsb_follow_text": "FOLLOW HOLLYWOOD<br> SKIN BAR",
+        "app_section_title": "Download Our App"
+      }
+    }
+  ]
+}
+{% endschema %}

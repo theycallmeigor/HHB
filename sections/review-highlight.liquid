@@ -1,0 +1,336 @@
+{% comment %}
+Section: Review Highlight (centered, one-line header)
+- Stars and headline appear on the same line.
+- No right column.
+- Configurable via Theme Editor.
+{% endcomment %}
+
+{%- liquid
+  assign width_section = section.settings.width_section
+  assign width_content = section.settings.width_content
+
+  capture width_section_
+    if width_section == 'container-fluid wide' and width_content == false
+      echo 'w-100'
+    else
+      echo width_section
+    endif
+  endcapture
+
+  capture width_content_
+    if width_content and width_section == 'w-100'
+      echo 'container'
+    elsif width_section == 'container-fluid wide' and width_content == false
+      echo 'container-fluid wide'
+    else
+      echo 'w-100'
+    endif
+  endcapture
+-%}
+
+<style>
+/* Scoped styles */
+#review-highlight-{{ section.id }} {
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+}
+#review-highlight-{{ section.id }} .rh-inner {
+  text-align: center;
+  padding-top: {{ section.settings.padding_top }}px;
+  padding-bottom: {{ section.settings.padding_bottom }}px;
+}
+
+/* One-line header: stars + headline */
+#review-highlight-{{ section.id }} .header-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: {{ section.settings.header_gap }}px;
+  white-space: nowrap; /* force one line */
+  margin: 0 0 10px 0;
+}
+#review-highlight-{{ section.id }} .stars {
+  color: {{ section.settings.stars_color }};
+  font-weight: 900;
+  font-size: {{ section.settings.stars_size }}px;
+  letter-spacing: {{ section.settings.stars_letter_spacing }}px;
+  line-height: 1;
+  display: inline-block;
+  margin: 0; /* no extra margin when inline */
+}
+#review-highlight-{{ section.id }} .headline {
+  font-weight: 700;
+  font-size: {{ section.settings.headline_size }}px;
+  line-height: 1.2;
+  {% if section.settings.uppercase_headline %}text-transform: uppercase;{% endif %}
+}
+
+/* Body line */
+#review-highlight-{{ section.id }} .content-text {
+  line-height: 1.6;
+  font-size: {{ section.settings.text_size }}px;
+}
+#review-highlight-{{ section.id }} .content-text .accent {
+  color: {{ section.settings.accent_color }};
+  font-weight: 700;
+}
+
+/* Desktop refinements */
+@media (min-width: 992px) {
+  #review-highlight-{{ section.id }} .stars {
+    font-size: {{ section.settings.stars_size_desktop }}px;
+    letter-spacing: {{ section.settings.stars_letter_spacing_desktop }}px;
+  }
+  #review-highlight-{{ section.id }} .headline {
+    font-size: {{ section.settings.headline_size_desktop }}px;
+  }
+  #review-highlight-{{ section.id }} .content-text {
+    font-size: {{ section.settings.text_size_desktop }}px;
+  }
+}
+</style>
+
+<div id="review-highlight-{{ section.id }}" class="{{ width_section_ }}">
+  <div class="section-width {{ width_content_ }}">
+    <div class="rh-inner">
+      <div class="header-line">
+        {%- if section.settings.show_stars -%}
+          <span class="stars" aria-hidden="true">
+            {%- for i in (1..section.settings.star_count) -%}★ {%- endfor -%}
+          </span>
+        {%- endif -%}
+        <span class="headline">{{ section.settings.review_headline | escape }}</span>
+      </div>
+      {%- if section.settings.show_stars -%}
+        <span class="visually-hidden">{{ section.settings.star_count }} star rating</span>
+      {%- endif -%}
+
+      <div class="content-text">
+        {{ section.settings.prefix_text | escape }}
+        <span class="accent">{{ section.settings.accent_text | escape }}</span>
+        {{ section.settings.suffix_text | escape }}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% style %}
+{%- assign section_id = '#review-highlight-' | append: section.id -%}
+{{ section.settings.css | replace: 'section_id', section_id }}
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Review highlight",
+  "tag": "section",
+  "class": "review-highlight-centered",
+  "settings": [
+    {
+      "type": "select",
+      "id": "width_section",
+      "label": "Max width section",
+      "options": [
+        { "value": "container", "label": "1200px" },
+        { "value": "container-fluid wide", "label": "Wide" },
+        { "value": "w-100", "label": "Full width" }
+      ],
+      "default": "container"
+    },
+    {
+      "type": "checkbox",
+      "id": "width_content",
+      "label": "Max width content when Full width?"
+    },
+
+    {
+      "type": "header",
+      "content": "Layout and spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top (px)",
+      "min": 0,
+      "max": 120,
+      "step": 2,
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom (px)",
+      "min": 0,
+      "max": 120,
+      "step": 2,
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "header_gap",
+      "label": "Gap between stars and headline (px)",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 12
+    },
+    {
+      "type": "checkbox",
+      "id": "uppercase_headline",
+      "label": "Uppercase headline",
+      "default": true
+    },
+
+    {
+      "type": "header",
+      "content": "Stars"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_stars",
+      "label": "Show stars",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "star_count",
+      "label": "Number of stars",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "color",
+      "id": "stars_color",
+      "label": "Stars color",
+      "default": "#FD01DE"
+    },
+    {
+      "type": "range",
+      "id": "stars_size",
+      "label": "Stars font size (mobile, px)",
+      "min": 10,
+      "max": 40,
+      "step": 1,
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "stars_letter_spacing",
+      "label": "Stars letter spacing (mobile, px)",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "stars_size_desktop",
+      "label": "Stars font size (desktop, px)",
+      "min": 10,
+      "max": 60,
+      "step": 1,
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "stars_letter_spacing_desktop",
+      "label": "Stars letter spacing (desktop, px)",
+      "min": 0,
+      "max": 12,
+      "step": 1,
+      "default": 4
+    },
+
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "text",
+      "id": "review_headline",
+      "label": "Headline",
+      "default": "55K+ 5 STAR REVIEWS"
+    },
+    {
+      "type": "range",
+      "id": "headline_size",
+      "label": "Headline size (mobile, px)",
+      "min": 10,
+      "max": 60,
+      "step": 1,
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "headline_size_desktop",
+      "label": "Headline size (desktop, px)",
+      "min": 10,
+      "max": 80,
+      "step": 1,
+      "default": 20
+    },
+    {
+      "type": "text",
+      "id": "prefix_text",
+      "label": "Prefix text",
+      "default": "Over"
+    },
+    {
+      "type": "text",
+      "id": "accent_text",
+      "label": "Accent text",
+      "default": "1 MILLION"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "default": "#FF00C1"
+    },
+    {
+      "type": "text",
+      "id": "suffix_text",
+      "label": "Suffix text",
+      "default": "Bottles Sold."
+    },
+    {
+      "type": "range",
+      "id": "text_size",
+      "label": "Body text size (mobile, px)",
+      "min": 10,
+      "max": 36,
+      "step": 1,
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "text_size_desktop",
+      "label": "Body text size (desktop, px)",
+      "min": 10,
+      "max": 48,
+      "step": 1,
+      "default": 16
+    },
+
+    {
+      "type": "header",
+      "content": "Custom CSS"
+    },
+    {
+      "type": "html",
+      "id": "css",
+      "label": "CSS for this section",
+      "info": "Use selector: section_id (auto-replaced with this section's root ID). Example: section_id .headline { letter-spacing: 0.5px; }",
+      "default": "/* Add custom CSS targeting section_id */"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Review highlight",
+      "category": "Text"
+    }
+  ]
+}
+{% endschema %}
