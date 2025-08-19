@@ -27,8 +27,16 @@
       --slide-inner-percentage-width: {{ section.settings.mobile_slides_inner_width }}%;
     }
 {%- endstyle -%}
-{% render 'cc-purchase-options', product: product %}
-{%- assign product = section.settings.product-%}
+{%- comment -%} Find the purchase options block if it exists {%- endcomment -%}
+{% assign purchase_options_block = section.blocks | where: 'type', 'purchase_options' | first %}
+{% if purchase_options_block %}
+  {% render 'cc-purchase-options', 
+    product: product, 
+    product_form_id: product_form_id, 
+    block: purchase_options_block, 
+    section: section 
+  %}
+{% endif %}
 
 {% comment %} TODO: assign `product.selected_or_first_available_variant` to variable and replace usage to reduce verbosity {% endcomment %}
 
