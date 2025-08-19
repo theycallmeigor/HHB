@@ -1,24 +1,257 @@
-{%- comment -%}
-  Main purchase options snippet that determines which version to use
-  This file acts as a router to the appropriate purchase options implementation
+{%- comment -%} 
+  Purchase options integrated with quantity breaks
+  This version works alongside the quantity breaks component
 {%- endcomment -%}
 
 {% liquid
-  # Check if we should use the integrated version (with quantity breaks)
-  assign use_integrated = false
-  for block in section.blocks
-    if block.type == 'quantity_selector' and block.settings.enable_quantity_discounts
-      assign use_integrated = true
-      break
-    endif
-  endfor
+  assign cc_map = product.metafields.cc.mapping.value
+  assign show_subscribe = false
+  assign cc_sub_id = ''
+  assign cc_ot_id = ''
 
-  # Render the appropriate version
-  if use_integrated
-    # Use the version integrated with quantity breaks
-    render 'cc-purchase-options2', product: product, product_form_id: product_form_id, block: block, section: section
-  else
-    # Use the standalone version
-    render 'cc-purchase-options3', product: product, product_form_id: product_form_id, block: block, section: section
+  if cc_map
+    assign cc_ot_id = cc_map.one_time_id | default: ''
+    
+    # Check subscription field properly
+    if cc_map.subscription == true or cc_map.subscription == 'true'
+      if cc_map.subscription_id != blank
+        assign show_subscribe = true
+        assign cc_sub_id = cc_map.subscription_id
+      endif
+    endif
+  endif
+
+  # Only show if we have both options configured
+  if cc_ot_id == blank and cc_sub_id == blank
+    assign show_subscribe = false
+  endif
+
+  assign default_mode = 'onetime'
+  if block and block.settings.default_selection
+    assign default_mode = block.settings.default_selection
+  endif
+  
+  assign is_subscription_default = false
+  if default_mode == 'subscription' and show_subscribe
+    assign is_subscription_default = true
   endif
 %}
+
+{% if show_subscribe %}
+<div id="cc-purchase-options-{{ section.id }}"
+     class="product-form__input purchase-options"
+     data-form-id="{{ product_form_id }}"
+     data-cc-ot-id="{{ cc_ot_id }}"
+     data-cc-sub-id="{{ cc_sub_id }}">
+  
+  <fieldset class="purchase-options__fieldset">
+    <legend class="visually-hidden">Purchase options</legend>
+
+    <label class="purchase-options__option">
+      <input type="radio" 
+             class="purchase-options__radio"
+             name="cc_purchase_mode_{{ section.id }}"
+             value="onetime"
+             {% unless is_subscription_default %}checked{% endunless %}>
+      <span class="purchase-options__label">
+        <span class="purchase-options__label-main">
+          {{ block.settings.onetime_label | default: 'One-time purchase' }}
+        </span>
+        {% if block.settings.onetime_subtitle != blank %}
+          <span class="purchase-options__label-sub">{{ block.settings.onetime_subtitle }}</span>
+        {% endif %}
+      </span>
+    </label>
+
+    <label class="purchase-options__option">
+      <input type="radio" 
+             class="purchase-options__radio"
+             name="cc_purchase_mode_{{ section.id }}"
+             value="subscription"
+             {% if is_subscription_default %}checked{% endif %}>
+      <span class="purchase-options__label">
+        <span class="purchase-options__label-main">
+          {{ block.settings.subscription_label | default: 'Subscribe & Save' }}
+        </span>
+        {% if block.settings.subscription_subtitle != blank %}
+          <span class="purchase-options__label-sub">{{ block.settings.subscription_subtitle }}</span>
+        {% endif %}
+      </span>
+    </label>
+  </fieldset>
+
+  {%- comment -%} Hidden fields that submit with the form {%- endcomment -%}
+  <input type="hidden" 
+         name="properties[purchase_option]"
+         value="{% if is_subscription_default %}subscription{% else %}one-time{% endif %}"
+         form="{{ product_form_id }}">
+  
+  <input type="hidden" 
+         name="properties[cc_override_id]"
+         value="{% if is_subscription_default %}{{ cc_sub_id }}{% else %}{{ cc_ot_id }}{% endif %}"
+         form="{{ product_form_id }}">
+</div>
+
+<script>
+(() => {
+  const root = document.getElementById('cc-purchase-options-{{ section.id }}');
+  if (!root) return;
+  
+  const formId = '{{ product_form_id }}';
+  const form = document.getElementById(formId);
+  const subId = '{{ cc_sub_id }}';
+  const otId = '{{ cc_ot_id }}';
+  
+  // Get hidden inputs
+  const po = root.querySelector('input[name="properties[purchase_option]"]');
+  const cc = root.querySelector('input[name="properties[cc_override_id]"]');
+  
+  // Get quantity breaks component if it exists
+  const quantityBreaks = document.getElementById('quantity-breaks-{{ section.id }}');
+  
+  function sync() {
+    const picked = root.querySelector('input.purchase-options__radio:checked');
+    if (!picked) return;
+    
+    const mode = picked.value;
+    const isSubscription = mode === 'subscription';
+    
+    // Update hidden inputs
+    if (po) po.value = isSubscription ? 'subscription' : 'one-time';
+    if (cc) cc.value = isSubscription ? subId : otId;
+    
+    // Update form data attributes
+    if (form) {
+      form.dataset.ccMode = isSubscription ? 'subscription' : 'one-time';
+      form.dataset.ccOffer = isSubscription ? subId : otId;
+    }
+    
+    // Update quantity breaks if present
+    if (quantityBreaks) {
+      quantityBreaks.dataset.currentMode = isSubscription ? 'subscription' : 'one-time';
+      quantityBreaks.dataset.currentOffer = isSubscription ? subId : otId;
+      
+      // Update purchase option buttons in quantity breaks
+      const qbOneTime = quantityBreaks.querySelector('.qb-purchase-option--onetime');
+      const qbSub = quantityBreaks.querySelector('.qb-purchase-option--subscription');
+      
+      if (qbOneTime) {
+        qbOneTime.classList.toggle('is-active', !isSubscription);
+        qbOneTime.setAttribute('aria-pressed', !isSubscription ? 'true' : 'false');
+      }
+      if (qbSub) {
+        qbSub.classList.toggle('is-active', isSubscription);
+        qbSub.setAttribute('aria-pressed', isSubscription ? 'true' : 'false');
+      }
+    }
+    
+    // Update all add to cart buttons
+    const atcButtons = document.querySelectorAll(`[form="${formId}"][name="add"], #${formId} [type="submit"][name="add"]`);
+    atcButtons.forEach(btn => {
+      btn.dataset.ccMode = isSubscription ? 'subscription' : 'one-time';
+      btn.dataset.ccOffer = isSubscription ? subId : otId;
+    });
+    
+    // Dispatch event
+    window.dispatchEvent(new CustomEvent('cc-purchase-option:change', {
+      detail: {
+        mode: isSubscription ? 'subscription' : 'one-time',
+        offer: isSubscription ? subId : otId,
+        formId: formId
+      }
+    }));
+  }
+  
+  // Listen for changes
+  root.addEventListener('change', e => {
+    if (e.target.classList.contains('purchase-options__radio')) {
+      sync();
+    }
+  });
+  
+  // Listen for quantity breaks changes
+  window.addEventListener('qb-purchase-option:change', (e) => {
+    if (e.detail.formId !== formId) return;
+    
+    const isSubscription = e.detail.mode === 'subscription';
+    const modeInput = root.querySelector(`input.purchase-options__radio[value="${isSubscription ? 'subscription' : 'onetime'}"]`);
+    
+    if (modeInput && !modeInput.checked) {
+      modeInput.checked = true;
+      sync();
+    }
+  });
+  
+  // Initial sync
+  sync();
+})();
+</script>
+
+<style>
+  .purchase-options__fieldset {
+    display: flex;
+    gap: 8px;
+    border: none;
+    padding: 0;
+    margin: 0 0 12px;
+    flex-wrap: wrap;
+  }
+  
+  .purchase-options__option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 10px 14px;
+    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.03);
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 140px;
+  }
+  
+  .purchase-options__option:hover {
+    background: rgba(0, 0, 0, 0.06);
+  }
+  
+  .purchase-options__option:has(.purchase-options__radio:checked) {
+    background: #fff;
+    border-color: rgba(109, 56, 139, 0.6);
+    box-shadow: 0 0 0 3px rgba(109, 56, 139, 0.12);
+  }
+  
+  .purchase-options__radio {
+    margin: 0;
+    flex-shrink: 0;
+  }
+  
+  .purchase-options__label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .purchase-options__label-main {
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.2;
+  }
+  
+  .purchase-options__label-sub {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    line-height: 1.2;
+  }
+  
+  @media (max-width: 480px) {
+    .purchase-options__fieldset {
+      flex-direction: column;
+    }
+    
+    .purchase-options__option {
+      width: 100%;
+    }
+  }
+</style>
+{% endif %}
