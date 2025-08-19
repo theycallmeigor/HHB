@@ -1,0 +1,89 @@
+{%- comment -%}
+  Subscription options for quantity breaks
+  Integrated with existing quantity breaks functionality
+{%- endcomment -%}
+
+{% liquid
+  assign has_subscription = false
+  assign cc_sub_id = ''
+  
+  # Check for cc_sub_id metafield in various locations
+  if product.metafields.custom.cc_sub_id != blank
+    assign has_subscription = true
+    assign cc_sub_id = product.metafields.custom.cc_sub_id
+  elsif product.metafields.checkoutchamp.cc_sub_id != blank
+    assign has_subscription = true
+    assign cc_sub_id = product.metafields.checkoutchamp.cc_sub_id
+  elsif product.metafields.cc.cc_sub_id != blank
+    assign has_subscription = true
+    assign cc_sub_id = product.metafields.cc.cc_sub_id
+  elsif selected_variant.metafields.custom.cc_sub_id != blank
+    assign has_subscription = true
+    assign cc_sub_id = selected_variant.metafields.custom.cc_sub_id
+  endif
+  
+  assign subscription_discount = block.settings.subscription_discount | default: 15
+%}
+
+{%- if has_subscription or block.settings.enable_subscription -%}
+  <div class="quantity-breaks__subscription-toggle" data-cc-sub-id="{{ cc_sub_id }}">
+    <div class="subscription-toggle__options">
+      <label class="subscription-toggle__option subscription-toggle__option--onetime">
+        <input 
+          type="radio" 
+          name="purchase_type_{{ section.id }}" 
+          value="onetime"
+          checked
+          class="subscription-toggle__input"
+          data-subscription-toggle="onetime"
+        >
+        <span class="subscription-toggle__button">
+          <span class="subscription-toggle__label">{{ block.settings.onetime_label | default: 'One-time purchase' }}</span>
+        </span>
+      </label>
+      
+      <label class="subscription-toggle__option subscription-toggle__option--subscribe">
+        <input 
+          type="radio" 
+          name="purchase_type_{{ section.id }}" 
+          value="subscribe"
+          class="subscription-toggle__input"
+          data-subscription-toggle="subscribe"
+        >
+        <span class="subscription-toggle__button">
+          <span class="subscription-toggle__label">
+            {{ block.settings.subscribe_label | default: 'Subscribe & Save' }}
+            <span class="subscription-toggle__badge color-{{ block.settings.subscription_badge_color | default: 'accent-1' }}">
+              {{ block.settings.subscription_badge_text | default: 'Save 15%' | replace: '[discount]', subscription_discount }}
+            </span>
+          </span>
+        </span>
+      </label>
+    </div>
+    
+    <div class="subscription-toggle__details" data-subscription-details style="display: none;">
+      <div class="subscription-frequency">
+        <label for="subscription-frequency-{{ section.id }}">
+          {{ block.settings.frequency_label | default: 'Deliver every' }}
+        </label>
+        <select 
+          id="subscription-frequency-{{ section.id }}"
+          name="properties[subscription_frequency]"
+          class="subscription-frequency__select"
+          form="{{ product_form_id }}"
+        >
+          <option value="15">15 days</option>
+          <option value="30" selected>30 days</option>
+          <option value="45">45 days</option>
+          <option value="60">60 days</option>
+          <option value="90">90 days</option>
+        </select>
+      </div>
+    </div>
+    
+    {%- comment -%} Hidden inputs for CheckoutChamp {%- endcomment -%}
+    <input type="hidden" name="properties[_subscription_enabled]" value="false" data-subscription-enabled form="{{ product_form_id }}">
+    <input type="hidden" name="properties[_cc_sub_id]" value="{{ cc_sub_id }}" form="{{ product_form_id }}">
+    <input type="hidden" name="properties[_subscription_discount]" value="{{ subscription_discount }}" form="{{ product_form_id }}">
+  </div>
+{%- endif -%}
