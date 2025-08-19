@@ -4,8 +4,8 @@
   assign show_subscribe = false
 
   if cc_map
-    if cc_map.subscription == true or cc_map.subscription == 'true' or cc_map.subscription
-      if cc_map.subscription_id != blank
+    if checkoutchamp_mapping.subscription == true or checkoutchamp_mapping.subscription == 'true' or checkoutchamp_mapping.subscription
+      if checkoutchamp_mapping.subscription_id != blank
         assign show_subscribe = true
       endif
     endif
@@ -54,7 +54,7 @@
          value="{% if is_subscription_default %}subscription{% else %}one-time{% endif %}"
          {% unless root_in_form %}form="{{ product_form_id }}"{% endunless %}>
   <input type="hidden" name="properties[cc_override_id]"
-         value="{% if is_subscription_default %}{{ cc_map.subscription_id }}{% else %}{{ cc_map.one_time_id | default: '' }}{% endif %}"
+         value="{% if is_subscription_default %}{{ checkoutchamp_mapping.subscription_id }}{% else %}{{ cc_map.one_time_id | default: '' }}{% endif %}"
          {% unless root_in_form %}form="{{ product_form_id }}"{% endunless %}>
 </div>
 
@@ -64,7 +64,7 @@
   if (!root) return;
   const po = root.querySelector('input[name="properties[purchase_option]"]');
   const cc = root.querySelector('input[name="properties[cc_override_id]"]');
-  const subId = {{ cc_map.subscription_id | default: '' | json }};
+  const subId = {{ checkoutchamp_mapping.subscription_id | default: '' | json }};
 const otId  = {{ cc_map.one_time_id  | default: '' | json }};
 
   function sync() {
@@ -126,7 +126,7 @@ const otId  = {{ cc_map.one_time_id  | default: '' | json }};
   assign cc_sub_override = ''
   if cc_map
     assign cc_ot_override = cc_map.one_time_id
-    assign cc_sub_override = cc_map.subscription_id
+    assign cc_sub_override = checkoutchamp_mapping.subscription_id
   endif
   if cc_ot_override == blank
     assign cc_ot_override = product.metafields.productId.productId
