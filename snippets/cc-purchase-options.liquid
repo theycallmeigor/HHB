@@ -8,6 +8,7 @@
   if cc_map
     assign cc_ot_id = cc_map.one_time_id | default: ''
     
+    # Fix: Check cc_map.subscription instead of checkoutchamp_mapping
     if cc_map.subscription == true or cc_map.subscription == 'true' or cc_map.subscription
       if cc_map.subscription_id != blank
         assign show_subscribe = true
@@ -16,35 +17,10 @@
     endif
   endif
 
-  # Fallback to legacy metafields if needed
-  if cc_ot_id == blank
-    assign cc_ot_id = product.metafields.productId.productId | default: ''
-  endif
-  if cc_sub_id == blank and product.metafields.productId.subscription_id != blank
-    assign cc_sub_id = product.metafields.productId.subscription_id
-    if cc_sub_id != blank
-      assign show_subscribe = true
-    endif
-  endif
-
   assign default_mode = block.settings.default_selection | default: 'onetime'
   assign is_subscription_default = false
   if default_mode == 'subscription' and show_subscribe
     assign is_subscription_default = true
-  endif
-
-  # Get default selling plan for native Shopify subscriptions
-  assign default_selling_plan = ''
-  if product.selling_plan_groups.size > 0
-    for spg in product.selling_plan_groups
-      for sp in spg.selling_plans
-        assign default_selling_plan = sp.id
-        break
-      endfor
-      if default_selling_plan != ''
-        break
-      endif
-    endfor
   endif
 %}
 
@@ -52,9 +28,7 @@
      class="product-form__input purchase-options"
      data-form-id="{{ product_form_id }}"
      data-cc-ot-id="{{ cc_ot_id }}"
-     data-cc-sub-id="{{ cc_sub_id }}"
-     data-default-selling-plan="{{ default_selling_plan }}"
-     {{ block.shopify_attributes }}>
+     data-cc-sub-id="{{ cc_sub_id }}">
   
   {% if show_subscribe %}
     <fieldset class="purchase-options__fieldset">
@@ -92,62 +66,44 @@
 
   {%- comment -%} Hidden fields that submit with the form {%- endcomment -%}
   <input type="hidden" 
-         id="cc-purchase-option-{{ block.id }}"
          name="properties[purchase_option]"
          value="{% if is_subscription_default %}subscription{% else %}one-time{% endif %}"
          form="{{ product_form_id }}">
   
   <input type="hidden" 
-         id="cc-override-id-{{ block.id }}"
          name="properties[cc_override_id]"
          value="{% if is_subscription_default %}{{ cc_sub_id }}{% else %}{{ cc_ot_id }}{% endif %}"
          form="{{ product_form_id }}">
-  
-  {% if product.selling_plan_groups.size > 0 %}
-    <input type="hidden"
-           id="cc-selling-plan-{{ block.id }}"
-           name="selling_plan"
-           value="{% if is_subscription_default %}{{ default_selling_plan }}{% endif %}"
-           form="{{ product_form_id }}">
-  {% endif %}
 </div>
 
+{% if show_subscribe %}
 <script>
 (() => {
   const root = document.getElementById('cc-purchase-options-{{ block.id }}');
   if (!root) return;
   
-  const formId = root.dataset.formId;
+  const formId = '{{ product_form_id }}';
   const form = document.getElementById(formId);
-  if (!form) return;
-  
-  // Get data attributes
-  const otId = root.dataset.ccOtId || '';
-  const subId = root.dataset.ccSubId || '';
-  const defaultSellingPlan = root.dataset.defaultSellingPlan || '';
   
   // Get hidden inputs
-  const purchaseOption = document.getElementById('cc-purchase-option-{{ block.id }}');
-  const ccOverride = document.getElementById('cc-override-id-{{ block.id }}');
-  const sellingPlan = document.getElementById('cc-selling-plan-{{ block.id }}');
+  const po = root.querySelector('input[name="properties[purchase_option]"]');
+  const cc = root.querySelector('input[name="properties[cc_override_id]"]');
   
-  // Get radio buttons
-  const radios = root.querySelectorAll('.purchase-options__radio');
+  // Get data from attributes
+  const subId = '{{ cc_sub_id }}';
+  const otId = '{{ cc_ot_id }}';
   
-  function updateHiddenFields(mode) {
-    if (purchaseOption) {
-      purchaseOption.value = mode === 'subscription' ? 'subscription' : 'one-time';
-    }
+  function sync() {
+    const picked = root.querySelector('input.purchase-options__radio:checked');
+    if (!picked) return;
     
-    if (ccOverride) {
-      ccOverride.value = mode === 'subscription' ? subId : otId;
-    }
+    const mode = picked.value;
     
-    if (sellingPlan) {
-      sellingPlan.value = mode === 'subscription' ? defaultSellingPlan : '';
-    }
+    // Update hidden inputs
+    if (po) po.value = mode === 'subscription' ? 'subscription' : 'one-time';
+    if (cc) cc.value = mode === 'subscription' ? subId : otId;
     
-    // Update data attributes on form and buttons for CheckoutChamp
+    // Update form data attributes for CheckoutChamp
     if (form) {
       form.dataset.ccMode = mode === 'subscription' ? 'subscription' : 'one-time';
       form.dataset.ccOffer = mode === 'subscription' ? subId : otId;
@@ -160,8 +116,8 @@
       btn.dataset.ccOffer = mode === 'subscription' ? subId : otId;
     });
     
-    // Dispatch event for other components (like quantity breaks)
-    window.dispatchEvent(new CustomEvent('purchase-option:change', {
+    // Dispatch event for quantity breaks component to listen to
+    window.dispatchEvent(new CustomEvent('cc-purchase-option:change', {
       detail: {
         mode: mode === 'subscription' ? 'subscription' : 'one-time',
         offer: mode === 'subscription' ? subId : otId,
@@ -170,33 +126,18 @@
     }));
   }
   
-  // Add change event listeners
-  radios.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        updateHiddenFields(e.target.value);
-      }
-    });
-  });
-  
-  // Initialize with current selection
-  const checkedRadio = root.querySelector('.purchase-options__radio:checked');
-  if (checkedRadio) {
-    updateHiddenFields(checkedRadio.value);
-  }
-  
-  // Listen for external changes (from quantity breaks component)
-  window.addEventListener('qb-purchase-option:change', (e) => {
-    if (e.detail && e.detail.formId === formId) {
-      const targetRadio = root.querySelector(`.purchase-options__radio[value="${e.detail.mode === 'subscription' ? 'subscription' : 'onetime'}"]`);
-      if (targetRadio && !targetRadio.checked) {
-        targetRadio.checked = true;
-        updateHiddenFields(targetRadio.value);
-      }
+  // Listen for changes on radio buttons
+  root.addEventListener('change', e => {
+    if (e.target.classList.contains('purchase-options__radio')) {
+      sync();
     }
   });
+  
+  // Initial sync
+  sync();
 })();
 </script>
+{% endif %}
 
 <style>
   .purchase-options__fieldset {
@@ -205,6 +146,7 @@
     border: none;
     padding: 0;
     margin: 0 0 12px;
+    flex-wrap: wrap;
   }
   
   .purchase-options__option {
@@ -212,20 +154,28 @@
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    padding: 8px 12px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    background: transparent;
+    padding: 10px 14px;
+    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.03);
     transition: all 0.2s ease;
+    flex: 1;
+    min-width: 140px;
+  }
+  
+  .purchase-options__option:hover {
+    background: rgba(0, 0, 0, 0.06);
   }
   
   .purchase-options__option:has(.purchase-options__radio:checked) {
-    background: rgba(109, 56, 139, 0.05);
-    border-color: rgba(109, 56, 139, 0.3);
+    background: #fff;
+    border-color: rgba(109, 56, 139, 0.6);
+    box-shadow: 0 0 0 3px rgba(109, 56, 139, 0.12);
   }
   
   .purchase-options__radio {
     margin: 0;
+    flex-shrink: 0;
   }
   
   .purchase-options__label {
@@ -237,10 +187,22 @@
   .purchase-options__label-main {
     font-weight: 600;
     font-size: 0.95rem;
+    line-height: 1.2;
   }
   
   .purchase-options__label-sub {
     font-size: 0.8rem;
     opacity: 0.7;
+    line-height: 1.2;
+  }
+  
+  @media (max-width: 480px) {
+    .purchase-options__fieldset {
+      flex-direction: column;
+    }
+    
+    .purchase-options__option {
+      width: 100%;
+    }
   }
 </style>
