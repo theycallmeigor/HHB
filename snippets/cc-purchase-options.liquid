@@ -1,66 +1,246 @@
 {%- comment -%} Gate by metaobject cc.mapping {%- endcomment -%}
-{%- assign cc_map = product.metafields.cc.mapping.value -%}
-{%- assign show_subscribe = cc_map and (cc_map.subscription == true or cc_map.subscription == 'true') and cc_map.subscription_id != blank -%}
+{% liquid
+  assign cc_map = product.metafields.cc.mapping.value
+  assign show_subscribe = false
+  assign cc_sub_id = ''
+  assign cc_ot_id = ''
 
-{%- assign default_mode = block.settings.default_selection -%}
-{%- assign is_subscription_default = default_mode == 'subscription' and show_subscribe -%}
+  if cc_map
+    assign cc_ot_id = cc_map.one_time_id | default: ''
+    
+    if cc_map.subscription == true or cc_map.subscription == 'true' or cc_map.subscription
+      if cc_map.subscription_id != blank
+        assign show_subscribe = true
+        assign cc_sub_id = cc_map.subscription_id
+      endif
+    endif
+  endif
+
+  # Fallback to legacy metafields if needed
+  if cc_ot_id == blank
+    assign cc_ot_id = product.metafields.productId.productId | default: ''
+  endif
+  if cc_sub_id == blank and product.metafields.productId.subscription_id != blank
+    assign cc_sub_id = product.metafields.productId.subscription_id
+    if cc_sub_id != blank
+      assign show_subscribe = true
+    endif
+  endif
+
+  assign default_mode = block.settings.default_selection | default: 'onetime'
+  assign is_subscription_default = false
+  if default_mode == 'subscription' and show_subscribe
+    assign is_subscription_default = true
+  endif
+
+  # Get default selling plan for native Shopify subscriptions
+  assign default_selling_plan = ''
+  if product.selling_plan_groups.size > 0
+    for spg in product.selling_plan_groups
+      for sp in spg.selling_plans
+        assign default_selling_plan = sp.id
+        break
+      endfor
+      if default_selling_plan != ''
+        break
+      endif
+    endfor
+  endif
+%}
 
 <div id="cc-purchase-options-{{ block.id }}"
      class="product-form__input purchase-options"
-     data-form-id="{{ product_form_id }}">
+     data-form-id="{{ product_form_id }}"
+     data-cc-ot-id="{{ cc_ot_id }}"
+     data-cc-sub-id="{{ cc_sub_id }}"
+     data-default-selling-plan="{{ default_selling_plan }}"
+     {{ block.shopify_attributes }}>
+  
   {% if show_subscribe %}
     <fieldset class="purchase-options__fieldset">
       <legend class="visually-hidden">Purchase options</legend>
 
       <label class="purchase-options__option">
-        <input type="radio" class="purchase-options__radio"
+        <input type="radio" 
+               class="purchase-options__radio"
                name="cc_purchase_mode_{{ section.id }}"
                value="onetime"
                {% unless is_subscription_default %}checked{% endunless %}>
         <span class="purchase-options__label">
           <span class="purchase-options__label-main">{{ block.settings.onetime_label | default: 'One-time purchase' }}</span>
-          {% if block.settings.onetime_subtitle != blank %}<span class="purchase-options__label-sub">{{ block.settings.onetime_subtitle }}</span>{% endif %}
+          {% if block.settings.onetime_subtitle != blank %}
+            <span class="purchase-options__label-sub">{{ block.settings.onetime_subtitle }}</span>
+          {% endif %}
         </span>
       </label>
 
       <label class="purchase-options__option">
-        <input type="radio" class="purchase-options__radio"
+        <input type="radio" 
+               class="purchase-options__radio"
                name="cc_purchase_mode_{{ section.id }}"
                value="subscription"
                {% if is_subscription_default %}checked{% endif %}>
         <span class="purchase-options__label">
           <span class="purchase-options__label-main">{{ block.settings.subscription_label | default: 'Subscribe & Save' }}</span>
-          {% if block.settings.subscription_subtitle != blank %}<span class="purchase-options__label-sub">{{ block.settings.subscription_subtitle }}</span>{% endif %}
+          {% if block.settings.subscription_subtitle != blank %}
+            <span class="purchase-options__label-sub">{{ block.settings.subscription_subtitle }}</span>
+          {% endif %}
         </span>
       </label>
     </fieldset>
   {% endif %}
-  <input type="hidden" name="properties[purchase_option]"
+
+  {%- comment -%} Hidden fields that submit with the form {%- endcomment -%}
+  <input type="hidden" 
+         id="cc-purchase-option-{{ block.id }}"
+         name="properties[purchase_option]"
          value="{% if is_subscription_default %}subscription{% else %}one-time{% endif %}"
-         {% unless root_in_form %}form="{{ product_form_id }}"{% endunless %}>
-  <input type="hidden" name="properties[cc_override_id]"
-         value="{% if is_subscription_default %}{{ cc_map.subscription_id }}{% else %}{{ cc_map.one_time_id | default: '' }}{% endif %}"
-         {% unless root_in_form %}form="{{ product_form_id }}"{% endunless %}>
+         form="{{ product_form_id }}">
+  
+  <input type="hidden" 
+         id="cc-override-id-{{ block.id }}"
+         name="properties[cc_override_id]"
+         value="{% if is_subscription_default %}{{ cc_sub_id }}{% else %}{{ cc_ot_id }}{% endif %}"
+         form="{{ product_form_id }}">
+  
+  {% if product.selling_plan_groups.size > 0 %}
+    <input type="hidden"
+           id="cc-selling-plan-{{ block.id }}"
+           name="selling_plan"
+           value="{% if is_subscription_default %}{{ default_selling_plan }}{% endif %}"
+           form="{{ product_form_id }}">
+  {% endif %}
 </div>
 
 <script>
 (() => {
   const root = document.getElementById('cc-purchase-options-{{ block.id }}');
   if (!root) return;
-  const po = root.querySelector('input[name="properties[purchase_option]"]');
-  const cc = root.querySelector('input[name="properties[cc_override_id]"]');
-  const subId = {{ cc_map.subscription_id | default: '' | json }};
-const otId  = {{ cc_map.one_time_id  | default: '' | json }};
-
-  function sync() {
-    const picked = root.querySelector('input.purchase-options__radio:checked');
-    const mode = picked ? picked.value : 'onetime';
-    po.value = mode === 'subscription' ? 'subscription' : 'one-time';
-    cc.value = mode === 'subscription' ? (subId || '') : (otId || '');
+  
+  const formId = root.dataset.formId;
+  const form = document.getElementById(formId);
+  if (!form) return;
+  
+  // Get data attributes
+  const otId = root.dataset.ccOtId || '';
+  const subId = root.dataset.ccSubId || '';
+  const defaultSellingPlan = root.dataset.defaultSellingPlan || '';
+  
+  // Get hidden inputs
+  const purchaseOption = document.getElementById('cc-purchase-option-{{ block.id }}');
+  const ccOverride = document.getElementById('cc-override-id-{{ block.id }}');
+  const sellingPlan = document.getElementById('cc-selling-plan-{{ block.id }}');
+  
+  // Get radio buttons
+  const radios = root.querySelectorAll('.purchase-options__radio');
+  
+  function updateHiddenFields(mode) {
+    if (purchaseOption) {
+      purchaseOption.value = mode === 'subscription' ? 'subscription' : 'one-time';
+    }
+    
+    if (ccOverride) {
+      ccOverride.value = mode === 'subscription' ? subId : otId;
+    }
+    
+    if (sellingPlan) {
+      sellingPlan.value = mode === 'subscription' ? defaultSellingPlan : '';
+    }
+    
+    // Update data attributes on form and buttons for CheckoutChamp
+    if (form) {
+      form.dataset.ccMode = mode === 'subscription' ? 'subscription' : 'one-time';
+      form.dataset.ccOffer = mode === 'subscription' ? subId : otId;
+    }
+    
+    // Update all add to cart buttons
+    const atcButtons = document.querySelectorAll(`[form="${formId}"][name="add"], #${formId} [type="submit"][name="add"]`);
+    atcButtons.forEach(btn => {
+      btn.dataset.ccMode = mode === 'subscription' ? 'subscription' : 'one-time';
+      btn.dataset.ccOffer = mode === 'subscription' ? subId : otId;
+    });
+    
+    // Dispatch event for other components (like quantity breaks)
+    window.dispatchEvent(new CustomEvent('purchase-option:change', {
+      detail: {
+        mode: mode === 'subscription' ? 'subscription' : 'one-time',
+        offer: mode === 'subscription' ? subId : otId,
+        formId: formId
+      }
+    }));
   }
-  root.addEventListener('change', e => {
-    if (e.target.classList.contains('purchase-options__radio')) sync();
+  
+  // Add change event listeners
+  radios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        updateHiddenFields(e.target.value);
+      }
+    });
   });
-  sync();
+  
+  // Initialize with current selection
+  const checkedRadio = root.querySelector('.purchase-options__radio:checked');
+  if (checkedRadio) {
+    updateHiddenFields(checkedRadio.value);
+  }
+  
+  // Listen for external changes (from quantity breaks component)
+  window.addEventListener('qb-purchase-option:change', (e) => {
+    if (e.detail && e.detail.formId === formId) {
+      const targetRadio = root.querySelector(`.purchase-options__radio[value="${e.detail.mode === 'subscription' ? 'subscription' : 'onetime'}"]`);
+      if (targetRadio && !targetRadio.checked) {
+        targetRadio.checked = true;
+        updateHiddenFields(targetRadio.value);
+      }
+    }
+  });
 })();
 </script>
+
+<style>
+  .purchase-options__fieldset {
+    display: flex;
+    gap: 8px;
+    border: none;
+    padding: 0;
+    margin: 0 0 12px;
+  }
+  
+  .purchase-options__option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+  
+  .purchase-options__option:has(.purchase-options__radio:checked) {
+    background: rgba(109, 56, 139, 0.05);
+    border-color: rgba(109, 56, 139, 0.3);
+  }
+  
+  .purchase-options__radio {
+    margin: 0;
+  }
+  
+  .purchase-options__label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .purchase-options__label-main {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  
+  .purchase-options__label-sub {
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+</style>
