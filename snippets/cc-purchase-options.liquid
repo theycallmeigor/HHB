@@ -35,8 +35,6 @@
       </label>
     </fieldset>
   {% endif %}
-
-  {#— Canonical hidden fields —#}
   <input type="hidden" name="properties[purchase_option]"
          value="{% if is_subscription_default %}subscription{% else %}one-time{% endif %}"
          {% unless root_in_form %}form="{{ product_form_id }}"{% endunless %}>
