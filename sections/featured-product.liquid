@@ -27,16 +27,8 @@
       --slide-inner-percentage-width: {{ section.settings.mobile_slides_inner_width }}%;
     }
 {%- endstyle -%}
-{%- comment -%} Find the purchase options block if it exists {%- endcomment -%}
-{% assign purchase_options_block = section.blocks | where: 'type', 'purchase_options' | first %}
-{% if purchase_options_block %}
-  {% render 'cc-purchase-options', 
-    product: product, 
-    product_form_id: product_form_id, 
-    block: purchase_options_block, 
-    section: section 
-  %}
-{% endif %}
+
+{%- assign product = section.settings.product-%}
 
 {% comment %} TODO: assign `product.selected_or_first_available_variant` to variable and replace usage to reduce verbosity {% endcomment %}
 
@@ -160,7 +152,6 @@
                     layout: block.settings.price_layout
                   -%}
                 </div>
-                {% comment %} 
                 {% if product != blank %}
                   <div {{ block.shopify_attributes }} class="product-form-installment-block">
                     {%- assign product_form_installment_id = 'product-form-installment-' | append: section.id -%}
@@ -170,7 +161,6 @@
                     {%- endform -%}
                   </div>
                 {% endif %}
-                {% endcomment %}
               {%- when 'sku' -%}
                 <p
                   class="product__sku no-js-hidden{% if block.settings.text_style == 'uppercase' %} caption-with-letter-spacing{% elsif block.settings.text_style == 'subtitle' %} subtitle{% endif %}{% if product.selected_or_first_available_variant.sku.size == 0 %} visibility-hidden{% endif %}"
@@ -1118,7 +1108,6 @@
           "type": "header",
           "content": "Text settings"
         },
-        
         {
           "type": "range",
           "id": "mobile_text_size",
@@ -2033,36 +2022,10 @@
       ]
     },
     {
-  "type": "purchase_options",
-  "name": "Purchase options",
-  "limit": 1,
-  "settings": [
-    { "type": "header", "content": "Labels" },
-    { "type": "text", "id": "onetime_label", "label": "One-time label", "default": "One-time purchase" },
-    { "type": "text", "id": "onetime_subtitle", "label": "One-time subtitle", "default": "one time" },
-    { "type": "text", "id": "subscription_label", "label": "Subscription label", "default": "Subscribe & Save" },
-    { "type": "text", "id": "subscription_subtitle", "label": "Subscription subtitle", "default": "Delivered automatically" },
-
-    { "type": "header", "content": "CheckoutChamp mapping" },
-    { "type": "text", "id": "onetime_offer_id", "label": "One-time offer/plan ID", "default": "1" },
-    { "type": "text", "id": "subscription_offer_id", "label": "Subscription offer/plan ID", "default": "1" },
-
-    { "type": "select", "id": "default_selection", "label": "Default selection", "options": [
-      { "value": "onetime", "label": "One-time" },
-      { "value": "subscription", "label": "Subscription" }
-    ], "default": "onetime" },
-
-    { "type": "header", "content": "Block margin" },
-    { "type": "range", "id": "margin_top", "min": 0, "max": 30, "step": 3, "unit": "px", "label": "Top margin", "default": 15 },
-    { "type": "range", "id": "margin_bottom", "min": 0, "max": 30, "step": 3, "unit": "px", "label": "Bottom margin", "default": 15 }
-  ]
-},
-    {
       "type": "quantity_selector",
       "name": "Quantity selector",
       "limit": 1,
       "settings": [
-        
         {
           "type": "header",
           "content": "Classic quantity selector"
