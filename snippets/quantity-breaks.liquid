@@ -193,31 +193,34 @@ const otId  = {{ cc_map.one_time_id  | default: '' | json }};
     - Hidden inputs submit through the main product form.
     - cc_override_id bridges to CheckoutChamp override logic (read in meta-data.json and redirect script).
   {%- endcomment -%}
+{%- comment -%} Purchase options shown only if subscription exists {%- endcomment -%}
+{% if cc_sub_override != blank or has_selling_plans %}
   <div class="qb-purchase-options" role="group" aria-label="Purchase options">
-    {% if cc_sub_override != blank or has_selling_plans %}
-      <button type="button" class="qb-purchase-option qb-purchase-option--subscription" data-option="subscription" aria-pressed="false">
-        <span class="qb-purchase-option__title">
-          {{ 'products.product.subscribe_and_save' | t | default: 'Subscribe & Save' }}
-        </span>
-        {% if subscription_subtext != blank %}
-          <span class="qb-purchase-option__subtitle">{{ subscription_subtext }}</span>
-        {% else %}
-          <span class="qb-purchase-option__subtitle">{{ 'Delivered automatically' | t | default: 'Delivered automatically' }}</span>
-        {% endif %}
-      </button>
-    {% endif %}
-    <button type="button" class="qb-purchase-option qb-purchase-option--onetime is-active" data-option="one-time" aria-pressed="true">
+    <button type="button"
+            class="qb-purchase-option qb-purchase-option--subscription"
+            data-option="subscription"
+            aria-pressed="false">
       <span class="qb-purchase-option__title">
-        {{ 'products.product.one_time_purchase' | t | default: 'One-time purchase' }}
+        {{ 'products.product.subscribe_and_save' | t: default: 'Subscribe & Save' }}
       </span>
+      {% if subscription_subtext != blank %}
+        <span class="qb-purchase-option__subtitle">{{ subscription_subtext }}</span>
+      {% else %}
+        <span class="qb-purchase-option__subtitle">{{ 'Delivered automatically' | t: default: 'Delivered automatically' }}</span>
+      {% endif %}
     </button>
 
-    <input type="hidden" form="{{ product_form_id }}" name="properties[purchase_option]" value="one-time">
-    <input type="hidden" form="{{ product_form_id }}" name="properties[cc_override_id]" value="">
-    {% if has_selling_plans %}
-      <input type="hidden" form="{{ product_form_id }}" name="selling_plan" value="">
-    {% endif %}
+    <button type="button"
+            class="qb-purchase-option qb-purchase-option--onetime is-active"
+            data-option="one-time"
+            aria-pressed="true">
+      <span class="qb-purchase-option__title">
+        {{ 'products.product.one_time_purchase' | t: default: 'One-time purchase' }}
+{{ 'products.product.subscribe_and_save' | t: default: 'Subscribe & Save' }}
+      </span>
+    </button>
   </div>
+{% endif %}
 
   <div class="quantity-breaks-container">
     {% for i in (1..4) %}
@@ -818,9 +821,9 @@ const otId  = {{ cc_map.one_time_id  | default: '' | json }};
       var oneTimeBtn = root.querySelector('.qb-purchase-option--onetime');
       var subBtn = root.querySelector('.qb-purchase-option--subscription');
 
-      var purchaseInput = root.querySelector('input[name="properties[purchase_option]"][form="{{ product_form_id }}"]');
-      var ccOverrideInput = root.querySelector('input[name="properties[cc_override_id]"][form="{{ product_form_id }}"]');
-      var sellingPlanInput = root.querySelector('input[name="selling_plan"][form="{{ product_form_id }}"]');
+var purchaseInput = document.querySelector('input[name="properties[purchase_option]"][form="{{ product_form_id }}"]');
+var ccOverrideInput = document.querySelector('input[name="properties[cc_override_id]"][form="{{ product_form_id }}"]');
+var sellingPlanInput = document.querySelector('input[name="selling_plan"][form="{{ product_form_id }}"]');
 
       var otId = root.getAttribute('data-cc-ot-id') || '';
       var subId = root.getAttribute('data-cc-sub-id') || '';
