@@ -1,6 +1,7 @@
 {%- comment -%}
-  Purchase Options Component
+  Purchase Options Component with CheckoutChamp Integration
   Renders one-time purchase and subscribe & save buttons
+  Checks for cc_sub_id metafield to enable subscription options
   
   Parameters:
   - product: Product object
@@ -8,7 +9,22 @@
   - form_id: Form ID for the product form
 {%- endcomment -%}
 
-<div class="purchase-options" data-purchase-options>
+{%- comment -%} Check if subscription is available via CheckoutChamp metafield {%- endcomment -%}
+{%- assign has_subscription = false -%}
+{%- if product.metafields.custom.cc_sub_id != blank or product.metafields.checkoutchamp.cc_sub_id != blank or product.metafields.cc.cc_sub_id != blank -%}
+  {%- assign has_subscription = true -%}
+  {%- assign cc_sub_id = product.metafields.custom.cc_sub_id | default: product.metafields.checkoutchamp.cc_sub_id | default: product.metafields.cc.cc_sub_id -%}
+{%- endif -%}
+
+{%- comment -%} Also check variant metafields {%- endcomment -%}
+{%- if selected_variant.metafields.custom.cc_sub_id != blank or selected_variant.metafields.checkoutchamp.cc_sub_id != blank -%}
+  {%- assign has_subscription = true -%}
+  {%- assign cc_sub_id = selected_variant.metafields.custom.cc_sub_id | default: selected_variant.metafields.checkoutchamp.cc_sub_id -%}
+{%- endif -%}
+
+{%- comment -%} Only render if product has subscription capability or force display {%- endcomment -%}
+{%- if has_subscription or settings.always_show_purchase_options -%}
+<div class="purchase-options" data-purchase-options data-cc-sub-id="{{ cc_sub_id }}">
   <div class="purchase-options__header">
     <h3 class="purchase-options__title">{{ 'products.product.purchase_options' | t | default: 'Purchase Options' }}</h3>
   </div>
@@ -18,17 +34,17 @@
     <div class="purchase-option purchase-option--onetime" data-purchase-option="onetime">
       <input 
         type="radio" 
-        name="purchase_option" 
-        id="purchase-onetime-{{ section.id }}"
+        name="purchase_option_{{ product.id }}" 
+        id="purchase-onetime-{{ product.id }}-{{ section.id }}"
         value="onetime"
         class="purchase-option__input visually-hidden"
         checked
         data-purchase-option-input
       >
-      <label for="purchase-onetime-{{ section.id }}" class="purchase-option__label">
+      <label for="purchase-onetime-{{ product.id }}-{{ section.id }}" class="purchase-option__label">
         <span class="purchase-option__button">
           <span class="purchase-option__icon">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
               <circle cx="10" cy="10" r="4" fill="currentColor" class="purchase-option__check"/>
             </svg>
@@ -51,16 +67,16 @@
     <div class="purchase-option purchase-option--subscribe" data-purchase-option="subscribe">
       <input 
         type="radio" 
-        name="purchase_option" 
-        id="purchase-subscribe-{{ section.id }}"
+        name="purchase_option_{{ product.id }}" 
+        id="purchase-subscribe-{{ product.id }}-{{ section.id }}"
         value="subscribe"
         class="purchase-option__input visually-hidden"
         data-purchase-option-input
       >
-      <label for="purchase-subscribe-{{ section.id }}" class="purchase-option__label">
+      <label for="purchase-subscribe-{{ product.id }}-{{ section.id }}" class="purchase-option__label">
         <span class="purchase-option__button">
           <span class="purchase-option__icon">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="2"/>
               <circle cx="10" cy="10" r="4" fill="currentColor" class="purchase-option__check"/>
             </svg>
@@ -75,10 +91,12 @@
             </span>
             <span class="purchase-option__price" data-subscribe-price>
               {%- if selected_variant -%}
-                {%- assign discounted_price = selected_variant.price | times: 0.85 -%}
+                {%- assign discount_multiplier = 100 | minus: discount_percentage | divided_by: 100.0 -%}
+                {%- assign discounted_price = selected_variant.price | times: discount_multiplier -%}
                 {{ discounted_price | money }}
               {%- else -%}
-                {%- assign discounted_price = product.price | times: 0.85 -%}
+                {%- assign discount_multiplier = 100 | minus: discount_percentage | divided_by: 100.0 -%}
+                {%- assign discounted_price = product.price | times: discount_multiplier -%}
                 {{ discounted_price | money }}
               {%- endif -%}
               <span class="purchase-option__frequency">{{ 'products.product.delivery_frequency' | t | default: 'Delivered every 30 days' }}</span>
@@ -92,14 +110,15 @@
   {%- comment -%} Subscription details (shown when subscribe is selected) {%- endcomment -%}
   <div class="purchase-options__details" data-subscription-details style="display: none;">
     <div class="subscription-frequency">
-      <label for="subscription-frequency-{{ section.id }}" class="subscription-frequency__label">
+      <label for="subscription-frequency-{{ product.id }}-{{ section.id }}" class="subscription-frequency__label">
         {{ 'products.product.delivery_every' | t | default: 'Deliver every' }}
       </label>
       <select 
-        id="subscription-frequency-{{ section.id }}" 
-        name="subscription_frequency" 
+        id="subscription-frequency-{{ product.id }}-{{ section.id }}" 
+        name="properties[subscription_frequency]" 
         class="subscription-frequency__select"
         data-subscription-frequency
+        form="{{ form_id }}"
       >
         <option value="15">{{ 'products.product.frequency_15_days' | t | default: '15 days' }}</option>
         <option value="30" selected>{{ 'products.product.frequency_30_days' | t | default: '30 days' }}</option>
@@ -112,19 +131,19 @@
     <div class="subscription-benefits">
       <ul class="subscription-benefits__list">
         <li class="subscription-benefits__item">
-          <svg class="subscription-benefits__icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <svg class="subscription-benefits__icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           {{ 'products.product.free_shipping' | t | default: 'Free shipping on all orders' }}
         </li>
         <li class="subscription-benefits__item">
-          <svg class="subscription-benefits__icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <svg class="subscription-benefits__icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           {{ 'products.product.cancel_anytime' | t | default: 'Cancel or pause anytime' }}
         </li>
         <li class="subscription-benefits__item">
-          <svg class="subscription-benefits__icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <svg class="subscription-benefits__icon" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           {{ 'products.product.exclusive_offers' | t | default: 'Exclusive subscriber-only offers' }}
@@ -134,6 +153,21 @@
   </div>
 
   {%- comment -%} Hidden inputs for CheckoutChamp integration {%- endcomment -%}
-  <input type="hidden" name="subscription_enabled" value="false" data-subscription-enabled>
-  <input type="hidden" name="subscription_discount" value="{{ settings.subscription_discount | default: 15 }}">
+  <input type="hidden" name="properties[_subscription_enabled]" value="false" data-subscription-enabled form="{{ form_id }}">
+  <input type="hidden" name="properties[_cc_sub_id]" value="{{ cc_sub_id }}" data-cc-sub-id form="{{ form_id }}">
+  <input type="hidden" name="properties[_subscription_discount]" value="{{ settings.subscription_discount | default: 15 }}" form="{{ form_id }}">
 </div>
+
+{%- comment -%} Debug mode - remove in production {%- endcomment -%}
+{%- if settings.debug_mode -%}
+<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 12px; border-radius: 4px;">
+  <strong>Debug Info:</strong><br>
+  Has Subscription: {{ has_subscription }}<br>
+  CC Sub ID: {{ cc_sub_id }}<br>
+  Product Metafields: {{ product.metafields.custom.cc_sub_id }} / {{ product.metafields.checkoutchamp.cc_sub_id }}<br>
+  Variant Metafields: {{ selected_variant.metafields.custom.cc_sub_id }}<br>
+  Always Show: {{ settings.always_show_purchase_options }}
+</div>
+{%- endif -%}
+
+{%- endif -%}
