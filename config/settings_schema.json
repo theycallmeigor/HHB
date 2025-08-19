@@ -27,12 +27,26 @@
       }
     ]
   },
-  {
+ {
   "name": "Subscription Settings",
   "settings": [
     {
       "type": "header",
       "content": "Subscribe & Save Configuration"
+    },
+    {
+      "type": "checkbox",
+      "id": "always_show_purchase_options",
+      "label": "Always Show Purchase Options",
+      "default": false,
+      "info": "Show purchase options even if cc_sub_id metafield is not present"
+    },
+    {
+      "type": "checkbox",
+      "id": "debug_mode",
+      "label": "Debug Mode",
+      "default": false,
+      "info": "Show debug information for troubleshooting"
     },
     {
       "type": "range",
@@ -49,13 +63,6 @@
       "id": "subscription_free_shipping",
       "label": "Free Shipping for Subscriptions",
       "default": true
-    },
-    {
-      "type": "text",
-      "id": "subscription_badge_text",
-      "label": "Subscription Badge Text",
-      "default": "Save",
-      "info": "Text shown in the subscription badge"
     }
   ]
 },
