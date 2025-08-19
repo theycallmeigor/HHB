@@ -1,17 +1,24 @@
 {%- comment -%} Gate by metaobject cc.mapping {%- endcomment -%}
+{%- comment -%} Gate by metaobject cc.mapping {%- endcomment -%}
 {% liquid
   assign cc_map = product.metafields.cc.mapping.value
   assign show_subscribe = false
+  assign cc_sub_id = ''
+  assign cc_ot_id = ''
 
   if cc_map
-    if checkoutchamp_mapping.subscription == true or checkoutchamp_mapping.subscription == 'true' or checkoutchamp_mapping.subscription
-      if checkoutchamp_mapping.subscription_id != blank
+    assign cc_ot_id = cc_map.one_time_id | default: ''
+    
+    # Check if subscription is enabled using the correct field reference
+    if cc_map.subscription == true or cc_map.subscription == 'true' 
+      if cc_map.subscription_id != blank
         assign show_subscribe = true
+        assign cc_sub_id = cc_map.subscription_id
       endif
     endif
   endif
 
-  assign default_mode = block.settings.default_selection
+  assign default_mode = block.settings.default_selection | default: 'onetime'
   assign is_subscription_default = false
   if default_mode == 'subscription' and show_subscribe
     assign is_subscription_default = true
@@ -20,142 +27,158 @@
 
 <div id="cc-purchase-options-{{ block.id }}"
      class="product-form__input purchase-options"
-     data-form-id="{{ product_form_id }}">
+     data-form-id="{{ product_form_id }}"
+     data-cc-ot-id="{{ cc_ot_id }}"
+     data-cc-sub-id="{{ cc_sub_id }}">
+  
   {% if show_subscribe %}
     <fieldset class="purchase-options__fieldset">
       <legend class="visually-hidden">Purchase options</legend>
 
       <label class="purchase-options__option">
-        <input type="radio" class="purchase-options__radio"
+        <input type="radio" 
+               class="purchase-options__radio"
                name="cc_purchase_mode_{{ section.id }}"
                value="onetime"
                {% unless is_subscription_default %}checked{% endunless %}>
         <span class="purchase-options__label">
           <span class="purchase-options__label-main">{{ block.settings.onetime_label | default: 'One-time purchase' }}</span>
-          {% if block.settings.onetime_subtitle != blank %}<span class="purchase-options__label-sub">{{ block.settings.onetime_subtitle }}</span>{% endif %}
+          {% if block.settings.onetime_subtitle != blank %}
+            <span class="purchase-options__label-sub">{{ block.settings.onetime_subtitle }}</span>
+          {% endif %}
         </span>
       </label>
 
       <label class="purchase-options__option">
-        <input type="radio" class="purchase-options__radio"
+        <input type="radio" 
+               class="purchase-options__radio"
                name="cc_purchase_mode_{{ section.id }}"
                value="subscription"
                {% if is_subscription_default %}checked{% endif %}>
         <span class="purchase-options__label">
           <span class="purchase-options__label-main">{{ block.settings.subscription_label | default: 'Subscribe & Save' }}</span>
-          {% if block.settings.subscription_subtitle != blank %}<span class="purchase-options__label-sub">{{ block.settings.subscription_subtitle }}</span>{% endif %}
+          {% if block.settings.subscription_subtitle != blank %}
+            <span class="purchase-options__label-sub">{{ block.settings.subscription_subtitle }}</span>
+          {% endif %}
         </span>
       </label>
     </fieldset>
   {% endif %}
 
-  {#— Canonical hidden fields —#}
-  <input type="hidden" name="properties[purchase_option]"
+  {%- comment -%} Hidden fields that submit with the form - always create these {%- endcomment -%}
+  <input type="hidden" 
+         name="properties[purchase_option]"
          value="{% if is_subscription_default %}subscription{% else %}one-time{% endif %}"
-         {% unless root_in_form %}form="{{ product_form_id }}"{% endunless %}>
-  <input type="hidden" name="properties[cc_override_id]"
-         value="{% if is_subscription_default %}{{ checkoutchamp_mapping.subscription_id }}{% else %}{{ cc_map.one_time_id | default: '' }}{% endif %}"
-         {% unless root_in_form %}form="{{ product_form_id }}"{% endunless %}>
+         form="{{ product_form_id }}">
+  
+  <input type="hidden" 
+         name="properties[cc_override_id]"
+         value="{% if is_subscription_default %}{{ cc_sub_id }}{% else %}{{ cc_ot_id }}{% endif %}"
+         form="{{ product_form_id }}">
 </div>
 
+{% if show_subscribe %}
 <script>
 (() => {
   const root = document.getElementById('cc-purchase-options-{{ block.id }}');
   if (!root) return;
+  
+  const formId = '{{ product_form_id }}';
+  const form = document.getElementById(formId);
+  
+  // Get hidden inputs
   const po = root.querySelector('input[name="properties[purchase_option]"]');
   const cc = root.querySelector('input[name="properties[cc_override_id]"]');
-  const subId = {{ checkoutchamp_mapping.subscription_id | default: '' | json }};
-const otId  = {{ cc_map.one_time_id  | default: '' | json }};
-
+  
+  // Get data from attributes
+  const subId = root.dataset.ccSubId || '{{ cc_sub_id }}';
+  const otId = root.dataset.ccOtId || '{{ cc_ot_id }}';
+  
   function sync() {
     const picked = root.querySelector('input.purchase-options__radio:checked');
-    const mode = picked ? picked.value : 'onetime';
-    po.value = mode === 'subscription' ? 'subscription' : 'one-time';
-    cc.value = mode === 'subscription' ? (subId || '') : (otId || '');
+    if (!picked) return;
+    
+    const mode = picked.value;
+    
+    // Update hidden inputs
+    if (po) po.value = mode === 'subscription' ? 'subscription' : 'one-time';
+    if (cc) cc.value = mode === 'subscription' ? subId : otId;
+    
+    // Update form data attributes for CheckoutChamp
+    if (form) {
+      form.dataset.ccMode = mode === 'subscription' ? 'subscription' : 'one-time';
+      form.dataset.ccOffer = mode === 'subscription' ? subId : otId;
+    }
+    
+    // Dispatch event for quantity breaks component to listen to
+    window.dispatchEvent(new CustomEvent('cc-purchase-option:change', {
+      detail: {
+        mode: mode === 'subscription' ? 'subscription' : 'one-time',
+        offer: mode === 'subscription' ? subId : otId,
+        formId: formId
+      }
+    }));
   }
+  
+  // Listen for changes on radio buttons
   root.addEventListener('change', e => {
-    if (e.target.classList.contains('purchase-options__radio')) sync();
+    if (e.target.classList.contains('purchase-options__radio')) {
+      sync();
+    }
   });
+  
+  // Initial sync
   sync();
 })();
 </script>
-{% liquid
-  assign item_count = 0
-  if block.settings.option_1_quantity != 0
-    assign item_count = item_count | plus: 1
-    assign last_offer_index = 1
-  endif
-  if block.settings.option_2_quantity != 0
-    assign item_count = item_count | plus: 1
-    assign last_offer_index = 2
-  endif
-  if block.settings.option_3_quantity != 0
-    assign item_count = item_count | plus: 1
-    assign last_offer_index = 3
-  endif
-  if block.settings.option_4_quantity != 0
-    assign item_count = item_count | plus: 1
-    assign last_offer_index = 4
-  endif
+{% endif %}
 
-  assign has_second_option = false
-  if product.options.size >= 2
-    assign has_second_option = true
-  endif
-
-  assign has_badge = false
-  if block.settings.option_1_badge != blank or block.settings.option_2_badge != blank or block.settings.option_3_badge != blank or block.settings.option_4_badge != blank
-    assign has_badge = true
-  endif
+<style>
+  .purchase-options__fieldset {
+    display: flex;
+    gap: 8px;
+    border: none;
+    padding: 0;
+    margin: 0 0 12px;
+  }
   
-  assign variants_available_arr = product.variants | map: 'available'
-  assign variants_option1_arr = product.variants | map: 'option1'
-  assign variants_option2_arr = product.variants | map: 'option2'
-  assign variants_option3_arr = product.variants | map: 'option3'
-
-  assign has_variants = false
-  assign base_price = product.selected_or_first_available_variant.price
-
-  comment
-    Purchase options (OTC / Subscription) sources
-    - Product-level metaobject mapping (preferred): product.metafields.cc.mapping
-    - Legacy fallbacks: product.metafields.productId.productId / .subscription_id
-  endcomment
-  assign cc_map = product.metafields.cc.mapping.value
-  assign cc_ot_override = ''
-  assign cc_sub_override = ''
-  if cc_map
-    assign cc_ot_override = cc_map.one_time_id
-    assign cc_sub_override = checkoutchamp_mapping.subscription_id
-  endif
-  if cc_ot_override == blank
-    assign cc_ot_override = product.metafields.productId.productId
-  endif
-  if cc_sub_override == blank
-    assign cc_sub_override = product.metafields.productId.subscription_id
-  endif
-
-  assign has_selling_plans = false
-  assign default_selling_plan_id = ''
-  assign subscription_subtext = ''
-  if product.selling_plan_groups.size > 0
-    assign has_selling_plans = true
-    for spg in product.selling_plan_groups
-      for sp in spg.selling_plans
-        assign default_selling_plan_id = sp.id
-        if sp.description != blank
-          assign subscription_subtext = sp.description
-        elsif sp.name != blank
-          assign subscription_subtext = sp.name
-        endif
-        break
-      endfor
-      if default_selling_plan_id != '' 
-        break
-      endif
-    endfor
-  endif
-%}
+  .purchase-options__option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+  
+  .purchase-options__option:has(.purchase-options__radio:checked) {
+    background: rgba(109, 56, 139, 0.05);
+    border-color: rgba(109, 56, 139, 0.3);
+  }
+  
+  .purchase-options__radio {
+    margin: 0;
+  }
+  
+  .purchase-options__label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .purchase-options__label-main {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  
+  .purchase-options__label-sub {
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+</style>
 <quantity-breaks
   class="quantity-breaks quantity-breaks--{{ block.settings.style }} accent-color-{{ block.settings.color_scheme }}{% if block.settings.space_images %} quantity-breaks--space-images{% endif %}{% if has_badge %} quantity-breaks--has-badge{% endif %}{% if block.settings.full_width_pickers %} quantity-breaks-full-width-pickers{% endif %} quantity-breaks--vertical-image-{{ block.settings.vertical_images_position }}{% if block.settings.display_selected_indicator %} quantity-breaks--show-indicator{% endif %}{% if block.settings.indicator_top == false %} quantity-breaks--indicator-bottom{% endif %}{% if block.settings.image_width == 100 %} quantity-breaks--max-width-images{% endif %}"
   id="quantity-breaks-{{ section.id }}"
