@@ -60,11 +60,14 @@
   endif
   
   assign subscription_discount = block.settings.subscription_discount | default: 15
-  assign show_subscription = has_subscription or block.settings.always_show_subscription
+  assign show_subscription = false
+  if has_subscription == true or block.settings.always_show_subscription == true
+    assign show_subscription = true
+  endif
 %}
 
 {%- comment -%} Purchase Type Toggle (One-time vs Subscribe & Save) {%- endcomment -%}
-{%- if show_subscription and block.settings.enable_subscription -%}
+{%- if show_subscription == true and block.settings.enable_subscription == true -%}
   <div class="quantity-breaks__purchase-type" data-cc-sub-id="{{ cc_sub_id }}">
     <div class="purchase-type__options">
       <label class="purchase-type__option purchase-type__option--onetime">
@@ -136,7 +139,7 @@
         </select>
       </div>
       
-      {%- if block.settings.show_subscription_benefits -%}
+      {%- if block.settings.show_subscription_benefits == true -%}
         <ul class="subscription-benefits">
           <li class="subscription-benefits__item">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -318,7 +321,7 @@
 {%- endif -%}
 
 <quantity-breaks
-  class="quantity-breaks quantity-breaks--{{ block.settings.style }} accent-color-{{ block.settings.color_scheme }}{% if block.settings.space_images %} quantity-breaks--space-images{% endif %}{% if has_badge %} quantity-breaks--has-badge{% endif %}{% if block.settings.full_width_pickers %} quantity-breaks-full-width-pickers{% endif %} quantity-breaks--vertical-image-{{ block.settings.vertical_images_position }}{% if block.settings.display_selected_indicator %} quantity-breaks--show-indicator{% endif %}{% if block.settings.indicator_top == false %} quantity-breaks--indicator-bottom{% endif %}{% if block.settings.image_width == 100 %} quantity-breaks--max-width-images{% endif %}{% if show_subscription and block.settings.enable_subscription %} quantity-breaks--has-subscription{% endif %}"
+  class="quantity-breaks quantity-breaks--{{ block.settings.style }} accent-color-{{ block.settings.color_scheme }}{% if block.settings.space_images %} quantity-breaks--space-images{% endif %}{% if has_badge %} quantity-breaks--has-badge{% endif %}{% if block.settings.full_width_pickers %} quantity-breaks-full-width-pickers{% endif %} quantity-breaks--vertical-image-{{ block.settings.vertical_images_position }}{% if block.settings.display_selected_indicator %} quantity-breaks--show-indicator{% endif %}{% if block.settings.indicator_top == false %} quantity-breaks--indicator-bottom{% endif %}{% if block.settings.image_width == 100 %} quantity-breaks--max-width-images{% endif %}{% if show_subscription == true and block.settings.enable_subscription == true %} quantity-breaks--has-subscription{% endif %}"
   id="quantity-breaks-{{ section.id }}"
   data-section="{{ section.id }}"
   data-items="{{ item_count }}"
@@ -334,7 +337,7 @@
   {% if block.settings.scroll_media_gallery == false %}
     data-prevent-gallery-scroll="true"
   {% endif %}
-  {% if show_subscription %}
+  {% if show_subscription == true %}
     data-subscription-enabled="{{ block.settings.enable_subscription }}"
     data-subscription-discount="{{ subscription_discount }}"
     data-cc-sub-id="{{ cc_sub_id }}"
@@ -595,6 +598,8 @@
                 </div>
               </div>
             </div>
+            
+            {%- comment -%} Keep all existing variant selectors exactly as they are {%- endcomment -%}
             {% if product.has_only_default_variant == false and block.settings.enable_variant_selectors %}
               {% if qty != 1 or block.settings.enable_variant_selectors_on_quantity_of_1 %}
                 <div class="quantity-break__variants">
@@ -700,6 +705,7 @@
             {% endif %}
           </div>
           
+          {%- comment -%} Keep all existing upsells functionality exactly as it is {%- endcomment -%}
           {% if block.settings.style == 'normal' %}
             <quantity-break-upsells
               class="quantity-break__upsells-container"
