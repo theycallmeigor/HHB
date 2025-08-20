@@ -286,241 +286,6 @@
                     </div>
                   </div>
                 </div>
-                {%- comment -%} ---------- PURCHASE TYPE TOGGLE (ONE-TIME vs SUBSCRIBE & SAVE) ---------- {%- endcomment -%}
-
-
-{%- liquid
-    # detect subscription capability (you already compute has_subscription/cc_sub_id above)
-  assign selling_plan_id = ''
-  if product.selling_plan_groups.size > 0
-    assign selling_plan_id = product.selling_plan_groups.first.selling_plans.first.id
-  endif
-
-  assign subscription_discount = block.settings.subscription_discount | default: 15
-  assign subscribe_default     = block.settings.subscribe_selected_by_default | default: false
--%}
-
-{%- if show_subscription == true and block.settings.enable_subscription == true -%}
-  <div class="qb-purchase-type" 
-       data-subs-discount="{{ subscription_discount | escape }}"
-       data-cc-sub-id="{{ cc_sub_id | escape }}"
-       data-selling-plan-id="{{ selling_plan_id | escape }}">
-
-    <div class="qb-purchase-type__row">
-      {%- assign onetime_checked = true -%}
-      {%- if subscribe_default -%}{%- assign onetime_checked = false -%}{%- endif -%}
-
-      <!-- ONE-TIME -->
-      <label class="qb-purchase-type__card">
-        <input type="radio"
-               name="purchase_type_{{ section.id }}"
-               value="onetime"
-               class="qb-purchase-type__input"
-               {% if onetime_checked %}checked{% endif %}
-               form="{{ product_form_id }}">
-        <span class="qb-purchase-type__body">
-          <span class="qb-radio"></span>
-          <span class="qb-purchase-type__text">
-            <span class="qb-purchase-type__title">
-              {{ block.settings.onetime_label | default: 'One-Time Purchase' }}
-            </span>
-            <span class="qb-purchase-type__sub">
-              {{ block.settings.onetime_sub | default: 'No refills. Stock may sell out.' }}
-            </span>
-          </span>
-        </span>
-      </label>
-
-      <!-- SUBSCRIBE -->
-      <label class="qb-purchase-type__card">
-        <input type="radio"
-               name="purchase_type_{{ section.id }}"
-               value="subscribe"
-               class="qb-purchase-type__input"
-               {% unless onetime_checked %}checked{% endunless %}
-               form="{{ product_form_id }}">
-        <span class="qb-purchase-type__body">
-          <span class="qb-radio"></span>
-          <span class="qb-purchase-type__text">
-            <span class="qb-purchase-type__title">
-              {{ block.settings.subscribe_label | default: 'Save 25% with Auto-Refills' | replace: '25', subscription_discount }}
-            </span>
-            <span class="qb-purchase-type__sub">
-              {{ block.settings.subscribe_sub | default: 'Zero commitment. Cancel anytime.' }}
-            </span>
-          </span>
-        </span>
-      </label>
-    </div>
-
-    <!-- Frequency + hidden inputs that the cart needs -->
-    <div class="qb-subscribe-details" {% if onetime_checked %}style="display:none"{% endif %}>
-      <label for="subscription-frequency-{{ section.id }}" class="qb-subscribe-details__label">
-        {{ block.settings.frequency_label | default: 'Deliver every' }}
-      </label>
-      <select id="subscription-frequency-{{ section.id }}"
-              name="properties[subscription_frequency]"
-              class="qb-subscribe-details__select"
-              form="{{ product_form_id }}">
-        <option value="15">15 days</option>
-        <option value="30" selected>30 days</option>
-        <option value="45">45 days</option>
-        <option value="60">60 days</option>
-        <option value="90">90 days</option>
-      </select>
-    </div>
-
-    <!-- Hidden fields (for both Shopify Selling Plans AND CheckoutChamp fallbacks) -->
-    <input type="hidden" name="selling_plan" value="" data-selling-plan-input form="{{ product_form_id }}">
-    <input type="hidden" name="properties[_subscription_enabled]" value="{% if onetime_checked %}false{% else %}true{% endif %}" data-subscription-enabled form="{{ product_form_id }}">
-    <input type="hidden" name="properties[_cc_sub_id]" value="{{ cc_sub_id }}" data-cc-sub-id form="{{ product_form_id }}">
-    <input type="hidden" name="properties[_subscription_discount]" value="{{ subscription_discount }}" data-subscription-discount form="{{ product_form_id }}">
-  </div>
-
-  <style>
-    /* Cards row */
-    .qb-purchase-type__row{display:flex;gap:.75rem;margin:0 0 1rem}
-    .qb-purchase-type__card{flex:1;cursor:pointer}
-    .qb-purchase-type__input{position:absolute;opacity:0;pointer-events:none}
-    .qb-purchase-type__body{
-      display:flex;align-items:center;gap:.6rem;padding:1rem;border:var(--border-width) solid rgba(var(--color-foreground),.2);
-      border-radius:var(--border-radius);background:#fff;transition:.2s
-    }
-    .qb-purchase-type__card:hover .qb-purchase-type__body{border-color:var(--text-accent-color)}
-    .qb-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--text-accent-color);display:inline-block;position:relative;flex:0 0 20px}
-    .qb-radio:after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--text-accent-color);opacity:0;transition:.2s}
-    .qb-purchase-type__input:checked + .qb-purchase-type__body{border-color:var(--text-accent-color);background:rgba(var(--color-foreground),.03)}
-    .qb-purchase-type__input:checked + .qb-purchase-type__body .qb-radio:after{opacity:1}
-    .qb-purchase-type__text{display:flex;flex-direction:column}
-    .qb-purchase-type__title{font-weight:700;line-height:1.1}
-    .qb-purchase-type__sub{font-size:.9rem;opacity:.8}
-    .qb-subscribe-details{padding:1rem;border-radius:var(--border-radius);background:rgba(var(--color-foreground),.03);margin-bottom:1rem}
-    .qb-subscribe-details__label{margin-right:.5rem;font-weight:600}
-    .qb-subscribe-details__select{min-width:9rem}
-    @media (max-width:749px){.qb-purchase-type__row{flex-direction:column}}
-  </style>
-{%- endif -%}
-
-{%- comment -%} ---------- SUBSCRIPTION PRICE/FORM LOGIC ---------- {%- endcomment -%}
-<script>
-(function() {
-  const root = document.getElementById('quantity-breaks-{{ section.id }}');
-  const toggleWrap = root?.previousElementSibling?.matches?.('.qb-purchase-type') ? root.previousElementSibling : document.querySelector('.qb-purchase-type');
-  if (!root || !toggleWrap) return;
-
-  const moneyFormat = root.dataset.moneyFormat || '${{amount}}';
-  const subDiscount = Number(toggleWrap.dataset.subsDiscount || 15); // percent
-  const sellingPlanId = toggleWrap.dataset.sellingPlanId || '';
-  const ccSubId = toggleWrap.dataset.ccSubId || '';
-  const sellingPlanInput = toggleWrap.querySelector('[data-selling-plan-input]');
-  const propEnabledInput = toggleWrap.querySelector('[data-subscription-enabled]');
-  const freqSelect = toggleWrap.querySelector('#subscription-frequency-{{ section.id }}');
-  const detailsBox = toggleWrap.querySelector('.qb-subscribe-details');
-
-  // all “price” spans inside each quantity break that should be rewritten
-  const refreshAllPrices = (isSub) => {
-    root.querySelectorAll('.quantity-break').forEach(bar => {
-      const priceSpan = bar.querySelector('[data-subscription-price]');
-      if (!priceSpan) return;
-
-      const original = Number(bar.dataset.originalPrice || 0);            // total price (cents) you computed in Liquid
-      const compare  = Number(bar.dataset.originalCompare || 0);          // total compare (cents)
-      const qty      = Number(bar.dataset.quantity || 1);
-
-      const newTotal = isSub ? Math.round(original * (1 - subDiscount/100)) : original;
-      const newEach  = qty > 0 ? Math.round(newTotal / qty) : newTotal;
-      const save     = (compare > 0 ? compare : original) - newTotal;
-
-      setDisplayFromTemplate(priceSpan, {
-        price:      newTotal,
-        price_each: newEach,
-        compare:    compare,
-        saved:      Math.max(0, save)
-      });
-
-      // toggle compare visibility if needed
-      const cmp = bar.querySelector('.quantity-break__compare-price');
-      if (cmp) {
-        if (compare <= newTotal) cmp.classList.add('hidden');
-        else cmp.classList.remove('hidden');
-      }
-    });
-  };
-
-  // reads element.dataset.text and replaces [price], [price_each], [compare_price], [amount_saved]
-  function setDisplayFromTemplate(el, vals){
-    const tpl = el.dataset.text || el.innerHTML;
-    const html = tpl
-      .replace(/\[price_each\]/g, formatMoney(vals.price_each))
-      .replace(/\[price\]/g,       formatMoney(vals.price))
-      .replace(/\[compare_price\]/g, formatMoney(vals.compare))
-      .replace(/\[amount_saved\]/g,  formatMoney(vals.saved));
-    el.innerHTML = html;
-  }
-
-  function formatMoney(cents) {
-    try {
-      if (window.Shopify && typeof Shopify.formatMoney === 'function') {
-        return Shopify.formatMoney(cents, moneyFormat);
-      }
-    } catch(e){}
-    const d = (cents/100).toFixed(2);
-    return moneyFormat.replace('{{amount}}', d);
-  }
-
-  function applyPurchaseMode(mode){
-    const isSub = mode === 'subscribe';
-
-    // show details box
-    if (detailsBox) detailsBox.style.display = isSub ? 'block' : 'none';
-
-    // set hidden property for your backend
-    if (propEnabledInput) propEnabledInput.value = String(isSub);
-
-    // set Shopify selling plan (if store uses it)
-    if (sellingPlanInput) sellingPlanInput.value = isSub ? (sellingPlanId || '') : '';
-
-    // update prices
-    refreshAllPrices(isSub);
-
-    // notify CheckoutChamp (optional)
-    const cc = window.CC || window.CheckoutChamp;
-    if (cc && typeof cc.setSubscription === 'function') {
-      try {
-        cc.setSubscription({
-          enabled: isSub,
-          id: ccSubId || null,
-          frequency: Number(freqSelect?.value || 30),
-          discount: subDiscount
-        });
-      } catch(e){}
-    }
-  }
-
-  // initial apply (respect default radio)
-  const current = toggleWrap.querySelector('input[name="purchase_type_{{ section.id }}"]:checked')?.value || 'onetime';
-  applyPurchaseMode(current);
-
-  // toggle listeners
-  toggleWrap.querySelectorAll('input[name="purchase_type_{{ section.id }}"]').forEach(r => {
-    r.addEventListener('change', e => applyPurchaseMode(e.target.value));
-  });
-
-  // when user changes frequency, update CC payload immediately
-  freqSelect?.addEventListener('change', () => {
-    const checked = toggleWrap.querySelector('input[name="purchase_type_{{ section.id }}"]:checked')?.value === 'subscribe';
-    if (checked) applyPurchaseMode('subscribe');
-  });
-
-  // if the shopper changes quantity break after the fact, keep prices in sync
-  root.addEventListener('change', (e) => {
-    if (e.target?.name === 'quantity') {
-      const isSub = toggleWrap.querySelector('input[name="purchase_type_{{ section.id }}"]:checked')?.value === 'subscribe';
-      refreshAllPrices(isSub);
-    }
-  });
-})();
-</script>
               {%- when 'quantity_selector' -%}
                 {%- if block.settings.enable_quantity_discounts -%}
                   {% render 'quantity-breaks', block: block, product: product, product_form_id: product_form_id %}
@@ -2277,65 +2042,67 @@
       ]
     },
     {
-  "type": "quantity_selector",
-  "name": "Quantity selector",
-  "limit": 1,
-  "settings": [
-    {
-      "type": "header",
-      "content": "Classic quantity selector"
-    },
-    {
-      "type": "paragraph",
-      "content": "To customize the colors of the classic quantity selector (not quantity breaks), navigate to Theme settings > Quantity selector."
-    },
-    {
-      "type": "checkbox",
-      "id": "full_width_classic",
-      "label": "Full width"
-    },
-    {
-      "type": "select",
-      "id": "atc_append",
-      "options": [
+      "type": "quantity_selector",
+      "name": "Quantity selector",
+      "limit": 1,
+      "settings": [
         {
-          "value": "none",
-          "label": "Normal"
+          "type": "header",
+          "content": "Classic quantity selector"
         },
         {
-          "value": "left",
-          "label": "Left side of the ATC button"
+          "type": "paragraph",
+          "content": "To customize the colors of the classic quantity selector (not quantity breaks), navigate to Theme settings > Quantity selector."
         },
         {
-          "value": "right",
-          "label": "Right side of the ATC button"
-        }
-      ],
-      "default": "none",
-      "label": "Position",
-      "info": "IMPORTANT: When displaying the selector next to the ATC button, the Quantity selector block must be placed ABOVE the Buy buttons block."
-    },
-    {
-      "type": "select",
-      "id": "atc_append_heights",
-      "options": [
-        {
-          "value": "original",
-          "label": "Keep original heights"
+          "type": "checkbox",
+          "id": "full_width_classic",
+          "label": "Full width"
         },
         {
-          "value": "stretch-quantity",
-          "label": "Make quantity selector same height as ATC button"
+          "type": "select",
+          "id": "atc_append",
+          "options": [
+            {
+              "value": "none",
+              "label": "Normal"
+            },
+            {
+              "value": "left",
+              "label": "Left side of the ATC button"
+            },
+            {
+              "value": "right",
+              "label": "Right side of the ATC button"
+            }
+          ],
+          "default": "none",
+          "label": "Position",
+          "info": "IMPORTANT: When displaying the selector next to the ATC button, the Quantity selector block must be placed ABOVE the Buy buttons block."
         },
         {
-          "value": "shrink-atc",
-          "label": "Make ATC button same height as quantity selector"
-        }
-      ],
-      "default": "stretch-quantity",
-      "label": "Heights of the quantity selector & ATC button when together",
-      "info": "By default, quantity selector & ATC button are not the same height. When you display the quantity selector next to the ATC button, this setting controls how's that handled."
-    },
+          "type": "select",
+          "id": "atc_append_heights",
+          "options": [
+            {
+              "value": "original",
+              "label": "Keep original heights"
+            },
+            {
+              "value": "stretch-quantity",
+              "label": "Make quantity selector same height as ATC button"
+            },
+            {
+              "value": "shrink-atc",
+              "label": "Make ATC button same height as quantity selector"
+            }
+          ],
+          "default": "stretch-quantity",
+          "label": "Heights of the quantity selector & ATC button when together",
+          "info": "By default, quantity selector & ATC button are not the same height. When you display the quantity selector next to the ATC button, this setting controls how's that handled."
+        },
+        
+    
     {
       "type": "header",
       "content": "Subscribe & Save Options"
@@ -2346,20 +2113,6 @@
       "label": "Enable Subscribe & Save",
       "default": true,
       "info": "Shows one-time purchase and subscribe & save options when cc_sub_id metafield is present"
-    },
-    {
-      "type": "checkbox",
-      "id": "always_show_subscription",
-      "label": "Always show subscription options",
-      "default": false,
-      "info": "Show subscription options even if cc_sub_id metafield is not present (for testing)"
-    },
-    {
-      "type": "checkbox",
-      "id": "show_subscription_benefits",
-      "label": "Show subscription benefits",
-      "default": true,
-      "info": "Display benefits list under subscription frequency selector"
     },
     {
       "type": "text",
@@ -2395,26 +2148,11 @@
       "id": "subscription_badge_color",
       "label": "Subscription badge color",
       "options": [
-        {
-          "value": "accent-1",
-          "label": "Accent 1"
-        },
-        {
-          "value": "accent-2",
-          "label": "Accent 2"
-        },
-        {
-          "value": "background-1",
-          "label": "Background 1"
-        },
-        {
-          "value": "background-2",
-          "label": "Background 2"
-        },
-        {
-          "value": "inverse",
-          "label": "Inverse"
-        }
+        { "value": "accent-1", "label": "Accent 1" },
+        { "value": "accent-2", "label": "Accent 2" },
+        { "value": "background-1", "label": "Background 1" },
+        { "value": "background-2", "label": "Background 2" },
+        { "value": "inverse", "label": "Inverse" }
       ],
       "default": "accent-1"
     },
@@ -2424,354 +2162,303 @@
       "label": "Frequency selector label",
       "default": "Deliver every"
     },
-    {
-      "type": "text",
-      "id": "benefit_1",
-      "label": "Subscription benefit 1",
-      "default": "Free shipping on all orders"
-    },
-    {
-      "type": "text",
-      "id": "benefit_2",
-      "label": "Subscription benefit 2",
-      "default": "Cancel or pause anytime"
-    },
-    {
-      "type": "text",
-      "id": "benefit_3",
-      "label": "Subscription benefit 3",
-      "default": "Exclusive subscriber offers"
-    },
-    {
-      "type": "header",
-      "content": "Quantity Discounts"
-    },
-    {
-      "type": "paragraph",
-      "content": "IMPORTANT: You MUST set up [automatic discounts](https://help.shopify.com/en/manual/discounts/automatic-discounts) in Shopify admin > Discounts to allow items to be discounted at certain quantity levels."
-    },
-    {
-      "type": "checkbox",
-      "id": "enable_quantity_discounts",
-      "label": "Enable Quantity Discounts"
-    },
-    {
-      "type": "paragraph",
-      "content": "[Tutorial on how to set up](https://dashboard.shrinesolutions.com/customer/help-center?category=Blocks&element=Quantity+Breaks)"
-    },
-    {
-      "type": "paragraph",
-      "content": "All settings below are related to quantity discounts (quantity breaks)."
-    },
-    {
-      "type": "header",
-      "content": "General & styling"
-    },
-    {
-      "type": "text",
-      "id": "headline",
-      "label": "Heading",
-      "default": "BUNDLE & SAVE"
-    },
-    {
-      "type": "select",
-      "id": "style",
-      "options": [
         {
-          "value": "normal",
-          "label": "Classic"
+          "type": "header",
+          "content": "Quantity Discounts"
         },
         {
-          "value": "compact",
-          "label": "Compact"
+          "type": "paragraph",
+          "content": "IMPORTANT: You MUST set up [automatic discounts](https://help.shopify.com/en/manual/discounts/automatic-discounts) in Shopify admin > Discounts to allow items to be discounted at certain quantity levels."
         },
         {
-          "value": "vertical",
-          "label": "Vertical"
-        }
-      ],
-      "label": "Style",
-      "default": "normal"
-    },
-    {
-      "type": "select",
-      "id": "preselected",
-      "options": [
-        {
-          "value": "none",
-          "label": "None"
+          "type": "checkbox",
+          "id": "enable_quantity_discounts",
+          "label": "Enable Quantity Discounts"
         },
         {
-          "value": "option_1",
-          "label": "Option #1"
+          "type": "paragraph",
+          "content": "[Tutorial on how to set up](https://dashboard.shrinesolutions.com/customer/help-center?category=Blocks&element=Quantity+Breaks)"
         },
         {
-          "value": "option_2",
-          "label": "Option #2"
+          "type": "paragraph",
+          "content": "All settings below are related to quantity discounts (quantity breaks)."
         },
         {
-          "value": "option_3",
-          "label": "Option #3"
+          "type": "header",
+          "content": "General & styling"
         },
         {
-          "value": "option_4",
-          "label": "Option #4"
-        }
-      ],
-      "default": "option_1",
-      "label": "Preselected option"
-    },
-    {
-      "type": "checkbox",
-      "id": "update_pdp_prices",
-      "label": "Update displayed product page prices",
-      "default": false,
-      "info": "This option updates the displayed price in the Price block, Sticky Add to Cart block & add to cart button to the selected offer price. This option might NOT work with certain currency converter apps. Test before publishing."
-    },
-    {
-      "type": "select",
-      "id": "prices_layout",
-      "label": "Prices layout",
-      "options": [
-        {
-          "value": "price-first-horizontal",
-          "label": "Price first - horizontal"
+          "type": "text",
+          "id": "headline",
+          "label": "Heading",
+          "default": "BUNDLE & SAVE"
         },
         {
-          "value": "price-first-vertical",
-          "label": "Price first - vertical"
+          "type": "select",
+          "id": "style",
+          "options": [
+            {
+              "value": "normal",
+              "label": "Classic"
+            },
+            {
+              "value": "compact",
+              "label": "Compact"
+            },
+            {
+              "value": "vertical",
+              "label": "Vertical"
+            }
+          ],
+          "label": "Style",
+          "default": "normal"
         },
         {
-          "value": "compare-price-first-horizontal",
-          "label": "Compare price first - horizontal"
+          "type": "select",
+          "id": "preselected",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "option_1",
+              "label": "Option #1"
+            },
+            {
+              "value": "option_2",
+              "label": "Option #2"
+            },
+            {
+              "value": "option_3",
+              "label": "Option #3"
+            },
+            {
+              "value": "option_4",
+              "label": "Option #4"
+            }
+          ],
+          "default": "option_1",
+          "label": "Preselected option"
         },
         {
-          "value": "compare-price-first-vertical",
-          "label": "Compare price first - vertical"
-        }
-      ],
-      "default": "price-first-vertical"
-    },
-    {
-      "type": "checkbox",
-      "id": "display_selected_indicator",
-      "label": "Display selected indicator in normal & compact style",
-      "default": true
-    },
-    {
-      "type": "range",
-      "id": "border_radius",
-      "min": 0,
-      "max": 40,
-      "step": 2,
-      "unit": "px",
-      "label": "Corner radius",
-      "default": 10
-    },
-    {
-      "type": "range",
-      "id": "border_width",
-      "min": 1,
-      "max": 5,
-      "step": 1,
-      "unit": "px",
-      "label": "Border width",
-      "default": 2
-    },
-    {
-      "type": "select",
-      "id": "color_scheme",
-      "label": "Color scheme",
-      "options": [
-        {
-          "value": "accent-1",
-          "label": "Accent 1"
+          "type": "checkbox",
+          "id": "update_pdp_prices",
+          "label": "Update displayed product page prices",
+          "default": false,
+          "info": "This option updates the displayed price in the Price block, Sticky Add to Cart block & add to cart button to the selected offer price. This option might NOT work with certain currency converter apps. Test before publishing."
         },
         {
-          "value": "accent-2",
-          "label": "Accent 2"
+          "type": "select",
+          "id": "prices_layout",
+          "label": "Prices layout",
+          "options": [
+            { "value": "price-first-horizontal", "label": "Price first - horizontal" },
+            { "value": "price-first-vertical", "label": "Price first - vertical" },
+            { "value": "compare-price-first-horizontal", "label": "Compare price first - horizontal" },
+            { "value": "compare-price-first-vertical", "label": "Compare price first - vertical" }
+          ],
+          "default": "price-first-vertical"
         },
         {
-          "value": "outline-button",
-          "label": "Outline button"
+          "type": "checkbox",
+          "id": "display_selected_indicator",
+          "label": "Display selected indicator in normal & compact style",
+          "default": true
         },
         {
-          "value": "text",
-          "label": "Text"
-        }
-      ],
-      "default": "accent-1"
-    },
-    {
-      "type": "select",
-      "id": "accent_color",
-      "label": "Text accent color",
-      "options": [
-        {
-          "value": "accent-1",
-          "label": "Accent 1"
+          "type": "range",
+          "id": "border_radius",
+          "min": 0,
+          "max": 40,
+          "step": 2,
+          "unit": "px",
+          "label": "Corner radius",
+          "default": 10
         },
         {
-          "value": "accent-2",
-          "label": "Accent 2"
+          "type": "range",
+          "id": "border_width",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "unit": "px",
+          "label": "Border width",
+          "default": 2
         },
         {
-          "value": "outline-button",
-          "label": "Outline button"
+          "type": "select",
+          "id": "color_scheme",
+          "label": "Color scheme",
+          "options": [
+            {
+              "value": "accent-1",
+              "label": "Accent 1"
+            },
+            {
+              "value": "accent-2",
+              "label": "Accent 2"
+            },
+            {
+              "value": "outline-button",
+              "label": "Outline button"
+            },
+            {
+              "value": "text",
+              "label": "Text"
+            }
+          ],
+          "default": "accent-1"
         },
         {
-          "value": "text",
-          "label": "Text"
-        }
-      ],
-      "default": "accent-1",
-      "info": "Put words in italic to make them be in this color."
-    },
-    {
-      "type": "header",
-      "content": "Variant selectors"
-    },
-    {
-      "type": "checkbox",
-      "id": "enable_variant_selectors",
-      "label": "Enable variant selectors",
-      "default": true,
-      "info": "If the product has multiple variants, a variant selector will be displayed for each quantity."
-    },
-    {
-      "type": "inline_richtext",
-      "id": "pickers_label",
-      "label": "Variant selectors label",
-      "info": "Displayed above the variant selectors."
-    },
-    {
-      "type": "checkbox",
-      "id": "enable_variant_selectors_on_quantity_of_1",
-      "label": "Enable variant selectors on single quantity",
-      "default": false
-    },
-    {
-      "type": "checkbox",
-      "id": "update_prices",
-      "label": "Enable variant price updates",
-      "default": false,
-      "info": "This option is used when variants have different prices, and it will dynamically change the displayed bundle prices based on the selected variants. ATTENTION: This option might NOT work with currency converters."
-    },
-    {
-      "type": "inline_richtext",
-      "id": "pickers_number_text",
-      "label": "Variant selectors number text",
-      "info": "Displayed before variant selectors. Use [index] to display the index of the selectors.",
-      "default": "<strong>#[index]</strong>"
-    },
-    {
-      "type": "checkbox",
-      "id": "show_selected_variant_images",
-      "label": "Show images of selected variants",
-      "default": false,
-      "info": "Shows little image of the selected variant next to each variant selector."
-    },
-    {
-      "type": "select",
-      "id": "variant_images_position",
-      "label": "Selected variant images position",
-      "options": [
-        {
-          "value": "start",
-          "label": "Before number text"
+          "type": "select",
+          "id": "accent_color",
+          "label": "Text accent color",
+          "options": [
+            {
+              "value": "accent-1",
+              "label": "Accent 1"
+            },
+            {
+              "value": "accent-2",
+              "label": "Accent 2"
+            },
+            {
+              "value": "outline-button",
+              "label": "Outline button"
+            },
+            {
+              "value": "text",
+              "label": "Text"
+            }
+          ],
+          "default": "accent-1",
+          "info": "Put words in italic to make them be in this color."
         },
         {
-          "value": "middle",
-          "label": "Between number text & variant selectors"
+          "type": "header",
+          "content": "Variant selectors"
         },
         {
-          "value": "end",
-          "label": "After variant selectors"
-        }
-      ],
-      "default": "middle"
-    },
-    {
-      "type": "checkbox",
-      "id": "skip_unavailable",
-      "label": "Hide & automatically skip sold out variants",
-      "default": false
-    },
-    {
-      "type": "checkbox",
-      "id": "full_width_pickers",
-      "label": "Make variant selectors full width",
-      "default": false
-    },
-    {
-      "type": "checkbox",
-      "id": "hide_pickers_overlay",
-      "label": "Disable variant selectors color overlay",
-      "default": true
-    },
-    {
-      "type": "checkbox",
-      "id": "indicator_top",
-      "label": "Only display the indicator in the top area",
-      "default": true,
-      "info": "If active, pushes the variant selectors to the left, and only displays the indicator next to the content area at the top."
-    },
-    {
-      "type": "checkbox",
-      "id": "scroll_media_gallery",
-      "label": "Scroll to the selected variant image in product images gallery",
-      "default": true
-    },
-    {
-      "type": "header",
-      "content": "Images",
-      "info": "Only available in classic & vertical style"
-    },
-    {
-      "type": "range",
-      "id": "image_width",
-      "min": 0,
-      "max": 100,
-      "step": 5,
-      "unit": "%",
-      "label": "Images width",
-      "default": 70
-    },
-    {
-      "type": "header",
-      "content": "Vertical style settings"
-    },
-    {
-      "type": "select",
-      "id": "vertical_items_align",
-      "label": "Offers vertical alignment",
-      "options": [
-        {
-          "value": "flex-start",
-          "label": "Top"
+          "type": "checkbox",
+          "id": "enable_variant_selectors",
+          "label": "Enable variant selectors",
+          "default": true,
+          "info": "If the product has multiple variants, a variant selector will be displayed for each quantity."
         },
         {
-          "value": "center",
-          "label": "Center"
+          "type": "inline_richtext",
+          "id": "pickers_label",
+          "label": "Variant selectors label",
+          "info": "Displayed above the variant selectors."
         },
         {
-          "value": "flex-end",
-          "label": "Bottom"
+          "type": "checkbox",
+          "id": "enable_variant_selectors_on_quantity_of_1",
+          "label": "Enable variant selectors on single quantity",
+          "default": false
         },
         {
-          "value": "stretch",
-          "label": "Make all offers same height"
-        }
-      ],
-      "default": "flex-start"
-    },
-    {
-      "type": "checkbox",
-      "id": "space_images",
-      "label": "Space images from top in vertical style",
-      "default": true,
-      "info": "Applied if style is set to Vertical and the option below is set to Top."
-    },
+          "type": "checkbox",
+          "id": "update_prices",
+          "label": "Enable variant price updates",
+          "default": false,
+          "info": "This option is used when variants have different prices, and it will dynamically change the displayed bundle prices based on the selected variants. ATTENTION: This option might NOT work with currency converters."
+        },
+        {
+          "type": "inline_richtext",
+          "id": "pickers_number_text",
+          "label": "Variant selectors number text",
+          "info": "Displayed before variant selectors. Use [index] to display the index of the selectors.",
+          "default": "<strong>#[index]</strong>"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_selected_variant_images",
+          "label": "Show images of selected variants",
+          "default": false,
+          "info": "Shows little image of the selected variant next to each variant selector."
+        },
+        {
+          "type": "select",
+          "id": "variant_images_position",
+          "label": "Selected variant images position",
+          "options": [
+            { "value": "start", "label": "Before number text" },
+            { "value": "middle", "label": "Between number text & variant selectors" },
+            { "value": "end", "label": "After variant selectors" }
+          ],
+          "default": "middle"
+        },
+        {
+          "type": "checkbox",
+          "id": "skip_unavailable",
+          "label": "Hide & automatically skip sold out variants",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "full_width_pickers",
+          "label": "Make variant selectors full width",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "hide_pickers_overlay",
+          "label": "Disable variant selectors color overlay",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "indicator_top",
+          "label": "Only display the indicator in the top area",
+          "default": true,
+          "info": "If active, pushes the variant selectors to the left, and only displays the indicator next to the content area at the top."
+        },
+        {
+          "type": "checkbox",
+          "id": "scroll_media_gallery",
+          "label": "Scroll to the selected variant image in product images gallery",
+          "default": true
+        },
+        {
+          "type": "header",
+          "content": "Images",
+          "info": "Only available in classic & vertical style"
+        },
+        {
+          "type": "range",
+          "id": "image_width",
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "label": "Images width",
+          "default": 70
+        },
+        {
+          "type": "header",
+          "content": "Vertical style settings"
+        },
+        {
+          "type": "select",
+          "id": "vertical_items_align",
+          "label": "Offers vertical alignment",
+          "options": [
+            { "value": "flex-start", "label": "Top" },
+            { "value": "center", "label": "Center" },
+            { "value": "flex-end", "label": "Bottom" },
+            { "value": "stretch", "label": "Make all offers same height" }
+          ],
+          "default": "flex-start"
+        },
+        {
+          "type": "checkbox",
+          "id": "space_images",
+          "label": "Space images from top in vertical style",
+          "default": true,
+          "info": "Applied if style is set to Vertical and the option below is set to Top."
+        },
         {
           "type": "select",
           "id": "vertical_images_position",
