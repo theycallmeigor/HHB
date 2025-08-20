@@ -2042,7 +2042,7 @@
         }
       ]
     },
-          {
+        {
   "type": "quantity_selector",
   "name": "Quantity selector",
   "limit": 1,
@@ -2120,6 +2120,18 @@
       "info": "Useful if using CheckoutChamp only."
     },
     {
+      "type": "text",
+      "id": "selling_plan_id",
+      "label": "Shopify Selling Plan ID",
+      "info": "Enter the selling plan ID from Shopify admin > Products > Selling plans"
+    },
+    {
+      "type": "text",
+      "id": "checkoutchamp_sub_id",
+      "label": "CheckoutChamp Subscription ID",
+      "info": "Enter the CheckoutChamp subscription ID if using their service"
+    },
+    {
       "type": "range",
       "id": "subscription_discount",
       "label": "Subscribe & Save discount",
@@ -2167,6 +2179,20 @@
       "default": "Deliver every"
     },
     {
+      "type": "text",
+      "id": "frequency_options",
+      "label": "Frequency options (days)",
+      "default": "30,60,90",
+      "info": "Comma-separated list of delivery frequencies in days"
+    },
+    {
+      "type": "text",
+      "id": "frequency_labels",
+      "label": "Frequency display labels",
+      "default": "30 days,60 days,90 days",
+      "info": "Comma-separated list of labels corresponding to frequency options"
+    },
+    {
       "type": "checkbox",
       "id": "show_subscription_benefits",
       "label": "Show benefits list under Subscribe",
@@ -2190,6 +2216,8 @@
       "label": "Benefit 3",
       "default": "Exclusive subscriber offers"
     },
+  
+      
 
     {
       "type": "header",
