@@ -286,7 +286,201 @@
                     </div>
                   </div>
                 </div>
-                
+                {% for block in section.blocks %}
+  {% case block.type %}
+
+    {% when 'purchase_type' %}
+      {% comment %} Separate purchase toggle block (no quantity-breaks dependency) {% endcomment %}
+{% assign has_selling_plans = false %}
+{% if product.selling_plan_groups.size > 0 %}
+  {% assign has_selling_plans = true %}
+{% endif %}
+
+{% assign show_toggle = false %}
+{% if block.settings.enable_subscription and has_selling_plans %}
+  {% assign show_toggle = true %}
+{% elsif block.settings.enable_subscription and block.settings.always_show_subscription %}
+  {% assign show_toggle = true %}
+{% endif %}
+      {% assign sub_discount = block.settings.subscription_discount | default: 15 %}
+      {% assign subscribe_default = block.settings.subscribe_selected_by_default %}
+      {% assign selling_plan_id = '' %}
+      {% if has_selling_plans and product.selling_plan_groups.first.selling_plans.size > 0 %}
+        {% assign selling_plan_id = product.selling_plan_groups.first.selling_plans.first.id %}
+      {% endif %}
+
+      {% if show_toggle %}
+        <div
+          id="purchase-toggle-{{ section.id }}-{{ block.id }}"
+          class="purchase-toggle"
+          style="--pt-mt: {{ block.settings.margin_top | divided_by: 10.0 }}rem; --pt-mb: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;"
+          data-subs-discount="{{ sub_discount | escape }}"
+          data-selling-plan-id="{{ selling_plan_id | escape }}"
+          data-cc-sub-id="{{ block.settings.cc_sub_id | escape }}"
+          {{ block.shopify_attributes }}
+        >
+          <div class="purchase-toggle__row" style="margin-top:var(--pt-mt);margin-bottom:var(--pt-mb);">
+            {%- assign onetime_checked = true -%}
+            {%- if subscribe_default -%}{%- assign onetime_checked = false -%}{%- endif -%}
+
+            <label class="purchase-toggle__card">
+              <input type="radio" name="purchase_type_{{ section.id }}_{{ block.id }}" value="onetime" class="purchase-toggle__input" {% if onetime_checked %}checked{% endif %}>
+              <span class="purchase-toggle__body">
+                <span class="purchase-radio"></span>
+                <span class="purchase-toggle__text">
+                  <span class="purchase-toggle__title">{{ block.settings.onetime_label | default: 'One-time purchase' }}</span>
+                  <span class="purchase-toggle__sub">{{ block.settings.onetime_sub | default: 'Ships once.' }}</span>
+                </span>
+              </span>
+            </label>
+
+            <label class="purchase-toggle__card">
+              <input type="radio" name="purchase_type_{{ section.id }}_{{ block.id }}" value="subscribe" class="purchase-toggle__input" {% unless onetime_checked %}checked{% endunless %}>
+              <span class="purchase-toggle__body">
+                <span class="purchase-radio"></span>
+                <span class="purchase-toggle__text">
+                  <span class="purchase-toggle__title">
+                    {{ block.settings.subscribe_label | default: 'Save [discount]% with Auto-Refills' | replace: '[discount]', sub_discount }}
+                  </span>
+                  <span class="purchase-toggle__sub">{{ block.settings.subscribe_sub | default: 'Zero commitment. Cancel anytime.' }}</span>
+                </span>
+              </span>
+            </label>
+          </div>
+
+          <div class="purchase-toggle__details" {% if onetime_checked %}style="display:none"{% endif %}>
+            <label class="purchase-toggle__details-label" for="subscription-frequency-{{ section.id }}-{{ block.id }}">
+              {{ block.settings.frequency_label | default: 'Deliver every' }}
+            </label>
+            <select id="subscription-frequency-{{ section.id }}-{{ block.id }}" name="subscription_frequency" class="purchase-toggle__details-select">
+              <option value="15">15 days</option>
+              <option value="30" selected>30 days</option>
+              <option value="45">45 days</option>
+              <option value="60">60 days</option>
+              <option value="90">90 days</option>
+            </select>
+
+            {% if block.settings.show_subscription_benefits %}
+              <ul class="purchase-toggle__benefits">
+                {% if block.settings.benefit_1 != blank %}<li>{{ block.settings.benefit_1 }}</li>{% endif %}
+                {% if block.settings.benefit_2 != blank %}<li>{{ block.settings.benefit_2 }}</li>{% endif %}
+                {% if block.settings.benefit_3 != blank %}<li>{{ block.settings.benefit_3 }}</li>{% endif %}
+              </ul>
+            {% endif %}
+          </div>
+
+          {%- comment -%}
+            We append the required hidden inputs to the main product form at runtime.
+            Works with any theme because we find the form in the same section.
+          {%- endcomment -%}
+          <script>
+          (function() {
+            var root = document.getElementById('purchase-toggle-{{ section.id }}-{{ block.id }}');
+            if (!root) return;
+
+            // Find the product form inside the same section
+            var sectionEl = root.closest('section') || root.closest('[data-section-id]');
+            var productForm = sectionEl && (sectionEl.querySelector('product-form form') || sectionEl.querySelector('form[action*="/cart/add"]'));
+            if (!productForm) return;
+
+            function ensureHidden(name){
+              var el = productForm.querySelector('[name="'+name.replace(/"/g,'&quot;')+'"]');
+              if (!el) {
+                el = document.createElement('input');
+                el.type = 'hidden';
+                el.name = name;
+                productForm.appendChild(el);
+              }
+              return el;
+            }
+
+            var sellingPlanInput = ensureHidden('selling_plan');
+            var propEnabled     = ensureHidden('properties[_subscription_enabled]');
+            var propDiscount    = ensureHidden('properties[_subscription_discount]');
+            var propFrequency   = ensureHidden('properties[subscription_frequency]');
+
+            var ccSubId = root.dataset.ccSubId || '';
+            var ccProp  = ccSubId ? ensureHidden('properties[_cc_sub_id]') : null;
+            if (ccProp) ccProp.value = ccSubId;
+
+            var radioOnetime = root.querySelector('input[type="radio"][value="onetime"]');
+            var radioSub     = root.querySelector('input[type="radio"][value="subscribe"]');
+            var detailsBox   = root.querySelector('.purchase-toggle__details');
+            var freqSelect   = root.querySelector('.purchase-toggle__details-select');
+
+            var subDiscount  = Number(root.dataset.subsDiscount || 0);
+            var sellingPlanId= root.dataset.sellingPlanId || '';
+
+            propDiscount.value = String(subDiscount);
+
+            function apply(mode){
+              var isSub = mode === 'subscribe';
+
+              if (detailsBox) detailsBox.style.display = isSub ? '' : 'none';
+              propEnabled.value  = isSub ? 'true' : 'false';
+              propFrequency.value= String(freqSelect && freqSelect.value || 30);
+              sellingPlanInput.value = isSub ? (sellingPlanId || '') : '';
+
+              // Broadcast for optional listeners (e.g., a quantity-breaks script can react to subscription state)
+              root.dispatchEvent(new CustomEvent('subscriptionModeChange', {
+                bubbles: true,
+                detail: { enabled: isSub, discount: subDiscount }
+              }));
+            }
+
+            radioOnetime && radioOnetime.addEventListener('change', function(){ apply('onetime'); });
+            radioSub     && radioSub.addEventListener('change', function(){ apply('subscribe'); });
+            freqSelect   && freqSelect.addEventListener('change', function(){
+              if (radioSub && radioSub.checked) apply('subscribe');
+            });
+
+            // Init
+            apply(radioSub && radioSub.checked ? 'subscribe' : 'onetime');
+          })();
+          </script>
+
+          <style>
+            /* Scoped styles */
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__row{
+              display:flex;gap:.75rem;flex-wrap:wrap;margin:0 0 0.5rem
+            }
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__card{flex:1;cursor:pointer}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__input{position:absolute;opacity:0;pointer-events:none}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__body{
+              display:flex;align-items:center;gap:.6rem;padding:1rem;border:1.5px solid rgba(0,0,0,.15);
+              border-radius:12px;background:#fff;transition:.2s
+            }
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__card:hover .purchase-toggle__body{border-color:var(--color-base-accent-1, #6D388B)}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--color-base-accent-1, #6D388B);display:inline-block;position:relative;flex:0 0 20px}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-radio:after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--color-base-accent-1, #6D388B);opacity:0;transition:.2s}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__input:checked + .purchase-toggle__body{border-color:var(--color-base-accent-1, #6D388B);background:rgba(0,0,0,.02)}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__input:checked + .purchase-toggle__body .purchase-radio:after{opacity:1}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__text{display:flex;flex-direction:column}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__title{font-weight:700;line-height:1.1}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__sub{font-size:.9rem;opacity:.8}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__details{
+              padding:1rem;border-radius:12px;background:rgba(0,0,0,.03);margin-bottom:.5rem
+            }
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__details-label{margin-right:.5rem;font-weight:600}
+            #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__benefits{margin:.5rem 0 0;padding-left:1.2rem}
+            @media (max-width:749px){
+              #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__row{flex-direction:column}
+            }
+            @media (prefers-color-scheme: dark){
+              #purchase-toggle-{{ section.id }}-{{ block.id }} .purchase-toggle__body{
+                border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.06)
+              }
+            }
+          </style>
+        </div>
+      {% endif %}
+
+    {% comment %}
+      ... keep your other block types here (price, title, buy buttons, quantity breaks, etc.) ...
+    {% endcomment %}
+
+  {% endcase %}
+{% endfor %}
               {%- when 'quantity_selector' -%}
                 {%- if block.settings.enable_quantity_discounts -%}
                   {% render 'quantity-breaks', block: block, product: product, product_form_id: product_form_id %}
@@ -2041,7 +2235,35 @@
           "default": 15
         }
       ]
-    },
+    },{
+  "type": "purchase_type",
+  "name": "Purchase type(sub vs 1)",
+  "limit": 1,
+  "settings": [
+    { "type": "checkbox", "id": "enable_subscription", "label": "Show toggle", "default": true },
+    { "type": "checkbox", "id": "always_show_subscription", "label": "Show even if no selling plans", "default": false },
+
+    { "type": "range", "id": "subscription_discount", "label": "Subscribe & Save discount", "min": 0, "max": 90, "step": 1, "unit": "%", "default": 25 },
+    { "type": "checkbox", "id": "subscribe_selected_by_default", "label": "Default to Subscribe", "default": false },
+
+    { "type": "inline_richtext", "id": "onetime_label", "label": "One-time title", "default": "One-time purchase" },
+    { "type": "inline_richtext", "id": "onetime_sub", "label": "One-time subtitle", "default": "Ships once." },
+
+    { "type": "inline_richtext", "id": "subscribe_label", "label": "Subscribe title", "default": "Save [discount]% with Auto-Refills" },
+    { "type": "inline_richtext", "id": "subscribe_sub", "label": "Subscribe subtitle", "default": "Zero commitment. Cancel anytime." },
+
+    { "type": "text", "id": "frequency_label", "label": "Frequency label", "default": "Deliver every" },
+    { "type": "checkbox", "id": "show_subscription_benefits", "label": "Show benefits list", "default": false },
+    { "type": "inline_richtext", "id": "benefit_1", "label": "Benefit 1", "default": "Free shipping on all orders" },
+    { "type": "inline_richtext", "id": "benefit_2", "label": "Benefit 2", "default": "Cancel or pause anytime" },
+    { "type": "inline_richtext", "id": "benefit_3", "label": "Benefit 3", "default": "Exclusive subscriber offers" },
+
+    { "type": "text", "id": "cc_sub_id", "label": "CheckoutChamp subscription ID (optional)" },
+
+    { "type": "range", "id": "margin_top", "label": "Top margin", "min": 0, "max": 30, "step": 3, "unit": "px", "default": 12 },
+    { "type": "range", "id": "margin_bottom", "label": "Bottom margin", "min": 0, "max": 30, "step": 3, "unit": "px", "default": 12 }
+  ]
+},
         {
   "type": "quantity_selector",
   "name": "Quantity selector",
