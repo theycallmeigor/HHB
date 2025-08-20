@@ -433,88 +433,121 @@
 {%- endif -%}
 
 {%- comment -%} ---------- SUBSCRIPTION PRICE/FORM LOGIC ---------- {%- endcomment -%}
+{%- comment -%} ---------- SUBSCRIPTION PRICE/FORM LOGIC FOR QUANTITY BREAKS ---------- {%- endcomment -%}
 <script>
 (function() {
-  const root = document.getElementById('quantity-breaks-{{ section.id }}');
-  const toggleWrap = root?.previousElementSibling?.matches?.('.qb-purchase-type') ? root.previousElementSibling : document.querySelector('.qb-purchase-type');
+  const sectionId = '{{ section.id }}';
+  const root = document.getElementById('quantity-breaks-' + sectionId);
+  
+  // Get the purchase type toggle container
+  const toggleWrap = document.querySelector('.qb-purchase-type[data-section="' + sectionId + '"]');
   if (!root || !toggleWrap) return;
 
-  const moneyFormat = root.dataset.moneyFormat || '${{amount}}';
-  const subDiscount = Number(toggleWrap.dataset.subsDiscount || 15); // percent
-  const sellingPlanId = toggleWrap.dataset.sellingPlanId || '';
-  const ccSubId = toggleWrap.dataset.ccSubId || '';
+  // Get settings from block configuration
+  const moneyFormat = '{{ shop.money_format | default: "${{amount}}" }}';
+  const subDiscount = {{ block.settings.subscription_discount | default: 15 }};
+  const sellingPlanId = '{{ block.settings.selling_plan_id }}';
+  const ccSubId = '{{ block.settings.checkoutchamp_sub_id }}';
+  
+  // Get form elements
   const sellingPlanInput = toggleWrap.querySelector('[data-selling-plan-input]');
   const propEnabledInput = toggleWrap.querySelector('[data-subscription-enabled]');
-  const freqSelect = toggleWrap.querySelector('#subscription-frequency-{{ section.id }}');
+  const freqSelect = toggleWrap.querySelector('#subscription-frequency-' + sectionId);
   const detailsBox = toggleWrap.querySelector('.qb-subscribe-details');
 
-  // all “price” spans inside each quantity break that should be rewritten
+  // Function to refresh all prices based on subscription status
   const refreshAllPrices = (isSub) => {
     root.querySelectorAll('.quantity-break').forEach(bar => {
       const priceSpan = bar.querySelector('[data-subscription-price]');
       if (!priceSpan) return;
 
-      const original = Number(bar.dataset.originalPrice || 0);            // total price (cents) you computed in Liquid
-      const compare  = Number(bar.dataset.originalCompare || 0);          // total compare (cents)
-      const qty      = Number(bar.dataset.quantity || 1);
+      const original = Number(bar.dataset.originalPrice || 0);
+      const compare = Number(bar.dataset.originalCompare || 0);
+      const qty = Number(bar.dataset.quantity || 1);
 
+      // Apply subscription discount if applicable
       const newTotal = isSub ? Math.round(original * (1 - subDiscount/100)) : original;
-      const newEach  = qty > 0 ? Math.round(newTotal / qty) : newTotal;
-      const save     = (compare > 0 ? compare : original) - newTotal;
+      const newEach = qty > 0 ? Math.round(newTotal / qty) : newTotal;
+      const save = (compare > 0 ? compare : original) - newTotal;
 
+      // Update displayed prices
       setDisplayFromTemplate(priceSpan, {
-        price:      newTotal,
+        price: newTotal,
         price_each: newEach,
-        compare:    compare,
-        saved:      Math.max(0, save)
+        compare: compare,
+        saved: Math.max(0, save)
       });
 
-      // toggle compare visibility if needed
+      // Toggle compare price visibility
       const cmp = bar.querySelector('.quantity-break__compare-price');
       if (cmp) {
-        if (compare <= newTotal) cmp.classList.add('hidden');
-        else cmp.classList.remove('hidden');
+        if (compare <= newTotal) {
+          cmp.classList.add('hidden');
+        } else {
+          cmp.classList.remove('hidden');
+        }
       }
+
+      // Update any variant-specific prices within quantity breaks
+      const variantPrices = bar.querySelectorAll('[data-variant-subscription-price]');
+      variantPrices.forEach(vp => {
+        const variantOriginal = Number(vp.dataset.originalPrice || 0);
+        const variantNew = isSub ? Math.round(variantOriginal * (1 - subDiscount/100)) : variantOriginal;
+        vp.innerHTML = formatMoney(variantNew);
+      });
     });
   };
 
-  // reads element.dataset.text and replaces [price], [price_each], [compare_price], [amount_saved]
-  function setDisplayFromTemplate(el, vals){
+  // Template replacement function
+  function setDisplayFromTemplate(el, vals) {
     const tpl = el.dataset.text || el.innerHTML;
     const html = tpl
       .replace(/\[price_each\]/g, formatMoney(vals.price_each))
-      .replace(/\[price\]/g,       formatMoney(vals.price))
+      .replace(/\[price\]/g, formatMoney(vals.price))
       .replace(/\[compare_price\]/g, formatMoney(vals.compare))
-      .replace(/\[amount_saved\]/g,  formatMoney(vals.saved));
+      .replace(/\[amount_saved\]/g, formatMoney(vals.saved));
     el.innerHTML = html;
   }
 
+  // Money formatting function
   function formatMoney(cents) {
     try {
       if (window.Shopify && typeof Shopify.formatMoney === 'function') {
         return Shopify.formatMoney(cents, moneyFormat);
       }
-    } catch(e){}
-    const d = (cents/100).toFixed(2);
+    } catch(e) {}
+    const d = (cents / 100).toFixed(2);
     return moneyFormat.replace('{{amount}}', d);
   }
 
-  function applyPurchaseMode(mode){
+  // Apply purchase mode (one-time vs subscription)
+  function applyPurchaseMode(mode) {
     const isSub = mode === 'subscribe';
 
-    // show details box
-    if (detailsBox) detailsBox.style.display = isSub ? 'block' : 'none';
+    // Show/hide subscription details
+    if (detailsBox) {
+      detailsBox.style.display = isSub ? 'block' : 'none';
+    }
 
-    // set hidden property for your backend
-    if (propEnabledInput) propEnabledInput.value = String(isSub);
+    // Set hidden inputs for backend processing
+    if (propEnabledInput) {
+      propEnabledInput.value = String(isSub);
+    }
 
-    // set Shopify selling plan (if store uses it)
-    if (sellingPlanInput) sellingPlanInput.value = isSub ? (sellingPlanId || '') : '';
+    // Set Shopify selling plan
+    if (sellingPlanInput) {
+      sellingPlanInput.value = isSub ? (sellingPlanId || '') : '';
+    }
 
-    // update prices
+    // Update all prices in quantity breaks
     refreshAllPrices(isSub);
 
-    // notify CheckoutChamp (optional)
+    // Update product page prices if enabled
+    {% if block.settings.update_pdp_prices %}
+      updateProductPagePrices(isSub);
+    {% endif %}
+
+    // Notify CheckoutChamp if integrated
     const cc = window.CC || window.CheckoutChamp;
     if (cc && typeof cc.setSubscription === 'function') {
       try {
@@ -524,31 +557,72 @@
           frequency: Number(freqSelect?.value || 30),
           discount: subDiscount
         });
-      } catch(e){}
+      } catch(e) {
+        console.error('CheckoutChamp integration error:', e);
+      }
     }
   }
 
-  // initial apply (respect default radio)
-  const current = toggleWrap.querySelector('input[name="purchase_type_{{ section.id }}"]:checked')?.value || 'onetime';
-  applyPurchaseMode(current);
+  // Update main product page prices
+  function updateProductPagePrices(isSub) {
+    const priceElements = document.querySelectorAll('#price-' + sectionId + ' .price__regular .price-item--regular');
+    priceElements.forEach(el => {
+      const original = Number(el.dataset.originalPrice || 0);
+      if (original > 0) {
+        const newPrice = isSub ? Math.round(original * (1 - subDiscount/100)) : original;
+        el.innerHTML = formatMoney(newPrice);
+      }
+    });
 
-  // toggle listeners
-  toggleWrap.querySelectorAll('input[name="purchase_type_{{ section.id }}"]').forEach(r => {
-    r.addEventListener('change', e => applyPurchaseMode(e.target.value));
+    // Update sticky ATC price if exists
+    const stickyPrice = document.getElementById('sticky-atc-price-' + sectionId);
+    if (stickyPrice) {
+      const original = Number(stickyPrice.dataset.originalPrice || 0);
+      if (original > 0) {
+        const newPrice = isSub ? Math.round(original * (1 - subDiscount/100)) : original;
+        stickyPrice.innerHTML = formatMoney(newPrice) + ' • ';
+      }
+    }
+  }
+
+  // Initialize with default selection
+  const defaultMode = {% if block.settings.subscribe_selected_by_default %}
+    'subscribe'
+  {% else %}
+    'onetime'
+  {% endif %};
+  
+  const currentRadio = toggleWrap.querySelector('input[name="purchase_type_' + sectionId + '"]:checked');
+  const initialMode = currentRadio ? currentRadio.value : defaultMode;
+  applyPurchaseMode(initialMode);
+
+  // Add event listeners for toggle changes
+  toggleWrap.querySelectorAll('input[name="purchase_type_' + sectionId + '"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      applyPurchaseMode(e.target.value);
+    });
   });
 
-  // when user changes frequency, update CC payload immediately
+  // Handle frequency changes
   freqSelect?.addEventListener('change', () => {
-    const checked = toggleWrap.querySelector('input[name="purchase_type_{{ section.id }}"]:checked')?.value === 'subscribe';
-    if (checked) applyPurchaseMode('subscribe');
+    const isSubscribe = toggleWrap.querySelector('input[name="purchase_type_' + sectionId + '"]:checked')?.value === 'subscribe';
+    if (isSubscribe) {
+      applyPurchaseMode('subscribe');
+    }
   });
 
-  // if the shopper changes quantity break after the fact, keep prices in sync
+  // Keep prices in sync when quantity break selection changes
   root.addEventListener('change', (e) => {
     if (e.target?.name === 'quantity') {
-      const isSub = toggleWrap.querySelector('input[name="purchase_type_{{ section.id }}"]:checked')?.value === 'subscribe';
-      refreshAllPrices(isSub);
+      const isSubscribe = toggleWrap.querySelector('input[name="purchase_type_' + sectionId + '"]:checked')?.value === 'subscribe';
+      refreshAllPrices(isSubscribe);
     }
+  });
+
+  // Handle variant selection changes within quantity breaks
+  root.addEventListener('variant:change', (e) => {
+    const isSubscribe = toggleWrap.querySelector('input[name="purchase_type_' + sectionId + '"]:checked')?.value === 'subscribe';
+    refreshAllPrices(isSubscribe);
   });
 })();
 </script>
