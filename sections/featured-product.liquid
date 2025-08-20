@@ -286,7 +286,12 @@
                     </div>
                   </div>
                 </div>
-                
+                {% render 'purchase_toggle', 
+  product: product, 
+  section: section, 
+  block: block,
+  product_form_id: product_form_id 
+%}
               {%- when 'quantity_selector' -%}
                 {%- if block.settings.enable_quantity_discounts -%}
                   {% render 'quantity-breaks', block: block, product: product, product_form_id: product_form_id %}
