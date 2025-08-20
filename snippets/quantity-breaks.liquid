@@ -4,7 +4,10 @@
   assign base_price = product.selected_or_first_available_variant.price
 
   assign cc_sub_id = cc_sub_override | default: ''
-  assign has_selling_plans = product.selling_plan_groups.size > 0
+  assign has_selling_plans = false
+if product.selling_plan_groups.size > 0
+  assign has_selling_plans = true
+endif
 
   assign selling_plan_id = ''
   if has_selling_plans
