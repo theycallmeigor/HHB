@@ -319,7 +319,239 @@
     }
   </style>
 {%- endif -%}
+{%- comment -%} ---------- PURCHASE TYPE TOGGLE (ONE-TIME vs SUBSCRIBE & SAVE) ---------- {%- endcomment -%}
+{%- liquid
+  # detect subscription capability (you already compute has_subscription/cc_sub_id above)
+  assign selling_plan_id = ''
+  if product.selling_plan_groups.size > 0
+    assign selling_plan_id = product.selling_plan_groups.first.selling_plans.first.id
+  endif
 
+  assign subscription_discount = block.settings.subscription_discount | default: 15
+  assign subscribe_default     = block.settings.subscribe_selected_by_default | default: false
+ -%}
+
+{%- if show_subscription == true and block.settings.enable_subscription == true -%}
+  <div class="qb-purchase-type" 
+       data-subs-discount="{{ subscription_discount | escape }}"
+       data-cc-sub-id="{{ cc_sub_id | escape }}"
+       data-selling-plan-id="{{ selling_plan_id | escape }}">
+
+    <div class="qb-purchase-type__row">
+      {%- assign onetime_checked = true -%}
+      {%- if subscribe_default -%}{%- assign onetime_checked = false -%}{%- endif -%}
+
+      <!-- ONE-TIME -->
+      <label class="qb-purchase-type__card">
+        <input type="radio"
+               name="purchase_type_{{ section.id }}"
+               value="onetime"
+               class="qb-purchase-type__input"
+               {% if onetime_checked %}checked{% endif %}
+               form="{{ product_form_id }}">
+        <span class="qb-purchase-type__body">
+          <span class="qb-radio"></span>
+          <span class="qb-purchase-type__text">
+            <span class="qb-purchase-type__title">
+              {{ block.settings.onetime_label | default: 'One-Time Purchase' }}
+            </span>
+            <span class="qb-purchase-type__sub">
+              {{ block.settings.onetime_sub | default: 'No refills. Stock may sell out.' }}
+            </span>
+          </span>
+        </span>
+      </label>
+
+      <!-- SUBSCRIBE -->
+      <label class="qb-purchase-type__card">
+        <input type="radio"
+               name="purchase_type_{{ section.id }}"
+               value="subscribe"
+               class="qb-purchase-type__input"
+               {% unless onetime_checked %}checked{% endunless %}
+               form="{{ product_form_id }}">
+        <span class="qb-purchase-type__body">
+          <span class="qb-radio"></span>
+          <span class="qb-purchase-type__text">
+            <span class="qb-purchase-type__title">
+              {{ block.settings.subscribe_label | default: 'Save 25% with Auto-Refills' | replace: '25', subscription_discount }}
+            </span>
+            <span class="qb-purchase-type__sub">
+              {{ block.settings.subscribe_sub | default: 'Zero commitment. Cancel anytime.' }}
+            </span>
+          </span>
+        </span>
+      </label>
+    </div>
+
+    <!-- Frequency + hidden inputs that the cart needs -->
+    <div class="qb-subscribe-details" {% if onetime_checked %}style="display:none"{% endif %}>
+      <label for="subscription-frequency-{{ section.id }}" class="qb-subscribe-details__label">
+        {{ block.settings.frequency_label | default: 'Deliver every' }}
+      </label>
+      <select id="subscription-frequency-{{ section.id }}"
+              name="properties[subscription_frequency]"
+              class="qb-subscribe-details__select"
+              form="{{ product_form_id }}">
+        <option value="15">15 days</option>
+        <option value="30" selected>30 days</option>
+        <option value="45">45 days</option>
+        <option value="60">60 days</option>
+        <option value="90">90 days</option>
+      </select>
+    </div>
+
+    <!-- Hidden fields (for both Shopify Selling Plans AND CheckoutChamp fallbacks) -->
+    <input type="hidden" name="selling_plan" value="" data-selling-plan-input form="{{ product_form_id }}">
+    <input type="hidden" name="properties[_subscription_enabled]" value="{% if onetime_checked %}false{% else %}true{% endif %}" data-subscription-enabled form="{{ product_form_id }}">
+    <input type="hidden" name="properties[_cc_sub_id]" value="{{ cc_sub_id }}" data-cc-sub-id form="{{ product_form_id }}">
+    <input type="hidden" name="properties[_subscription_discount]" value="{{ subscription_discount }}" data-subscription-discount form="{{ product_form_id }}">
+  </div>
+
+  <style>
+    /* Cards row */
+    .qb-purchase-type__row{display:flex;gap:.75rem;margin:0 0 1rem}
+    .qb-purchase-type__card{flex:1;cursor:pointer}
+    .qb-purchase-type__input{position:absolute;opacity:0;pointer-events:none}
+    .qb-purchase-type__body{
+      display:flex;align-items:center;gap:.6rem;padding:1rem;border:var(--border-width) solid rgba(var(--color-foreground),.2);
+      border-radius:var(--border-radius);background:#fff;transition:.2s
+    }
+    .qb-purchase-type__card:hover .qb-purchase-type__body{border-color:var(--text-accent-color)}
+    .qb-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--text-accent-color);display:inline-block;position:relative;flex:0 0 20px}
+    .qb-radio:after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--text-accent-color);opacity:0;transition:.2s}
+    .qb-purchase-type__input:checked + .qb-purchase-type__body{border-color:var(--text-accent-color);background:rgba(var(--color-foreground),.03)}
+    .qb-purchase-type__input:checked + .qb-purchase-type__body .qb-radio:after{opacity:1}
+    .qb-purchase-type__text{display:flex;flex-direction:column}
+    .qb-purchase-type__title{font-weight:700;line-height:1.1}
+    .qb-purchase-type__sub{font-size:.9rem;opacity:.8}
+    .qb-subscribe-details{padding:1rem;border-radius:var(--border-radius);background:rgba(var(--color-foreground),.03);margin-bottom:1rem}
+    .qb-subscribe-details__label{margin-right:.5rem;font-weight:600}
+    .qb-subscribe-details__select{min-width:9rem}
+    @media (max-width:749px){.qb-purchase-type__row{flex-direction:column}}
+  </style>
+{%- endif -%}
+
+{%- comment -%} ---------- SUBSCRIPTION PRICE/FORM LOGIC ---------- {%- endcomment -%}
+<script>
+(function() {
+  const root = document.getElementById('quantity-breaks-{{ section.id }}');
+  const toggleWrap = root?.previousElementSibling?.matches?.('.qb-purchase-type') ? root.previousElementSibling : document.querySelector('.qb-purchase-type');
+  if (!root || !toggleWrap) return;
+
+  const moneyFormat = root.dataset.moneyFormat || '${{amount}}';
+  const subDiscount = Number(toggleWrap.dataset.subsDiscount || 15); // percent
+  const sellingPlanId = toggleWrap.dataset.sellingPlanId || '';
+  const ccSubId = toggleWrap.dataset.ccSubId || '';
+  const sellingPlanInput = toggleWrap.querySelector('[data-selling-plan-input]');
+  const propEnabledInput = toggleWrap.querySelector('[data-subscription-enabled]');
+  const freqSelect = toggleWrap.querySelector('#subscription-frequency-{{ section.id }}');
+  const detailsBox = toggleWrap.querySelector('.qb-subscribe-details');
+
+  // all “price” spans inside each quantity break that should be rewritten
+  const refreshAllPrices = (isSub) => {
+    root.querySelectorAll('.quantity-break').forEach(bar => {
+      const priceSpan = bar.querySelector('[data-subscription-price]');
+      if (!priceSpan) return;
+
+      const original = Number(bar.dataset.originalPrice || 0);            // total price (cents) you computed in Liquid
+      const compare  = Number(bar.dataset.originalCompare || 0);          // total compare (cents)
+      const qty      = Number(bar.dataset.quantity || 1);
+
+      const newTotal = isSub ? Math.round(original * (1 - subDiscount/100)) : original;
+      const newEach  = qty > 0 ? Math.round(newTotal / qty) : newTotal;
+      const save     = (compare > 0 ? compare : original) - newTotal;
+
+      setDisplayFromTemplate(priceSpan, {
+        price:      newTotal,
+        price_each: newEach,
+        compare:    compare,
+        saved:      Math.max(0, save)
+      });
+
+      // toggle compare visibility if needed
+      const cmp = bar.querySelector('.quantity-break__compare-price');
+      if (cmp) {
+        if (compare <= newTotal) cmp.classList.add('hidden');
+        else cmp.classList.remove('hidden');
+      }
+    });
+  };
+
+  // reads element.dataset.text and replaces [price], [price_each], [compare_price], [amount_saved]
+  function setDisplayFromTemplate(el, vals){
+    const tpl = el.dataset.text || el.innerHTML;
+    const html = tpl
+      .replace(/\[price_each\]/g, formatMoney(vals.price_each))
+      .replace(/\[price\]/g,       formatMoney(vals.price))
+      .replace(/\[compare_price\]/g, formatMoney(vals.compare))
+      .replace(/\[amount_saved\]/g,  formatMoney(vals.saved));
+    el.innerHTML = html;
+  }
+
+  function formatMoney(cents) {
+    try {
+      if (window.Shopify && typeof Shopify.formatMoney === 'function') {
+        return Shopify.formatMoney(cents, moneyFormat);
+      }
+    } catch(e){}
+    const d = (cents/100).toFixed(2);
+    return moneyFormat.replace('{{amount}}', d);
+  }
+
+  function applyPurchaseMode(mode){
+    const isSub = mode === 'subscribe';
+
+    // show details box
+    if (detailsBox) detailsBox.style.display = isSub ? 'block' : 'none';
+
+    // set hidden property for your backend
+    if (propEnabledInput) propEnabledInput.value = String(isSub);
+
+    // set Shopify selling plan (if store uses it)
+    if (sellingPlanInput) sellingPlanInput.value = isSub ? (sellingPlanId || '') : '';
+
+    // update prices
+    refreshAllPrices(isSub);
+
+    // notify CheckoutChamp (optional)
+    const cc = window.CC || window.CheckoutChamp;
+    if (cc && typeof cc.setSubscription === 'function') {
+      try {
+        cc.setSubscription({
+          enabled: isSub,
+          id: ccSubId || null,
+          frequency: Number(freqSelect?.value || 30),
+          discount: subDiscount
+        });
+      } catch(e){}
+    }
+  }
+
+  // initial apply (respect default radio)
+  const current = toggleWrap.querySelector('input[name="purchase_type_{{ section.id }}"]:checked')?.value || 'onetime';
+  applyPurchaseMode(current);
+
+  // toggle listeners
+  toggleWrap.querySelectorAll('input[name="purchase_type_{{ section.id }}"]').forEach(r => {
+    r.addEventListener('change', e => applyPurchaseMode(e.target.value));
+  });
+
+  // when user changes frequency, update CC payload immediately
+  freqSelect?.addEventListener('change', () => {
+    const checked = toggleWrap.querySelector('input[name="purchase_type_{{ section.id }}"]:checked')?.value === 'subscribe';
+    if (checked) applyPurchaseMode('subscribe');
+  });
+
+  // if the shopper changes quantity break after the fact, keep prices in sync
+  root.addEventListener('change', (e) => {
+    if (e.target?.name === 'quantity') {
+      const isSub = toggleWrap.querySelector('input[name="purchase_type_{{ section.id }}"]:checked')?.value === 'subscribe';
+      refreshAllPrices(isSub);
+    }
+  });
+})();
+</script>
 <quantity-breaks
   class="quantity-breaks quantity-breaks--{{ block.settings.style }} accent-color-{{ block.settings.color_scheme }}{% if block.settings.space_images %} quantity-breaks--space-images{% endif %}{% if has_badge %} quantity-breaks--has-badge{% endif %}{% if block.settings.full_width_pickers %} quantity-breaks-full-width-pickers{% endif %} quantity-breaks--vertical-image-{{ block.settings.vertical_images_position }}{% if block.settings.display_selected_indicator %} quantity-breaks--show-indicator{% endif %}{% if block.settings.indicator_top == false %} quantity-breaks--indicator-bottom{% endif %}{% if block.settings.image_width == 100 %} quantity-breaks--max-width-images{% endif %}{% if show_subscription == true and block.settings.enable_subscription == true %} quantity-breaks--has-subscription{% endif %}"
   id="quantity-breaks-{{ section.id }}"
