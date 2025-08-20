@@ -2102,7 +2102,95 @@
       "label": "Heights of the quantity selector & ATC button when together",
       "info": "By default, quantity selector & ATC button are not the same height. When you display the quantity selector next to the ATC button, this setting controls how's that handled."
     },
-    
+    {
+      "type": "header",
+      "content": "Purchase type (Subscribe & Save)"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_subscription",
+      "label": "Show one-time vs subscribe toggle",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "always_show_subscription",
+      "label": "Show toggle even if no subscription metafield",
+      "default": false,
+      "info": "Useful if using CheckoutChamp only."
+    },
+    {
+      "type": "range",
+      "id": "subscription_discount",
+      "label": "Subscribe & Save discount",
+      "min": 0,
+      "max": 90,
+      "step": 1,
+      "unit": "%",
+      "default": 25
+    },
+    {
+      "type": "checkbox",
+      "id": "subscribe_selected_by_default",
+      "label": "Default to Subscribe",
+      "default": true
+    },
+    {
+      "type": "inline_richtext",
+      "id": "onetime_label",
+      "label": "One-time title",
+      "default": "One-Time Purchase"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "onetime_sub",
+      "label": "One-time subtitle",
+      "default": "No refills. Stock may sell out."
+    },
+    {
+      "type": "inline_richtext",
+      "id": "subscribe_label",
+      "label": "Subscribe title",
+      "default": "Save [discount]% with Auto-Refills",
+      "info": "Use [discount] to insert the percent you set above."
+    },
+    {
+      "type": "inline_richtext",
+      "id": "subscribe_sub",
+      "label": "Subscribe subtitle",
+      "default": "Zero commitment. Cancel anytime."
+    },
+    {
+      "type": "text",
+      "id": "frequency_label",
+      "label": "Frequency label",
+      "default": "Deliver every"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_subscription_benefits",
+      "label": "Show benefits list under Subscribe",
+      "default": false
+    },
+    {
+      "type": "inline_richtext",
+      "id": "benefit_1",
+      "label": "Benefit 1",
+      "default": "Free shipping on all orders"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "benefit_2",
+      "label": "Benefit 2",
+      "default": "Cancel or pause anytime"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "benefit_3",
+      "label": "Benefit 3",
+      "default": "Exclusive subscriber offers"
+    },
+
     {
       "type": "header",
       "content": "Quantity Discounts"
