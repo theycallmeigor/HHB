@@ -285,7 +285,7 @@ It preserves all original styling, layout and functionality.
 {%- endcomment -%}
 
 {%- when 'subscription_checkbox' -%}
-  {%- if product.metafields.custom.cc_sub != blank -%}
+  {%- if product.metafields.custom.cc_sub == true -%}
     <div class="product-info__subscription-checkbox">
       <div id="subscription-checkbox-container" data-box="true" style="padding: 20px 0px 16px; margin-top: 20px; width: 100%;">
         <div data-secondsdelay="" class="form-check fk-form-radio-button-parent" style="display: flex; align-items: center; justify-content: center;">
