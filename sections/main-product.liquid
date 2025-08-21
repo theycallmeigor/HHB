@@ -276,6 +276,76 @@
                 >
                   <span class="visually-hidden">{{ 'products.product.sku' | t }}:</span> {{- product.selected_or_first_available_variant.sku -}}
                 </p>
+                {%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+SUBSCRIPTION CHECKBOX BLOCK
+----------------------------------------------------------------------------------------------------------------------
+This block displays a subscription checkbox when the product has the custom.cc_sub metafield.
+It preserves all original styling, layout and functionality.
+{%- endcomment -%}
+
+{%- when 'subscription_checkbox' -%}
+  {%- if product.metafields.custom.cc_sub != blank -%}
+    <div class="product-info__subscription-checkbox">
+      <div id="subscription-checkbox-container" data-box="true" style="padding: 20px 0px 16px; margin-top: 20px; width: 100%;">
+        <div data-secondsdelay="" class="form-check fk-form-radio-button-parent" style="display: flex; align-items: center; justify-content: center;">
+          <input 
+            type="checkbox" 
+            value="subscription" 
+            name="purchase-type" 
+            id="subscription-toggle-checkbox-{{ product.id }}-{{ section.id }}" 
+            class="fk-form-general-radio-checkbox fk-form-checkbox subscribe-checkbox" 
+            checked 
+            style="margin-right: 8px; width: 20px; height: 20px; cursor: pointer;"
+            form="{{ product_form_id }}"
+          >
+          <label 
+            for="subscription-toggle-checkbox-{{ product.id }}-{{ section.id }}" 
+            class="form-check-label" 
+            style="cursor: pointer; font-size: 16px; color: #333; font-weight: 600;"
+          >
+            {{ block.settings.checkbox_label | default: 'YES! I want to Subscribe & Save and receive my discount today!' }}
+          </label>
+        </div>
+      </div>
+      
+      {%- comment -%} Hidden input to track subscription status in the form {%- endcomment -%}
+      <input 
+        type="hidden" 
+        name="properties[_subscription]" 
+        value="true" 
+        id="subscription-value-{{ product.id }}-{{ section.id }}"
+        form="{{ product_form_id }}"
+      >
+      
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const checkbox = document.getElementById('subscription-toggle-checkbox-{{ product.id }}-{{ section.id }}');
+          const hiddenInput = document.getElementById('subscription-value-{{ product.id }}-{{ section.id }}');
+          
+          if (checkbox && hiddenInput) {
+            // Set initial value
+            hiddenInput.value = checkbox.checked ? 'true' : 'false';
+            
+            // Update hidden input when checkbox changes
+            checkbox.addEventListener('change', function() {
+              hiddenInput.value = this.checked ? 'true' : 'false';
+              
+              // Trigger custom event for other scripts to listen to
+              const event = new CustomEvent('subscription:change', {
+                detail: {
+                  productId: '{{ product.id }}',
+                  subscribed: this.checked,
+                  checkbox: this
+                }
+              });
+              document.dispatchEvent(event);
+            });
+          }
+        });
+      </script>
+    </div>
+  {%- endif -%}
               {%- when 'custom_liquid' -%}
                 {{ block.settings.custom_liquid }}
               {%- when 'collapsible_tab' -%}
@@ -2441,6 +2511,75 @@
         }
       ]
     },
+    {
+  "type": "subscription_checkbox",
+  "name": "Subscription Checkbox",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "This checkbox will only appear if the product has a custom.cc_sub metafield value."
+    },
+    {
+      "type": "text",
+      "id": "checkbox_label",
+      "label": "Checkbox Label",
+      "default": "YES! I want to Subscribe & Save and receive my discount today!",
+      "info": "The text that appears next to the subscription checkbox"
+    },
+    {
+      "type": "header",
+      "content": "Advanced Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "checked_by_default",
+      "label": "Checked by default",
+      "default": true,
+      "info": "Whether the subscription checkbox should be checked when the page loads"
+    },
+    {
+      "type": "color",
+      "id": "label_color",
+      "label": "Label text color",
+      "default": "#333333"
+    },
+    {
+      "type": "range",
+      "id": "label_font_size",
+      "label": "Label font size",
+      "min": 14,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "label_font_weight",
+      "label": "Label font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semi-bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "600"
+    }
+  ]
+},
     {
       "type": "quantity_selector",
       "name": "Quantity selector",
