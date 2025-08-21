@@ -104,7 +104,7 @@
           "type": "subscription_checkbox",
           "settings": {
             "checkbox_label": "YES! I want to Subscribe & Save and receive my discount today!",
-            "checked_by_default": true,
+            "checked_by_default": false,
             "label_color": "#333333",
             "label_font_size": 16,
             "label_font_weight": "600"
