@@ -100,16 +100,6 @@
             "margin_bottom": 15
           }
         },
-        "subscription_checkbox_RMxHTT": {
-          "type": "subscription_checkbox",
-          "settings": {
-            "checkbox_label": "YES! I want to Subscribe & Save and receive my discount today!",
-            "checked_by_default": false,
-            "label_color": "#333333",
-            "label_font_size": 16,
-            "label_font_weight": "600"
-          }
-        },
         "04ba004e-2f54-4936-8b1c-8bcadf6573f6": {
           "type": "quantity_selector",
           "settings": {
@@ -241,6 +231,16 @@
             "option_4_benefit_color": "accent-1",
             "margin_top": 15,
             "margin_bottom": 15
+          }
+        },
+        "subscription_checkbox_RMxHTT": {
+          "type": "subscription_checkbox",
+          "settings": {
+            "checkbox_label": "YES! I want to Subscribe & Save and receive my discount today!",
+            "checked_by_default": true,
+            "label_color": "#333333",
+            "label_font_size": 16,
+            "label_font_weight": "600"
           }
         },
         "buy_buttons": {
@@ -377,8 +377,8 @@
         "loox_reviews_loox_rating_fYJ3aG",
         "price",
         "5fcc0428-e768-4cb7-bea3-eb0274198dd1",
-        "subscription_checkbox_RMxHTT",
         "04ba004e-2f54-4936-8b1c-8bcadf6573f6",
+        "subscription_checkbox_RMxHTT",
         "buy_buttons",
         "custom_liquid_6F3UNA",
         "image_ndBkxH",
