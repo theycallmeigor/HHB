@@ -109,7 +109,7 @@
             "enable_quantity_discounts": true,
             "headline": "BUNDLE & SAVE",
             "style": "normal",
-            "preselected": "option_2",
+            "preselected": "none",
             "update_pdp_prices": false,
             "prices_layout": "price-first-vertical",
             "display_selected_indicator": true,
