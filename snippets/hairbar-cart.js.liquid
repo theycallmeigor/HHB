@@ -1,5 +1,6 @@
 {%- comment %}
   Enhanced redirect cart that properly passes products to checkout
+  Now with subscription support using custom.cc_sub_id metafield
   @param cart (cart, mandatory)
   @param checkout_url (string, mandatory) the checkout url
   @param checkout_button_selector (string) the query selector for the checkout button
@@ -17,7 +18,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   var debug = true ? console.log.bind(console, '[DEBUG][RedirectCart]') : function () {};
 
-  debug('Script loaded - Enhanced Version');
+  debug('Script loaded - Enhanced Version with Subscription Support');
 
   window.RedirectCart = function (options) {
     var self = {};
@@ -56,10 +57,14 @@ document.addEventListener("DOMContentLoaded", function () {
       
       debug('Checkout triggered');
       
+      // Check subscription status before proceeding
+      var isSubscribed = checkSubscriptionStatus();
+      debug('Subscription status:', isSubscribed);
+      
       // First try the meta-data view, fallback to regular cart.json
       fetchCartData()
         .then(function(data) {
-          var checkoutUrl = getCheckoutURL(data);
+          var checkoutUrl = getCheckoutURL(data, isSubscribed);
           debug('Checkout URL:', checkoutUrl);
           window.location.href = checkoutUrl;
         })
@@ -68,6 +73,34 @@ document.addEventListener("DOMContentLoaded", function () {
           // Fallback to basic redirect
           window.location.href = self.options.checkoutUrl;
         });
+    }
+
+    function checkSubscriptionStatus() {
+      // Check if subscription checkbox is checked
+      var subscriptionCheckbox = document.getElementById('subscription-toggle-checkbox');
+      var subscriptionValue = document.getElementById('subscription-value');
+      
+      if (subscriptionCheckbox && subscriptionCheckbox.checked) {
+        debug('Subscription checkbox is checked');
+        return true;
+      }
+      
+      if (subscriptionValue && subscriptionValue.value === 'true') {
+        debug('Subscription value is true');
+        return true;
+      }
+      
+      // Also check for subscription in form data
+      var form = document.querySelector('form[action*="/cart/add"]');
+      if (form) {
+        var subscriptionInput = form.querySelector('input[name="properties[_subscription]"]');
+        if (subscriptionInput && subscriptionInput.value === 'true') {
+          debug('Subscription property found in form');
+          return true;
+        }
+      }
+      
+      return false;
     }
 
     function fetchCartData() {
@@ -94,34 +127,54 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function getCheckoutURL(cartData) {
+    function getCheckoutURL(cartData, isSubscribed) {
       var cookie = getCartCookie('cart');
       var affId = getCartCookie('affId') || getUrlParam('affId');
       var urlLineItems = '';
       
       if (cartData.type === 'meta' && cartData.data.meta_product_id_array) {
-        // Use meta-data format
+        // Use meta-data format with subscription support
         urlLineItems = Object.keys(cartData.data.meta_product_id_array).reduce(function (output, productId) {
           var item = cartData.data.meta_product_id_array[productId];
-          return output.concat([item.id + ':' + item.quantity]);
+          var itemId = item.id;
+          
+          // If subscribed and subscription ID exists, use it
+          if (isSubscribed && item.subscription_id) {
+            itemId = item.subscription_id;
+            debug('Using subscription ID:', itemId, 'instead of:', item.id);
+          }
+          
+          return output.concat([itemId + ':' + item.quantity]);
         }, []).join(';');
+        
       } else if (cartData.type === 'standard' && cartData.data.items) {
-        // Use standard cart format with variant IDs
+        // Use standard cart format with variant IDs and subscription support
         urlLineItems = cartData.data.items.map(function(item) {
-          // Try multiple ID fields for compatibility
           var productId = item.variant_id || item.id || item.product_id;
           var quantity = item.quantity;
           
-          // If selling plan exists, append it
-          if (item.selling_plan_allocation && item.selling_plan_allocation.selling_plan) {
-            productId = productId + '|' + item.selling_plan_allocation.selling_plan.id;
+          // Check for subscription ID if subscribed
+          if (isSubscribed) {
+            // Check for subscription ID in properties or metafields
+            if (item.properties && item.properties._subscription_id) {
+              productId = item.properties._subscription_id;
+              debug('Using subscription ID from properties:', productId);
+            } else if (item.subscription_id) {
+              productId = item.subscription_id;
+              debug('Using subscription ID from item:', productId);
+            }
+            // If selling plan exists, it might contain subscription info
+            else if (item.selling_plan_allocation && item.selling_plan_allocation.selling_plan) {
+              productId = productId + '|' + item.selling_plan_allocation.selling_plan.id;
+            }
           }
           
           return productId + ':' + quantity;
         }).join(';');
+        
       } else {
-        // Fallback: try to extract from current cart items
-        urlLineItems = extractFromCartItems();
+        // Fallback: try to extract from current cart items with subscription support
+        urlLineItems = extractFromCartItems(isSubscribed);
       }
 
       debug('Line items for checkout:', urlLineItems);
@@ -141,6 +194,17 @@ document.addEventListener("DOMContentLoaded", function () {
         params.append('affId', affId);
       }
       
+      // Add subscription flag if active
+      if (isSubscribed) {
+        params.append('subscription', 'true');
+        
+        // Add subscription discount if available
+        var subscriptionDiscount = document.getElementById('subscription-discount-value');
+        if (subscriptionDiscount && subscriptionDiscount.value) {
+          params.append('subscription_discount', subscriptionDiscount.value);
+        }
+      }
+      
       // Add discount code if present
       if (cartData.data && cartData.data.discount_applications && cartData.data.discount_applications.length > 0) {
         params.append('discount', cartData.data.discount_applications[0].title);
@@ -152,16 +216,28 @@ document.addEventListener("DOMContentLoaded", function () {
       return finalUrl;
     }
 
-    function extractFromCartItems() {
-      // Fallback method using Liquid to generate product list
+    function extractFromCartItems(isSubscribed) {
+      // Fallback method using Liquid to generate product list with subscription support
       var items = [];
       {%- for item in cart.items -%}
-        {%- if item.variant_id -%}
+        {%- assign item_id = item.variant_id | default: item.id -%}
+        {%- if item.product.metafields.custom.cc_sub_id and item.properties._subscription == 'true' -%}
+          {%- comment -%} Use subscription ID if subscription is active {%- endcomment -%}
+          items.push('{{ item.product.metafields.custom.cc_sub_id }}:{{ item.quantity }}');
+        {%- elsif item.variant_id -%}
           items.push('{{ item.variant_id }}:{{ item.quantity }}');
         {%- elsif item.id -%}
           items.push('{{ item.id }}:{{ item.quantity }}');
         {%- endif -%}
       {%- endfor -%}
+      
+      // Override with subscription IDs if subscribed
+      if (isSubscribed) {
+        debug('Checking for subscription IDs in cart items');
+        // This part would need actual cart item data with metafields
+        // which we'll get from the enhanced meta-data view
+      }
+      
       return items.join(';');
     }
 
@@ -181,5 +257,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Create instance
   var instance = new RedirectCart();
+  
+  // Listen for subscription changes to update cart data
+  document.addEventListener('subscription:change', function(event) {
+    debug('Subscription state changed:', event.detail);
+    // Store subscription state for checkout
+    if (event.detail.subscribed) {
+      sessionStorage.setItem('subscription_active', 'true');
+      sessionStorage.setItem('subscription_discount', event.detail.discount);
+    } else {
+      sessionStorage.removeItem('subscription_active');
+      sessionStorage.removeItem('subscription_discount');
+    }
+  });
 });
 </script>
