@@ -2871,6 +2871,277 @@ document.addEventListener('shopify:section:load', () => {
         }
       ],
       "default": "600"
+    },
+    {
+      "type": "header",
+      "content": "Quantity Breaks Integration"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_quantity_breaks_integration",
+      "label": "Enable for quantity breaks",
+      "default": false,
+      "info": "Show subscription options within quantity break selections"
+    },
+    {
+      "type": "select",
+      "id": "quantity_breaks_display",
+      "label": "Display position in quantity breaks",
+      "options": [
+        {
+          "value": "inside",
+          "label": "Inside each quantity option"
+        },
+        {
+          "value": "below",
+          "label": "Below quantity options"
+        },
+        {
+          "value": "above",
+          "label": "Above quantity options"
+        }
+      ],
+      "default": "inside"
+    },
+    {
+      "type": "checkbox",
+      "id": "combine_discounts",
+      "label": "Combine subscription discount with quantity discounts",
+      "default": true,
+      "info": "Apply subscription discount on top of quantity break discounts"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_combined_savings",
+      "label": "Show combined savings amount",
+      "default": false,
+      "info": "Display total savings from both quantity and subscription discounts"
+    },
+    {
+      "type": "header",
+      "content": "Subscription Frequency"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_frequency_selector",
+      "label": "Show frequency selector",
+      "default": false,
+      "info": "Allow customers to choose delivery frequency"
+    },
+    {
+      "type": "text",
+      "id": "frequency_options",
+      "label": "Frequency options",
+      "default": "Weekly:1_week,Bi-Weekly:2_weeks,Monthly:1_month,Every 2 Months:2_months,Quarterly:3_months",
+      "info": "Format: Display Name:value, separated by commas"
+    },
+    {
+      "type": "select",
+      "id": "default_frequency",
+      "label": "Default frequency",
+      "options": [
+        {
+          "value": "1_week",
+          "label": "Weekly"
+        },
+        {
+          "value": "2_weeks",
+          "label": "Bi-Weekly"
+        },
+        {
+          "value": "1_month",
+          "label": "Monthly"
+        },
+        {
+          "value": "2_months",
+          "label": "Every 2 Months"
+        },
+        {
+          "value": "3_months",
+          "label": "Quarterly"
+        }
+      ],
+      "default": "1_month"
+    },
+    {
+      "type": "header",
+      "content": "Tiered Discounts"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_tiered_discounts",
+      "label": "Enable quantity-based subscription discounts",
+      "default": false,
+      "info": "Different subscription discounts for different quantities"
+    },
+    {
+      "type": "text",
+      "id": "tier_1_settings",
+      "label": "Tier 1 (Quantity:Discount%)",
+      "default": "1:10",
+      "info": "Example: 1:10 means 10% off for quantity 1"
+    },
+    {
+      "type": "text",
+      "id": "tier_2_settings",
+      "label": "Tier 2 (Quantity:Discount%)",
+      "default": "2:15",
+      "info": "Example: 2:15 means 15% off for quantity 2"
+    },
+    {
+      "type": "text",
+      "id": "tier_3_settings",
+      "label": "Tier 3 (Quantity:Discount%)",
+      "default": "3:20",
+      "info": "Example: 3:20 means 20% off for quantity 3"
+    },
+    {
+      "type": "text",
+      "id": "tier_4_settings",
+      "label": "Tier 4 (Quantity:Discount%)",
+      "default": "4:25",
+      "info": "Example: 4:25 means 25% off for quantity 4+"
+    },
+    {
+      "type": "header",
+      "content": "Visual Enhancements"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_subscription_badge",
+      "label": "Show subscription badge",
+      "default": false,
+      "info": "Display a badge when subscription is selected"
+    },
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Badge text",
+      "default": "SUBSCRIBE & SAVE",
+      "info": "Text shown in the subscription badge"
+    },
+    {
+      "type": "color",
+      "id": "badge_background_color",
+      "label": "Badge background color",
+      "default": "#00a651"
+    },
+    {
+      "type": "color",
+      "id": "badge_text_color",
+      "label": "Badge text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "checkbox",
+      "id": "highlight_subscription_prices",
+      "label": "Highlight subscription prices",
+      "default": false,
+      "info": "Visually emphasize prices when subscription is selected"
+    },
+    {
+      "type": "color",
+      "id": "highlight_color",
+      "label": "Price highlight color",
+      "default": "#00a651"
+    },
+    {
+      "type": "header",
+      "content": "Price Display"
+    },
+    {
+      "type": "select",
+      "id": "price_display_mode",
+      "label": "Price display when subscription selected",
+      "options": [
+        {
+          "value": "replace",
+          "label": "Replace with subscription price"
+        },
+        {
+          "value": "both",
+          "label": "Show both prices"
+        },
+        {
+          "value": "strikethrough",
+          "label": "Strikethrough original price"
+        }
+      ],
+      "default": "replace"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_per_delivery_price",
+      "label": "Show per-delivery price",
+      "default": false,
+      "info": "Display price per delivery for multi-quantity orders"
+    },
+    {
+      "type": "text",
+      "id": "per_delivery_text",
+      "label": "Per delivery text",
+      "default": "[price] per delivery",
+      "info": "Use [price] for the calculated per-delivery amount"
+    },
+    {
+      "type": "header",
+      "content": "Mobile Optimization"
+    },
+    {
+      "type": "checkbox",
+      "id": "mobile_friendly_layout",
+      "label": "Optimize for mobile",
+      "default": true,
+      "info": "Adjust layout for better mobile experience"
+    },
+    {
+      "type": "range",
+      "id": "mobile_font_size",
+      "label": "Mobile font size",
+      "min": 12,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "checkbox",
+      "id": "mobile_sticky_bar",
+      "label": "Show sticky subscription bar on mobile",
+      "default": false,
+      "info": "Display subscription option in a sticky bar at bottom of screen"
+    },
+    {
+      "type": "header",
+      "content": "Customer Experience"
+    },
+    {
+      "type": "checkbox",
+      "id": "remember_preference",
+      "label": "Remember customer preference",
+      "default": false,
+      "info": "Save subscription selection for future visits"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_tooltip",
+      "label": "Show information tooltip",
+      "default": false,
+      "info": "Display an info icon with subscription details"
+    },
+    {
+      "type": "textarea",
+      "id": "tooltip_content",
+      "label": "Tooltip content",
+      "default": "Subscribe and save on every order. Cancel or modify anytime.",
+      "info": "Information shown when hovering over tooltip"
+    },
+    {
+      "type": "checkbox",
+      "id": "animate_selection",
+      "label": "Animate subscription selection",
+      "default": false,
+      "info": "Add smooth animations when toggling subscription"
     }
   ]
 },
