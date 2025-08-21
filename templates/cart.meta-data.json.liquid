@@ -1,10 +1,45 @@
 {%- layout none -%}
-{ "meta_product_id_array": [
-{% for item in cart.items %}
-  {% if item.variant.metafields.productId.productId %}
-    { "id": {{ item.variant.metafields.productId.productId }}, "quantity": {{ item.quantity }}
-    }
-    {% unless forloop.last %},{% endunless %}
-  {% endif %}
-{% endfor %}
-] }
+{
+  "meta_product_id_array": [
+    {%- for item in cart.items -%}
+      {%- liquid
+        assign use_subscription = false
+        assign subscription_id = nil
+        
+        if item.properties._subscription == 'true'
+          assign use_subscription = true
+        endif
+        
+        if use_subscription and item.product.metafields.custom.cc_sub_id
+          assign subscription_id = item.product.metafields.custom.cc_sub_id
+        endif
+        
+        if subscription_id
+          assign item_id = subscription_id
+        elsif item.variant.metafields.productId.productId
+          assign item_id = item.variant.metafields.productId.productId
+        else
+          assign item_id = item.variant_id | default: item.id
+        endif
+      -%}
+      
+      {
+        "id": {{ item_id | json }},
+        "quantity": {{ item.quantity }},
+        "original_id": {{ item.variant_id | default: item.id | json }},
+        {%- if subscription_id -%}
+        "subscription_id": {{ subscription_id | json }},
+        "is_subscription": true,
+        {%- endif -%}
+        {%- if item.product.metafields.custom.cc_sub_id -%}
+        "available_subscription_id": {{ item.product.metafields.custom.cc_sub_id | json }},
+        {%- endif -%}
+        "properties": {{ item.properties | json }}
+      }
+      {%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+  ],
+  "subscription_active": {% if cart.attributes.subscription_active %}true{% else %}false{% endif %},
+  "total_items": {{ cart.item_count }},
+  "total_price": {{ cart.total_price }}
+}
