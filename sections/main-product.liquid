@@ -328,60 +328,337 @@ It preserves all original styling, layout and functionality.
 {%- endcomment -%}
   {%- when 'subscription_checkbox' -%}
   {%- if product.metafields.custom.cc_sub == true -%}
-          <div id="subscription-checkbox-container" data-box="true" style="padding: 20px 0px 16px; margin-top: 20px; width: 100%;">
-            <div data-secondsdelay="" class="form-check fk-form-radio-button-parent" style="display: flex; align-items: center; justify-content: center;">
-              <input 
-                type="checkbox" 
-                value="subscription" 
-                name="purchase-type" 
-                id="subscription-toggle-checkbox" 
-                class="fk-form-general-radio-checkbox fk-form-checkbox subscribe-checkbox" 
-                {% if block.settings.checked_by_default != false %}checked{% endif %}
-                style="margin-right: 8px; width: 20px; height: 20px; cursor: pointer;"
-                form="{{ product_form_id }}"
-              >
-              <label 
-                for="subscription-toggle-checkbox" 
-                class="form-check-label" 
-                style="cursor: pointer; font-size: {{ block.settings.label_font_size | default: 16 }}px; color: {{ block.settings.label_color | default: '#333' }}; font-weight: {{ block.settings.label_font_weight | default: '600' }};"
-              >
-                {{ block.settings.checkbox_label | default: 'YES! I want to Subscribe & Save and receive my discount today!' }}
-              </label>
-            </div>
-          </div>
-          
-          {%- comment -%} Hidden input to track subscription in cart properties {%- endcomment -%}
-          <input 
-            type="hidden" 
-            name="properties[_subscription]" 
-            value="{% if block.settings.checked_by_default != false %}true{% else %}false{% endif %}" 
-            id="subscription-value"
-            form="{{ product_form_id }}"
-          >
-          
-          <script>
-            document.addEventListener('DOMContentLoaded', function() {
-              const checkbox = document.getElementById('subscription-toggle-checkbox');
-              const hiddenInput = document.getElementById('subscription-value');
-              
-              if (checkbox && hiddenInput) {
-                checkbox.addEventListener('change', function() {
-                  hiddenInput.value = this.checked ? 'true' : 'false';
-                  
-                  // Dispatch event for integration with other scripts
-                  const event = new CustomEvent('subscription:change', {
-                    detail: {
-                      productId: '{{ product.id }}',
-                      subscribed: this.checked
-                    },
-                    bubbles: true
-                  });
-                  document.dispatchEvent(event);
-                });
-              }
-            });
-          </script>
-        {%- endif -%}
+    {%- liquid
+      assign subscription_discount = block.settings.default_discount
+      if product.metafields.custom.cc_sub_discount != blank
+        assign subscription_discount = product.metafields.custom.cc_sub_discount | plus: 0
+      endif
+      
+      assign label_text = block.settings.checkbox_label
+      if block.settings.show_discount_in_label
+        assign label_text = label_text | replace: '[discount]', subscription_discount | append: '%'
+      endif
+    -%}
+    
+    <div id="subscription-checkbox-container" 
+         data-box="true" 
+         data-subscription-discount="{{ subscription_discount }}"
+         style="padding: 20px 0px 16px; margin-top: 20px; width: 100%;">
+      <div data-secondsdelay="" class="form-check fk-form-radio-button-parent" style="display: flex; align-items: center; justify-content: center;">
+        <input 
+          type="checkbox" 
+          value="subscription" 
+          name="purchase-type" 
+          id="subscription-toggle-checkbox" 
+          class="fk-form-general-radio-checkbox fk-form-checkbox subscribe-checkbox" 
+          {% if block.settings.checked_by_default != false %}checked{% endif %}
+          data-discount="{{ subscription_discount }}"
+          style="margin-right: 8px; width: 20px; height: 20px; cursor: pointer;"
+          form="{{ product_form_id }}"
+        >
+        <label 
+          for="subscription-toggle-checkbox" 
+          class="form-check-label" 
+          style="cursor: pointer; font-size: {{ block.settings.label_font_size | default: 16 }}px; color: {{ block.settings.label_color | default: '#333' }}; font-weight: {{ block.settings.label_font_weight | default: '600' }};"
+        >
+          {{ label_text }}
+        </label>
+      </div>
+    </div>
+    
+    {%- comment -%} Hidden inputs to track subscription in cart properties {%- endcomment -%}
+    <input 
+      type="hidden" 
+      name="properties[_subscription]" 
+      value="{% if block.settings.checked_by_default != false %}true{% else %}false{% endif %}" 
+      id="subscription-value"
+      form="{{ product_form_id }}"
+    >
+    <input 
+      type="hidden" 
+      name="properties[_subscription_discount]" 
+      value="{{ subscription_discount }}" 
+      id="subscription-discount-value"
+      form="{{ product_form_id }}"
+    >
+      <Script>class SubscriptionManager {
+  constructor() {
+    this.checkbox = document.getElementById('subscription-toggle-checkbox');
+    this.hiddenInput = document.getElementById('subscription-value');
+    this.discountInput = document.getElementById('subscription-discount-value');
+    this.discountPercentage = 0;
+    
+    if (this.checkbox) {
+      this.discountPercentage = parseFloat(this.checkbox.dataset.discount) || 15;
+      this.init();
+    }
+  }
+
+  init() {
+    // Listen for checkbox changes
+    this.checkbox.addEventListener('change', (e) => this.handleSubscriptionToggle(e));
+    
+    // Apply initial state
+    if (this.checkbox.checked) {
+      this.applySubscriptionDiscount();
+    }
+
+    // Listen for variant changes
+    document.addEventListener('variant:change', () => this.updatePrices());
+    
+    // Listen for quantity break changes
+    document.addEventListener('quantitybreak:change', () => this.updateQuantityBreakPrices());
+  }
+
+  handleSubscriptionToggle(event) {
+    const isChecked = event.target.checked;
+    
+    // Update hidden inputs
+    this.hiddenInput.value = isChecked ? 'true' : 'false';
+    
+    if (isChecked) {
+      this.applySubscriptionDiscount();
+    } else {
+      this.removeSubscriptionDiscount();
+    }
+    
+    // Dispatch custom event
+    const customEvent = new CustomEvent('subscription:change', {
+      detail: {
+        subscribed: isChecked,
+        discount: this.discountPercentage,
+        productId: window.productId
+      },
+      bubbles: true
+    });
+    document.dispatchEvent(customEvent);
+  }
+
+  applySubscriptionDiscount() {
+    // Update regular product price
+    this.updateProductPrice();
+    
+    // Update quantity breaks if present
+    this.updateQuantityBreakPrices();
+    
+    // Update sticky ATC if present
+    this.updateStickyATC();
+    
+    // Add visual indicator
+    this.addDiscountIndicator();
+  }
+
+  removeSubscriptionDiscount() {
+    // Restore original prices
+    this.restoreOriginalPrices();
+    
+    // Remove visual indicators
+    this.removeDiscountIndicators();
+  }
+
+  updateProductPrice() {
+    const priceElements = document.querySelectorAll('.price__regular .price-item--regular, .product-page-price .price-item--regular');
+    const saleElements = document.querySelectorAll('.price__sale .price-item--sale');
+    
+    priceElements.forEach(element => {
+      const originalPrice = this.getOriginalPrice(element);
+      const discountedPrice = this.calculateDiscountedPrice(originalPrice);
+      this.updatePriceDisplay(element, discountedPrice, originalPrice);
+    });
+    
+    saleElements.forEach(element => {
+      const originalPrice = this.getOriginalPrice(element);
+      const discountedPrice = this.calculateDiscountedPrice(originalPrice);
+      this.updatePriceDisplay(element, discountedPrice, originalPrice);
+    });
+  }
+
+  updateQuantityBreakPrices() {
+    const quantityBreaks = document.querySelector('quantity-breaks');
+    if (!quantityBreaks) return;
+    
+    const breakOptions = quantityBreaks.querySelectorAll('.quantity-break');
+    const isSubscribed = this.checkbox.checked;
+    
+    breakOptions.forEach(option => {
+      const priceElements = option.querySelectorAll('[data-text*="[price]"]');
+      const comparePriceElements = option.querySelectorAll('[data-text*="[compare_price]"]');
+      
+      priceElements.forEach(element => {
+        const originalText = element.dataset.text;
+        const basePrice = parseFloat(option.dataset.basePrice) || 0;
+        const quantity = parseInt(option.dataset.quantity) || 1;
+        
+        if (isSubscribed) {
+          const discountedPrice = this.calculateDiscountedPrice(basePrice * quantity);
+          element.dataset.subscriptionPrice = discountedPrice;
+          this.updateQuantityBreakPrice(element, discountedPrice);
+        } else {
+          this.restoreQuantityBreakPrice(element);
+        }
+      });
+    });
+
+    // Trigger quantity breaks recalculation
+    if (quantityBreaks.updatePrices) {
+      quantityBreaks.updatePrices();
+    }
+  }
+
+  updateStickyATC() {
+    const stickyATC = document.querySelector('sticky-atc');
+    if (!stickyATC) return;
+    
+    const priceElements = stickyATC.querySelectorAll('.sticky-atc__price, .sticky-atc__button-price');
+    const isSubscribed = this.checkbox.checked;
+    
+    priceElements.forEach(element => {
+      if (isSubscribed) {
+        const originalPrice = this.getOriginalPrice(element);
+        const discountedPrice = this.calculateDiscountedPrice(originalPrice);
+        this.updatePriceDisplay(element, discountedPrice, originalPrice);
+      } else {
+        this.restoreOriginalPrice(element);
+      }
+    });
+  }
+
+  calculateDiscountedPrice(price) {
+    const discount = 1 - (this.discountPercentage / 100);
+    return Math.round(price * discount);
+  }
+
+  getOriginalPrice(element) {
+    if (!element.dataset.originalPrice) {
+      const priceText = element.textContent.replace(/[^0-9.,]/g, '');
+      const price = parseFloat(priceText.replace(',', '')) * 100;
+      element.dataset.originalPrice = price;
+      return price;
+    }
+    return parseFloat(element.dataset.originalPrice);
+  }
+
+  updatePriceDisplay(element, newPrice, originalPrice) {
+    const formattedPrice = this.formatMoney(newPrice);
+    
+    // Store original price if not already stored
+    if (!element.dataset.originalPrice) {
+      element.dataset.originalPrice = originalPrice;
+    }
+    
+    // Update display with subscription price
+    element.innerHTML = `
+      <span class="subscription-price">${formattedPrice}</span>
+      <span class="original-price" style="text-decoration: line-through; opacity: 0.6; margin-left: 0.5rem;">
+        ${this.formatMoney(originalPrice)}
+      </span>
+    `;
+    
+    // Add subscription badge if not present
+    this.addSubscriptionBadge(element);
+  }
+
+  updateQuantityBreakPrice(element, newPrice) {
+    const formattedPrice = this.formatMoney(newPrice);
+    const originalHtml = element.innerHTML;
+    
+    if (!element.dataset.originalHtml) {
+      element.dataset.originalHtml = originalHtml;
+    }
+    
+    element.innerHTML = element.innerHTML.replace(/\[price\]/g, formattedPrice);
+  }
+
+  restoreOriginalPrices() {
+    document.querySelectorAll('[data-original-price]').forEach(element => {
+      const originalPrice = parseFloat(element.dataset.originalPrice);
+      element.textContent = this.formatMoney(originalPrice);
+      delete element.dataset.originalPrice;
+    });
+    
+    document.querySelectorAll('[data-original-html]').forEach(element => {
+      element.innerHTML = element.dataset.originalHtml;
+      delete element.dataset.originalHtml;
+    });
+  }
+
+  restoreOriginalPrice(element) {
+    if (element.dataset.originalPrice) {
+      const originalPrice = parseFloat(element.dataset.originalPrice);
+      element.textContent = this.formatMoney(originalPrice);
+      delete element.dataset.originalPrice;
+    }
+  }
+
+  restoreQuantityBreakPrice(element) {
+    if (element.dataset.originalHtml) {
+      element.innerHTML = element.dataset.originalHtml;
+      delete element.dataset.originalHtml;
+    }
+  }
+
+  addDiscountIndicator() {
+    const priceContainers = document.querySelectorAll('.product-page-price, .sticky-atc__price');
+    priceContainers.forEach(container => {
+      if (!container.querySelector('.subscription-discount-badge')) {
+        const badge = document.createElement('span');
+        badge.className = 'subscription-discount-badge';
+        badge.textContent = `${this.discountPercentage}% OFF - Subscription`;
+        badge.style.cssText = `
+          display: inline-block;
+          background: #4CAF50;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          margin-left: 8px;
+          font-weight: 600;
+        `;
+        container.appendChild(badge);
+      }
+    });
+  }
+
+  addSubscriptionBadge(element) {
+    const parent = element.closest('.price') || element.parentElement;
+    if (parent && !parent.querySelector('.subscription-badge')) {
+      const badge = document.createElement('div');
+      badge.className = 'subscription-badge';
+      badge.innerHTML = `
+        <svg width="16" height="16" style="margin-right: 4px; vertical-align: middle;">
+          <circle cx="8" cy="8" r="8" fill="#4CAF50"/>
+          <path d="M6 8l2 2 4-4" stroke="white" stroke-width="2" fill="none"/>
+        </svg>
+        <span style="font-size: 12px; color: #4CAF50;">Subscription price</span>
+      `;
+      badge.style.marginTop = '4px';
+      parent.appendChild(badge);
+    }
+  }
+
+  removeDiscountIndicators() {
+    document.querySelectorAll('.subscription-discount-badge, .subscription-badge').forEach(badge => {
+      badge.remove();
+    });
+  }
+
+  formatMoney(cents) {
+    const format = window.theme?.moneyFormat || '${{amount}}';
+    const value = (cents / 100).toFixed(2);
+    return format.replace('{{amount}}', value);
+  }
+}
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  window.subscriptionManager = new SubscriptionManager();
+});
+
+// Reinitialize on section reload (for theme editor)
+document.addEventListener('shopify:section:load', () => {
+  window.subscriptionManager = new SubscriptionManager();
+});</Script>
+  {%- endif -%}
               {%- when 'quantity_selector' -%}
                 {%- if block.settings.enable_quantity_discounts -%}
                   {% render 'quantity-breaks', block: block, product: product, product_form_id: product_form_id %}
@@ -2507,7 +2784,7 @@ It preserves all original styling, layout and functionality.
         }
       ]
     },
-    {
+   {
   "type": "subscription_checkbox",
   "name": "Subscription Checkbox",
   "limit": 1,
@@ -2521,7 +2798,28 @@ It preserves all original styling, layout and functionality.
       "id": "checkbox_label",
       "label": "Checkbox Label",
       "default": "YES! I want to Subscribe & Save and receive my discount today!",
-      "info": "The text that appears next to the subscription checkbox"
+      "info": "The text that appears next to the subscription checkbox. Use [discount] to display the discount percentage."
+    },
+    {
+      "type": "header",
+      "content": "Discount Settings"
+    },
+    {
+      "type": "range",
+      "id": "default_discount",
+      "label": "Default subscription discount",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "%",
+      "default": 15,
+      "info": "This discount is applied unless overridden by the product's custom.cc_sub_discount metafield"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_discount_in_label",
+      "label": "Show discount percentage in label",
+      "default": true
     },
     {
       "type": "header",
