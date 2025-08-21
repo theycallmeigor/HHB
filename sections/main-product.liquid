@@ -389,6 +389,7 @@ It preserves all original styling, layout and functionality.
       this.hiddenInput = document.getElementById('subscription-value');
       this.discountInput = document.getElementById('subscription-discount-value');
       this.discountPercentage = 0;
+      this.isUpdating = false;
       
       if (this.checkbox) {
         this.discountPercentage = parseFloat(this.checkbox.dataset.discount) || 15;
@@ -408,12 +409,43 @@ It preserves all original styling, layout and functionality.
       }, 100);
 
       // Listen for variant changes and reapply subscription state
-      document.addEventListener('variant:change', () => {
+      document.addEventListener('variant:change', (e) => {
+        if (this.isUpdating) return;
+        
         setTimeout(() => {
           if (this.checkbox.checked) {
             this.updatePrices();
           }
-        }, 50);
+        }, 100);
+      });
+      
+      // Listen for price updates from Dawn theme
+      const priceObserver = new MutationObserver((mutations) => {
+        if (this.isUpdating) return;
+        
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList' || mutation.type === 'characterData') {
+            if (this.checkbox.checked && !this.isUpdating) {
+              this.isUpdating = true;
+              setTimeout(() => {
+                this.updatePrices();
+                this.isUpdating = false;
+              }, 50);
+            }
+          }
+        });
+      });
+      
+      // Observe all price containers
+      const priceContainers = document.querySelectorAll('.product-page-price, #price-' + document.querySelector('[data-section]')?.dataset.section);
+      priceContainers.forEach(container => {
+        if (container) {
+          priceObserver.observe(container, {
+            childList: true,
+            subtree: true,
+            characterData: true
+          });
+        }
       });
       
       // Listen for quantity break changes
@@ -470,20 +502,51 @@ It preserves all original styling, layout and functionality.
     }
 
     updateProductPrice() {
-      const priceElements = document.querySelectorAll('.price__regular .price-item--regular, .product-page-price .price-item--regular');
-      const saleElements = document.querySelectorAll('.price__sale .price-item--sale');
+      // Target all price elements more specifically
+      const priceSelectors = [
+        '.price__regular .price-item--regular',
+        '.product-page-price .price-item--regular',
+        '.price__sale .price-item--sale',
+        '.product-page-price .price-item--sale',
+        '#price-{{ section.id }} .price-item--regular',
+        '#price-{{ section.id }} .price-item--sale'
+      ];
       
-      priceElements.forEach(element => {
-        const originalPrice = this.getOriginalPrice(element);
-        const discountedPrice = this.calculateDiscountedPrice(originalPrice);
-        this.updatePriceDisplaySimple(element, discountedPrice);
+      priceSelectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+          if (!element.dataset.originalPrice || this.isUpdating) {
+            const priceText = element.textContent.replace(/[^0-9.,]/g, '');
+            const price = parseFloat(priceText.replace(',', '')) * 100;
+            if (!isNaN(price) && price > 0) {
+              element.dataset.originalPrice = price;
+              element.dataset.originalHtml = element.innerHTML;
+            }
+          }
+          
+          const originalPrice = parseFloat(element.dataset.originalPrice);
+          if (originalPrice && originalPrice > 0) {
+            const discountedPrice = this.calculateDiscountedPrice(originalPrice);
+            this.updatePriceDisplay(element, discountedPrice);
+          }
+        });
       });
+    }
+
+    updatePriceDisplay(element, newPrice) {
+      const formattedPrice = this.formatMoney(newPrice);
       
-      saleElements.forEach(element => {
-        const originalPrice = this.getOriginalPrice(element);
-        const discountedPrice = this.calculateDiscountedPrice(originalPrice);
-        this.updatePriceDisplaySimple(element, discountedPrice);
-      });
+      // Preserve any structure but update the price text
+      if (element.innerHTML.includes('</span>')) {
+        // Price has internal structure (like "From $X")
+        element.innerHTML = element.innerHTML.replace(/\$[\d,]+\.?\d*/g, formattedPrice);
+      } else {
+        // Simple price element
+        element.textContent = formattedPrice;
+      }
+      
+      // Add a data attribute to indicate this price has been modified
+      element.dataset.subscriptionPrice = 'true';
     }
 
     updateQuantityBreakPrices() {
@@ -495,19 +558,17 @@ It preserves all original styling, layout and functionality.
       
       breakOptions.forEach(option => {
         const quantity = parseInt(option.dataset.quantity) || 1;
-        
-        // Find the actual price span element that contains the price
         const priceElement = option.querySelector('.quantity-break__price');
+        
         if (!priceElement) return;
         
-        // Store original HTML and price if not already stored
+        // Store original data if not already stored
         if (!priceElement.hasAttribute('data-original-html')) {
           priceElement.setAttribute('data-original-html', priceElement.innerHTML.trim());
           
-          // Extract price from the HTML
           const priceMatch = priceElement.textContent.match(/\$?([\d,]+\.?\d*)/);
           if (priceMatch) {
-            const originalPrice = parseFloat(priceMatch[1].replace(',', '')) * 100; // Convert to cents
+            const originalPrice = parseFloat(priceMatch[1].replace(',', '')) * 100;
             priceElement.setAttribute('data-original-price', originalPrice);
           }
         }
@@ -517,35 +578,27 @@ It preserves all original styling, layout and functionality.
         
         if (originalPrice && originalHtml) {
           if (isSubscribed) {
-            // Calculate subscription price
             const discountedPrice = this.calculateDiscountedPrice(originalPrice);
             const formattedPrice = this.formatMoney(discountedPrice);
-            
-            // Replace the price in the HTML while preserving structure
             const newHtml = originalHtml.replace(/\$[\d,]+\.?\d*/g, formattedPrice);
             priceElement.innerHTML = newHtml;
             
-            // Update compare price element if it exists
+            // Update compare price if exists
             const compareElement = option.querySelector('.quantity-break__compare-price');
             if (compareElement) {
               if (!compareElement.hasAttribute('data-original-display')) {
                 compareElement.setAttribute('data-original-display', compareElement.style.display || 'inline');
                 compareElement.setAttribute('data-original-html', compareElement.innerHTML);
               }
-              // Show original price as compare price
               compareElement.innerHTML = this.formatMoney(originalPrice);
               compareElement.style.display = 'inline';
               compareElement.style.textDecoration = 'line-through';
               compareElement.style.opacity = '0.6';
             }
-            
-            // Don't modify the caption - keep original savings text
-            
           } else {
-            // Restore original price
+            // Restore original
             priceElement.innerHTML = originalHtml;
             
-            // Restore compare price
             const compareElement = option.querySelector('.quantity-break__compare-price');
             if (compareElement && compareElement.hasAttribute('data-original-html')) {
               compareElement.innerHTML = compareElement.getAttribute('data-original-html');
@@ -556,28 +609,29 @@ It preserves all original styling, layout and functionality.
           }
         }
       });
-      
-      // Trigger any quantity breaks native update functions
-      const quantityBreaksElement = document.querySelector('quantity-breaks');
-      if (quantityBreaksElement) {
-        quantityBreaksElement.dispatchEvent(new CustomEvent('subscription:updated', {
-          detail: { isSubscribed, discount: this.discountPercentage }
-        }));
-      }
     }
 
     updateStickyATC() {
       const stickyATC = document.querySelector('sticky-atc');
       if (!stickyATC) return;
       
-      const priceElements = stickyATC.querySelectorAll('.sticky-atc__price, .sticky-atc__button-price');
+      const priceElements = stickyATC.querySelectorAll('.sticky-atc__price, .sticky-atc__button-price, .main-atc-price-span-{{ section.id }}');
       const isSubscribed = this.checkbox.checked;
       
       priceElements.forEach(element => {
         if (isSubscribed) {
-          const originalPrice = this.getOriginalPrice(element);
-          const discountedPrice = this.calculateDiscountedPrice(originalPrice);
-          this.updatePriceDisplaySimple(element, discountedPrice);
+          if (!element.dataset.originalPrice) {
+            const priceText = element.textContent.replace(/[^0-9.,]/g, '');
+            const price = parseFloat(priceText.replace(',', '')) * 100;
+            element.dataset.originalPrice = price;
+            element.dataset.originalHtml = element.innerHTML;
+          }
+          
+          const originalPrice = parseFloat(element.dataset.originalPrice);
+          if (originalPrice) {
+            const discountedPrice = this.calculateDiscountedPrice(originalPrice);
+            this.updatePriceDisplay(element, discountedPrice);
+          }
         } else {
           this.restoreOriginalPrice(element);
         }
@@ -589,32 +643,15 @@ It preserves all original styling, layout and functionality.
       return Math.round(price * discount);
     }
 
-    getOriginalPrice(element) {
-      // Always recalculate price on variant change
-      const priceText = element.textContent.replace(/[^0-9.,]/g, '');
-      const price = parseFloat(priceText.replace(',', '')) * 100;
-      element.dataset.originalPrice = price;
-      return price;
-    }
-
-    updatePriceDisplaySimple(element, newPrice) {
-      const formattedPrice = this.formatMoney(newPrice);
-      
-      // Store original HTML if not stored
-      if (!element.dataset.originalHtml) {
-        element.dataset.originalHtml = element.innerHTML;
-      }
-      
-      // Simply update the price text - no additional elements
-      element.textContent = formattedPrice;
-    }
-
     restoreOriginalPrices() {
       // Restore all elements with stored original HTML
       document.querySelectorAll('[data-original-html]').forEach(element => {
-        element.innerHTML = element.dataset.originalHtml;
-        delete element.dataset.originalHtml;
-        delete element.dataset.originalPrice;
+        if (element.dataset.originalHtml) {
+          element.innerHTML = element.dataset.originalHtml;
+          delete element.dataset.originalHtml;
+          delete element.dataset.originalPrice;
+          delete element.dataset.subscriptionPrice;
+        }
       });
       
       // Restore compare prices
@@ -631,20 +668,24 @@ It preserves all original styling, layout and functionality.
         element.innerHTML = element.dataset.originalHtml;
         delete element.dataset.originalHtml;
         delete element.dataset.originalPrice;
+        delete element.dataset.subscriptionPrice;
       }
     }
 
     formatMoney(cents) {
-      // Format to match Shopify's money format
       const value = (cents / 100).toFixed(2);
       return `$${value}`;
     }
   }
 
   // Initialize on DOM ready
-  document.addEventListener('DOMContentLoaded', () => {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      window.subscriptionManager = new SubscriptionManager();
+    });
+  } else {
     window.subscriptionManager = new SubscriptionManager();
-  });
+  }
 
   // Reinitialize on section reload (for theme editor)
   document.addEventListener('shopify:section:load', () => {
