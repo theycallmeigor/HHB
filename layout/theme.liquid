@@ -9,7 +9,8 @@
 
     <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
     <link rel="preconnect" href="https://js.shrinetheme.com" crossorigin>
-    
+    {{ 'subscription-quantity-breaks.css' | asset_url | stylesheet_tag }}
+
     {% liquid
       assign is_rtl = false
       if settings.enable_rtl == true
@@ -618,5 +619,7 @@
     {% if settings.display_store_languages %}
       {% render 'enabled-languages-modal' %}
     {% endif %}
+    {{ 'subscription-quantity-breaks.js' | asset_url | script_tag }}
+
   {%- render 'page-footer.zipifypages', renderctx: 'thm', ocuapp: oneclickupsellapp -%}</body>
 </html>
