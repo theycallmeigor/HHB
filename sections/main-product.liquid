@@ -139,19 +139,106 @@
                 {% render 'rating-stars-block', block: block, margins: true, block_attributes: true %}
               {% when 'trustpilot_stars' %}
                 {% render 'trustpilot-stars-block', block: block, margins: true, block_attributes: true %}
-              {%- when 'price' -%}
-                <div class="no-js-hidden product-page-price" id="price-{{ section.id }}" role="status" {{ block.shopify_attributes }} style="--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;">
+             {%- when 'price' -%}
+                <div class="no-js-hidden product-page-price" 
+                     id="price-{{ section.id }}" 
+                     role="status" 
+                     data-section="{{ section.id }}"
+                     data-subscription-enabled="{% if product.selling_plan_groups.size > 0 %}true{% else %}false{% endif %}"
+                     {{ block.shopify_attributes }} 
+                     style="--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;">
+                  
                   {%- render 'price',
                     product: product,
                     block: block,
                     use_variant: true,
                     show_badges: true,
                     hide_sale_badge: block.settings.hide_sale_badge,
-                    price_class: 'price--large',
+                    price_class: 'price--large price-updatable',
                     main_price: true,
                     layout: block.settings.price_layout
                   -%}
+                  
+                  {%- comment -%}
+                  Add subscription price display that will be toggled
+                  {%- endcomment -%}
+                  {%- if product.selling_plan_groups.size > 0 -%}
+                    <div class="subscription-price-wrapper" style="display: none;" data-subscription-price>
+                      <span class="subscription-discount-label">
+                        {%- if product.selling_plan_groups.first.selling_plans.first.price_adjustments.first.value -%}
+                          Save {{ product.selling_plan_groups.first.selling_plans.first.price_adjustments.first.value }}%
+                        {%- endif -%}
+                      </span>
+                    </div>
+                  {%- endif -%}
                 </div>
+
+                {%- comment -%}
+                Script to handle subscription price updates
+                {%- endcomment -%}
+                <script>
+                  document.addEventListener('DOMContentLoaded', function() {
+                    // Listen for subscription changes
+                    document.addEventListener('subscription:change', function(e) {
+                      const priceContainer = document.getElementById('price-{{ section.id }}');
+                      if (!priceContainer) return;
+                      
+                      const isSubscribed = e.detail.subscribed;
+                      const discount = e.detail.discount || 0;
+                      
+                      // Add data attribute for styling
+                      priceContainer.dataset.subscriptionActive = isSubscribed ? 'true' : 'false';
+                      
+                      // Show/hide subscription indicator
+                      const subscriptionWrapper = priceContainer.querySelector('[data-subscription-price]');
+                      if (subscriptionWrapper) {
+                        subscriptionWrapper.style.display = isSubscribed ? 'block' : 'none';
+                      }
+                      
+                      // The actual price update will be handled by quantity-breaks-manager.js
+                      // This just ensures the UI is ready for it
+                    });
+                    
+                    // Listen for quantity break changes
+                    document.addEventListener('quantitybreak:change', function(e) {
+                      const priceContainer = document.getElementById('price-{{ section.id }}');
+                      if (!priceContainer) return;
+                      
+                      // Add indicator for quantity-based pricing
+                      priceContainer.dataset.quantitySelected = e.detail.quantity;
+                    });
+                  });
+                </script>
+
+                {%- comment -%}
+                Styles for subscription pricing display
+                {%- endcomment -%}
+                <style>
+                  .product-page-price[data-subscription-active="true"] .price-item--regular {
+                    position: relative;
+                  }
+                  
+                  .product-page-price[data-subscription-active="true"] .price-updatable {
+                    color: var(--color-foreground);
+                  }
+                  
+                  .subscription-price-wrapper {
+                    margin-top: 0.5rem;
+                    font-size: 0.9em;
+                  }
+                  
+                  .subscription-discount-label {
+                    color: var(--color-success, #059669);
+                    font-weight: 500;
+                  }
+                  
+                  /* Ensure original price shows as compare when subscription active */
+                  .product-page-price[data-subscription-active="true"] .price-item--regular:not(.price-item--last) {
+                    text-decoration: line-through;
+                    opacity: 0.65;
+                  }
+                </style>
+
 {% comment %}
                 <div {{ block.shopify_attributes }}>
                   {%- assign product_form_installment_id = 'product-form-installment-' | append: section.id -%}
@@ -160,7 +247,7 @@
                     {{ form | payment_terms }}
                   {%- endform -%}
                 </div>
-                {% endcomment %}
+{% endcomment %}
               {% when 'clickable_discount' %}
                 <div style='--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;' {{ block.shopify_attributes }}>
                   {% if block.settings.discount_code != blank %}
