@@ -1,86 +1,5 @@
-{%- comment -%} Gate by metaobject cc.mapping {%- endcomment -%}
 {% liquid
-  assign cc_map = product.metafields.cc.mapping.value
-  assign show_subscribe = false
-
-  if cc_map
-    if cc_map.subscription == true or cc_map.subscription == 'true' or cc_map.subscription
-      if cc_map.subscription_id != blank
-        assign show_subscribe = true
-      endif
-    endif
-  endif
-
-  assign default_mode = block.settings.default_selection
-  assign is_subscription_default = false
-  if default_mode == 'subscription' and show_subscribe
-    assign is_subscription_default = true
-  endif
-%}
-
-<div id="cc-purchase-options-{{ block.id }}"
-     class="product-form__input purchase-options"
-     data-form-id="{{ product_form_id }}">
-  {% if show_subscribe %}
-    <fieldset class="purchase-options__fieldset">
-      <legend class="visually-hidden">Purchase options</legend>
-
-      <label class="purchase-options__option">
-        <input type="radio" class="purchase-options__radio"
-               name="cc_purchase_mode_{{ section.id }}"
-               value="onetime"
-               {% unless is_subscription_default %}checked{% endunless %}>
-        <span class="purchase-options__label">
-          <span class="purchase-options__label-main">{{ block.settings.onetime_label | default: 'One-time purchase' }}</span>
-          {% if block.settings.onetime_subtitle != blank %}<span class="purchase-options__label-sub">{{ block.settings.onetime_subtitle }}</span>{% endif %}
-        </span>
-      </label>
-
-      <label class="purchase-options__option">
-        <input type="radio" class="purchase-options__radio"
-               name="cc_purchase_mode_{{ section.id }}"
-               value="subscription"
-               {% if is_subscription_default %}checked{% endif %}>
-        <span class="purchase-options__label">
-          <span class="purchase-options__label-main">{{ block.settings.subscription_label | default: 'Subscribe & Save' }}</span>
-          {% if block.settings.subscription_subtitle != blank %}<span class="purchase-options__label-sub">{{ block.settings.subscription_subtitle }}</span>{% endif %}
-        </span>
-      </label>
-    </fieldset>
-  {% endif %}
-
-  {#— Canonical hidden fields —#}
-  <input type="hidden" name="properties[purchase_option]"
-         value="{% if is_subscription_default %}subscription{% else %}one-time{% endif %}"
-         {% unless root_in_form %}form="{{ product_form_id }}"{% endunless %}>
-  <input type="hidden" name="properties[cc_override_id]"
-         value="{% if is_subscription_default %}{{ cc_map.subscription_id }}{% else %}{{ cc_map.one_time_id | default: '' }}{% endif %}"
-         {% unless root_in_form %}form="{{ product_form_id }}"{% endunless %}>
-</div>
-
-<script>
-(() => {
-  const root = document.getElementById('cc-purchase-options-{{ block.id }}');
-  if (!root) return;
-  const po = root.querySelector('input[name="properties[purchase_option]"]');
-  const cc = root.querySelector('input[name="properties[cc_override_id]"]');
-  const subId = {{ cc_map.subscription_id | default: '' | json }};
-const otId  = {{ cc_map.one_time_id  | default: '' | json }};
-
-  function sync() {
-    const picked = root.querySelector('input.purchase-options__radio:checked');
-    const mode = picked ? picked.value : 'onetime';
-    po.value = mode === 'subscription' ? 'subscription' : 'one-time';
-    cc.value = mode === 'subscription' ? (subId || '') : (otId || '');
-  }
-  root.addEventListener('change', e => {
-    if (e.target.classList.contains('purchase-options__radio')) sync();
-  });
-  sync();
-})();
-</script>
-{% liquid
-  assign item_count = 0
+ assign item_count = 0
   if block.settings.option_1_quantity != 0
     assign item_count = item_count | plus: 1
     assign last_offer_index = 1
@@ -115,46 +34,6 @@ const otId  = {{ cc_map.one_time_id  | default: '' | json }};
 
   assign has_variants = false
   assign base_price = product.selected_or_first_available_variant.price
-
-  comment
-    Purchase options (OTC / Subscription) sources
-    - Product-level metaobject mapping (preferred): product.metafields.cc.mapping
-    - Legacy fallbacks: product.metafields.productId.productId / .subscription_id
-  endcomment
-  assign cc_map = product.metafields.cc.mapping.value
-  assign cc_ot_override = ''
-  assign cc_sub_override = ''
-  if cc_map
-    assign cc_ot_override = cc_map.one_time_id
-    assign cc_sub_override = cc_map.subscription_id
-  endif
-  if cc_ot_override == blank
-    assign cc_ot_override = product.metafields.productId.productId
-  endif
-  if cc_sub_override == blank
-    assign cc_sub_override = product.metafields.productId.subscription_id
-  endif
-
-  assign has_selling_plans = false
-  assign default_selling_plan_id = ''
-  assign subscription_subtext = ''
-  if product.selling_plan_groups.size > 0
-    assign has_selling_plans = true
-    for spg in product.selling_plan_groups
-      for sp in spg.selling_plans
-        assign default_selling_plan_id = sp.id
-        if sp.description != blank
-          assign subscription_subtext = sp.description
-        elsif sp.name != blank
-          assign subscription_subtext = sp.name
-        endif
-        break
-      endfor
-      if default_selling_plan_id != '' 
-        break
-      endif
-    endfor
-  endif
 %}
 <quantity-breaks
   class="quantity-breaks quantity-breaks--{{ block.settings.style }} accent-color-{{ block.settings.color_scheme }}{% if block.settings.space_images %} quantity-breaks--space-images{% endif %}{% if has_badge %} quantity-breaks--has-badge{% endif %}{% if block.settings.full_width_pickers %} quantity-breaks-full-width-pickers{% endif %} quantity-breaks--vertical-image-{{ block.settings.vertical_images_position }}{% if block.settings.display_selected_indicator %} quantity-breaks--show-indicator{% endif %}{% if block.settings.indicator_top == false %} quantity-breaks--indicator-bottom{% endif %}{% if block.settings.image_width == 100 %} quantity-breaks--max-width-images{% endif %}"
@@ -173,9 +52,6 @@ const otId  = {{ cc_map.one_time_id  | default: '' | json }};
   {% if block.settings.scroll_media_gallery == false %}
     data-prevent-gallery-scroll="true"
   {% endif %}
-  data-cc-ot-id="{{ cc_ot_override }}"
-  data-cc-sub-id="{{ cc_sub_override }}"
-  data-default-selling-plan="{{ default_selling_plan_id }}"
   style="--items-count:{{ item_count }};--image-width:{{ block.settings.image_width }}%;--border-radius:{{ block.settings.border_radius | divided_by: 10.0 }}rem;--border-width:{{ block.settings.border_width | divided_by: 10.0 }}rem;--text-accent-color:var(--color-base-{{ block.settings.accent_color }});--vertical-items-align:{{ block.settings.vertical_items_align }};{% if block.settings.hide_pickers_overlay %}--pickers-overlay-opacity:0;--pickers-hover-overlay-opacity:0;{% endif %}--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;"
   {{ block.shopify_attributes }}
 >
@@ -186,42 +62,6 @@ const otId  = {{ cc_map.one_time_id  | default: '' | json }};
       <span></span>
     </h3>
   {% endif %}
-
-  {%- comment -%}
-    Purchase options toggle (Subscribe vs One-time)
-    - Non-intrusive: scoped styles to this instance ID.
-    - Hidden inputs submit through the main product form.
-    - cc_override_id bridges to CheckoutChamp override logic (read in meta-data.json and redirect script).
-  {%- endcomment -%}
-{%- comment -%} Purchase options shown only if subscription exists {%- endcomment -%}
-{% if cc_sub_override != blank or has_selling_plans %}
-  <div class="qb-purchase-options" role="group" aria-label="Purchase options">
-    <button type="button"
-            class="qb-purchase-option qb-purchase-option--subscription"
-            data-option="subscription"
-            aria-pressed="false">
-      <span class="qb-purchase-option__title">
-        {{ 'products.product.subscribe_and_save' | t: default: 'Subscribe & Save' }}
-      </span>
-      {% if subscription_subtext != blank %}
-        <span class="qb-purchase-option__subtitle">{{ subscription_subtext }}</span>
-      {% else %}
-        <span class="qb-purchase-option__subtitle">{{ 'Delivered automatically' | t: default: 'Delivered automatically' }}</span>
-      {% endif %}
-    </button>
-
-    <button type="button"
-            class="qb-purchase-option qb-purchase-option--onetime is-active"
-            data-option="one-time"
-            aria-pressed="true">
-      <span class="qb-purchase-option__title">
-        {{ 'products.product.one_time_purchase' | t: default: 'One-time purchase' }}
-{{ 'products.product.subscribe_and_save' | t: default: 'Subscribe & Save' }}
-      </span>
-    </button>
-  </div>
-{% endif %}
-
   <div class="quantity-breaks-container">
     {% for i in (1..4) %}
       {% liquid
@@ -760,115 +600,5 @@ const otId  = {{ cc_map.one_time_id  | default: '' | json }};
 
   <script data-has-variants="{{ has_variants }}" type="application/json">
     {{ product.variants | json }}
-  </script>
-
-  <style>
-    /* Scoped styles to preserve global theme layout */
-    #quantity-breaks-{{ section.id }} .qb-purchase-options {
-      display: flex;
-      gap: 8px;
-      align-items: stretch;
-      margin: 8px 0 12px;
-      flex-wrap: wrap;
-    }
-    #quantity-breaks-{{ section.id }} .qb-purchase-option {
-      appearance: none;
-      border: 1.5px solid rgba(0,0,0,0.15);
-      background: rgba(0,0,0,0.03);
-      color: inherit;
-      border-radius: 999px;
-      padding: 10px 14px;
-      line-height: 1.1;
-      display: inline-flex;
-      flex-direction: column;
-      justify-content: center;
-      cursor: pointer;
-      transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
-    }
-    #quantity-breaks-{{ section.id }} .qb-purchase-option__title {
-      font-weight: 600;
-      font-size: 0.95rem;
-      white-space: nowrap;
-    }
-    #quantity-breaks-{{ section.id }} .qb-purchase-option__subtitle {
-      font-size: 0.8rem;
-      opacity: .7;
-      white-space: nowrap;
-    }
-    #quantity-breaks-{{ section.id }} .qb-purchase-option.is-active {
-      background: #fff;
-      border-color: rgba(109,56,139,0.6);
-      box-shadow: 0 0 0 3px rgba(109,56,139,0.12);
-    }
-    @media (prefers-color-scheme: dark) {
-      #quantity-breaks-{{ section.id }} .qb-purchase-option {
-        border-color: rgba(255,255,255,0.2);
-        background: rgba(255,255,255,0.06);
-      }
-      #quantity-breaks-{{ section.id }} .qb-purchase-option.is-active {
-        background: rgba(255,255,255,0.1);
-        border-color: rgba(255,255,255,0.4);
-        box-shadow: 0 0 0 3px rgba(255,255,255,0.12);
-      }
-    }
-  </style>
-
-  <script>
-    (function() {
-      var root = document.getElementById('quantity-breaks-{{ section.id }}');
-      if (!root) return;
-
-      var oneTimeBtn = root.querySelector('.qb-purchase-option--onetime');
-      var subBtn = root.querySelector('.qb-purchase-option--subscription');
-
-var purchaseInput = document.querySelector('input[name="properties[purchase_option]"][form="{{ product_form_id }}"]');
-var ccOverrideInput = document.querySelector('input[name="properties[cc_override_id]"][form="{{ product_form_id }}"]');
-var sellingPlanInput = document.querySelector('input[name="selling_plan"][form="{{ product_form_id }}"]');
-
-      var otId = root.getAttribute('data-cc-ot-id') || '';
-      var subId = root.getAttribute('data-cc-sub-id') || '';
-      var defaultPlan = root.getAttribute('data-default-selling-plan') || '';
-
-      function setActive(which) {
-        if (oneTimeBtn) {
-          oneTimeBtn.classList.toggle('is-active', which === 'one-time');
-          oneTimeBtn.setAttribute('aria-pressed', which === 'one-time' ? 'true' : 'false');
-        }
-        if (subBtn) {
-          subBtn.classList.toggle('is-active', which === 'subscription');
-          subBtn.setAttribute('aria-pressed', which === 'subscription' ? 'true' : 'false');
-        }
-      }
-
-      function updateHidden(which) {
-        if (!purchaseInput || !ccOverrideInput) return;
-        purchaseInput.value = which;
-
-        if (which === 'subscription') {
-          if (sellingPlanInput) sellingPlanInput.value = defaultPlan || '';
-          ccOverrideInput.value = subId || '';
-        } else {
-          if (sellingPlanInput) sellingPlanInput.value = '';
-          ccOverrideInput.value = otId || '';
-        }
-      }
-
-      if (oneTimeBtn) {
-        oneTimeBtn.addEventListener('click', function() {
-          setActive('one-time');
-          updateHidden('one-time');
-        });
-      }
-      if (subBtn) {
-        subBtn.addEventListener('click', function() {
-          setActive('subscription');
-          updateHidden('subscription');
-        });
-      }
-
-      // Initialize default state (one-time by default)
-      setActive('one-time');
-      updateHidden('one-time');
-    })();
   </script>
 </quantity-breaks>

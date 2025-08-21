@@ -276,69 +276,7 @@
                 >
                   <span class="visually-hidden">{{ 'products.product.sku' | t }}:</span> {{- product.selected_or_first_available_variant.sku -}}
                 </p>
-                {%- comment -%}
-----------------------------------------------------------------------------------------------------------------------
-SUBSCRIPTION CHECKBOX BLOCK
-----------------------------------------------------------------------------------------------------------------------
-This block displays a subscription checkbox when the product has the custom.cc_sub metafield.
-It preserves all original styling, layout and functionality.
-{%- endcomment -%}
-  {%- when 'subscription_checkbox' -%}
-  {%- if product.metafields.custom.cc_sub == true -%}
-          <div id="subscription-checkbox-container" data-box="true" style="padding: 20px 0px 16px; margin-top: 20px; width: 100%;">
-            <div data-secondsdelay="" class="form-check fk-form-radio-button-parent" style="display: flex; align-items: center; justify-content: center;">
-              <input 
-                type="checkbox" 
-                value="subscription" 
-                name="purchase-type" 
-                id="subscription-toggle-checkbox" 
-                class="fk-form-general-radio-checkbox fk-form-checkbox subscribe-checkbox" 
-                {% if block.settings.checked_by_default != false %}checked{% endif %}
-                style="margin-right: 8px; width: 20px; height: 20px; cursor: pointer;"
-                form="{{ product_form_id }}"
-              >
-              <label 
-                for="subscription-toggle-checkbox" 
-                class="form-check-label" 
-                style="cursor: pointer; font-size: {{ block.settings.label_font_size | default: 16 }}px; color: {{ block.settings.label_color | default: '#333' }}; font-weight: {{ block.settings.label_font_weight | default: '600' }};"
-              >
-                {{ block.settings.checkbox_label | default: 'YES! I want to Subscribe & Save and receive my discount today!' }}
-              </label>
-            </div>
-          </div>
-          
-          {%- comment -%} Hidden input to track subscription in cart properties {%- endcomment -%}
-          <input 
-            type="hidden" 
-            name="properties[_subscription]" 
-            value="{% if block.settings.checked_by_default != false %}true{% else %}false{% endif %}" 
-            id="subscription-value"
-            form="{{ product_form_id }}"
-          >
-          
-          <script>
-            document.addEventListener('DOMContentLoaded', function() {
-              const checkbox = document.getElementById('subscription-toggle-checkbox');
-              const hiddenInput = document.getElementById('subscription-value');
-              
-              if (checkbox && hiddenInput) {
-                checkbox.addEventListener('change', function() {
-                  hiddenInput.value = this.checked ? 'true' : 'false';
-                  
-                  // Dispatch event for integration with other scripts
-                  const event = new CustomEvent('subscription:change', {
-                    detail: {
-                      productId: '{{ product.id }}',
-                      subscribed: this.checked
-                    },
-                    bubbles: true
-                  });
-                  document.dispatchEvent(event);
-                });
-              }
-            });
-          </script>
-        {%- endif -%}
+               
 
 
               {%- when 'custom_liquid' -%}
