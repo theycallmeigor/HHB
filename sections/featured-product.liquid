@@ -434,6 +434,158 @@
                 -%}
               {%- when 'custom_liquid' -%}
                 {{ block.settings.custom_liquid }}
+                {%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+SUBSCRIPTION CHECKBOX BLOCK - ENHANCED VERSION
+----------------------------------------------------------------------------------------------------------------------
+This version uses block settings for customization while preserving all original functionality
+{%- endcomment -%}
+
+{%- when 'subscription_checkbox' -%}
+  {%- if product.metafields.custom.cc_sub != blank -%}
+    <div class="product-info__subscription-checkbox">
+      <div 
+        id="subscription-checkbox-container" 
+        data-box="true" 
+        style="padding: 20px 0px 16px; margin-top: 20px; width: 100%;"
+      >
+        <div 
+          data-secondsdelay="" 
+          class="form-check fk-form-radio-button-parent" 
+          style="display: flex; align-items: center; justify-content: center;"
+        >
+          <input 
+            type="checkbox" 
+            value="subscription" 
+            name="purchase-type" 
+            id="subscription-toggle-checkbox-{{ product.id }}-{{ section.id }}" 
+            class="fk-form-general-radio-checkbox fk-form-checkbox subscribe-checkbox" 
+            {% if block.settings.checked_by_default %}checked{% endif %}
+            style="margin-right: 8px; width: 20px; height: 20px; cursor: pointer;"
+            form="{{ product_form_id }}"
+            data-subscription-checkbox
+          >
+          <label 
+            for="subscription-toggle-checkbox-{{ product.id }}-{{ section.id }}" 
+            class="form-check-label" 
+            style="cursor: pointer; font-size: {{ block.settings.label_font_size }}px; color: {{ block.settings.label_color }}; font-weight: {{ block.settings.label_font_weight }};"
+          >
+            {{ block.settings.checkbox_label | default: 'YES! I want to Subscribe & Save and receive my discount today!' }}
+          </label>
+        </div>
+      </div>
+      
+      {%- comment -%} Store subscription data as line item property {%- endcomment -%}
+      <input 
+        type="hidden" 
+        name="properties[Subscription]" 
+        value="{% if block.settings.checked_by_default %}Yes{% else %}No{% endif %}" 
+        id="subscription-property-{{ product.id }}-{{ section.id }}"
+        form="{{ product_form_id }}"
+        data-subscription-property
+      >
+      
+      {%- comment -%} Store subscription metadata {%- endcomment -%}
+      <input 
+        type="hidden" 
+        name="properties[_subscription_enabled]" 
+        value="{% if block.settings.checked_by_default %}true{% else %}false{% endif %}" 
+        id="subscription-enabled-{{ product.id }}-{{ section.id }}"
+        form="{{ product_form_id }}"
+        data-subscription-enabled
+      >
+      
+      <script>
+        (function() {
+          const initSubscriptionCheckbox = function() {
+            const checkbox = document.getElementById('subscription-toggle-checkbox-{{ product.id }}-{{ section.id }}');
+            const propertyInput = document.getElementById('subscription-property-{{ product.id }}-{{ section.id }}');
+            const enabledInput = document.getElementById('subscription-enabled-{{ product.id }}-{{ section.id }}');
+            
+            if (!checkbox || !propertyInput || !enabledInput) return;
+            
+            // Function to update subscription state
+            const updateSubscriptionState = function(isChecked) {
+              propertyInput.value = isChecked ? 'Yes' : 'No';
+              enabledInput.value = isChecked ? 'true' : 'false';
+              
+              // Dispatch custom event for integration with other scripts
+              const event = new CustomEvent('subscription:change', {
+                detail: {
+                  productId: '{{ product.id }}',
+                  variantId: '{{ product.selected_or_first_available_variant.id }}',
+                  subscribed: isChecked,
+                  checkbox: checkbox,
+                  metafield: {{ product.metafields.custom.cc_sub | json }}
+                },
+                bubbles: true
+              });
+              document.dispatchEvent(event);
+              
+              // Also dispatch on the form for form-specific listeners
+              const form = document.getElementById('{{ product_form_id }}');
+              if (form) {
+                form.dispatchEvent(new CustomEvent('subscription:update', {
+                  detail: { subscribed: isChecked }
+                }));
+              }
+            };
+            
+            // Set initial state
+            updateSubscriptionState(checkbox.checked);
+            
+            // Listen for changes
+            checkbox.addEventListener('change', function() {
+              updateSubscriptionState(this.checked);
+            });
+            
+            // Listen for variant changes to potentially update subscription availability
+            document.addEventListener('variant:change', function(event) {
+              // You can add logic here to enable/disable subscription based on variant
+              console.log('Variant changed, subscription checkbox state:', checkbox.checked);
+            });
+          };
+          
+          // Initialize on DOM ready
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSubscriptionCheckbox);
+          } else {
+            initSubscriptionCheckbox();
+          }
+          
+          // Re-initialize on section reload (theme editor)
+          document.addEventListener('shopify:section:load', function(event) {
+            if (event.detail.sectionId === '{{ section.id }}') {
+              initSubscriptionCheckbox();
+            }
+          });
+        })();
+      </script>
+      
+      <style>
+        /* Ensure checkbox styling consistency */
+        .product-info__subscription-checkbox {
+          animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Hover effect for better UX */
+        .fk-form-checkbox.subscribe-checkbox:hover {
+          transform: scale(1.1);
+          transition: transform 0.2s ease;
+        }
+        
+        .form-check-label:hover {
+          opacity: 0.9;
+          transition: opacity 0.2s ease;
+        }
+      </style>
+    </div>
+  {%- endif -%}
               {%- when 'payment_badges' -%}
                 <div class='payment-badges-block' style="--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;">
                   <ul class="payment-badges" role="list">
