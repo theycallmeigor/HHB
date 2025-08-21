@@ -144,100 +144,44 @@
                      id="price-{{ section.id }}" 
                      role="status" 
                      data-section="{{ section.id }}"
-                     data-subscription-enabled="{% if product.selling_plan_groups.size > 0 %}true{% else %}false{% endif %}"
+                     data-base-price="{{ product.selected_or_first_available_variant.price }}"
                      {{ block.shopify_attributes }} 
                      style="--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;">
                   
+                  {%- comment -%}
+                  This will show the default price initially, but will be updated by quantity-breaks-manager.js
+                  {%- endcomment -%}
                   {%- render 'price',
                     product: product,
                     block: block,
                     use_variant: true,
                     show_badges: true,
                     hide_sale_badge: block.settings.hide_sale_badge,
-                    price_class: 'price--large price-updatable',
+                    price_class: 'price--large',
                     main_price: true,
                     layout: block.settings.price_layout
                   -%}
-                  
-                  {%- comment -%}
-                  Add subscription price display that will be toggled
-                  {%- endcomment -%}
-                  {%- if product.selling_plan_groups.size > 0 -%}
-                    <div class="subscription-price-wrapper" style="display: none;" data-subscription-price>
-                      <span class="subscription-discount-label">
-                        {%- if product.selling_plan_groups.first.selling_plans.first.price_adjustments.first.value -%}
-                          Save {{ product.selling_plan_groups.first.selling_plans.first.price_adjustments.first.value }}%
-                        {%- endif -%}
-                      </span>
-                    </div>
-                  {%- endif -%}
                 </div>
 
                 {%- comment -%}
-                Script to handle subscription price updates
+                Script to ensure price updates from quantity breaks
                 {%- endcomment -%}
                 <script>
                   document.addEventListener('DOMContentLoaded', function() {
-                    // Listen for subscription changes
-                    document.addEventListener('subscription:change', function(e) {
-                      const priceContainer = document.getElementById('price-{{ section.id }}');
-                      if (!priceContainer) return;
+                    // Make sure the price container is ready for updates
+                    const priceContainer = document.getElementById('price-{{ section.id }}');
+                    if (priceContainer) {
+                      // Add identifier for quantity-breaks-manager to find this element
+                      priceContainer.classList.add('quantity-break-price-target');
                       
-                      const isSubscribed = e.detail.subscribed;
-                      const discount = e.detail.discount || 0;
-                      
-                      // Add data attribute for styling
-                      priceContainer.dataset.subscriptionActive = isSubscribed ? 'true' : 'false';
-                      
-                      // Show/hide subscription indicator
-                      const subscriptionWrapper = priceContainer.querySelector('[data-subscription-price]');
-                      if (subscriptionWrapper) {
-                        subscriptionWrapper.style.display = isSubscribed ? 'block' : 'none';
-                      }
-                      
-                      // The actual price update will be handled by quantity-breaks-manager.js
-                      // This just ensures the UI is ready for it
-                    });
-                    
-                    // Listen for quantity break changes
-                    document.addEventListener('quantitybreak:change', function(e) {
-                      const priceContainer = document.getElementById('price-{{ section.id }}');
-                      if (!priceContainer) return;
-                      
-                      // Add indicator for quantity-based pricing
-                      priceContainer.dataset.quantitySelected = e.detail.quantity;
-                    });
+                      // Store original price structure for reference
+                      const priceElements = priceContainer.querySelectorAll('.price-item--regular, .price-item--sale');
+                      priceElements.forEach(el => {
+                        el.dataset.originalPrice = el.textContent.trim();
+                      });
+                    }
                   });
                 </script>
-
-                {%- comment -%}
-                Styles for subscription pricing display
-                {%- endcomment -%}
-                <style>
-                  .product-page-price[data-subscription-active="true"] .price-item--regular {
-                    position: relative;
-                  }
-                  
-                  .product-page-price[data-subscription-active="true"] .price-updatable {
-                    color: var(--color-foreground);
-                  }
-                  
-                  .subscription-price-wrapper {
-                    margin-top: 0.5rem;
-                    font-size: 0.9em;
-                  }
-                  
-                  .subscription-discount-label {
-                    color: var(--color-success, #059669);
-                    font-weight: 500;
-                  }
-                  
-                  /* Ensure original price shows as compare when subscription active */
-                  .product-page-price[data-subscription-active="true"] .price-item--regular:not(.price-item--last) {
-                    text-decoration: line-through;
-                    opacity: 0.65;
-                  }
-                </style>
 
 {% comment %}
                 <div {{ block.shopify_attributes }}>
