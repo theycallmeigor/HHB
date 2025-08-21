@@ -390,6 +390,8 @@ It preserves all original styling, layout and functionality.
       this.discountInput = document.getElementById('subscription-discount-value');
       this.discountPercentage = 0;
       this.isUpdating = false;
+      this.priceCache = new Map();
+      this.updateTimeout = null;
       
       if (this.checkbox) {
         this.discountPercentage = parseFloat(this.checkbox.dataset.discount) || 15;
@@ -400,6 +402,9 @@ It preserves all original styling, layout and functionality.
     init() {
       // Listen for checkbox changes
       this.checkbox.addEventListener('change', (e) => this.handleSubscriptionToggle(e));
+      
+      // Store original prices first before any modifications
+      this.storeOriginalPrices();
       
       // Apply initial state with slight delay to ensure DOM is ready
       setTimeout(() => {
@@ -412,28 +417,43 @@ It preserves all original styling, layout and functionality.
       document.addEventListener('variant:change', (e) => {
         if (this.isUpdating) return;
         
-        setTimeout(() => {
+        // Clear previous timeout
+        if (this.updateTimeout) {
+          clearTimeout(this.updateTimeout);
+        }
+        
+        this.updateTimeout = setTimeout(() => {
+          this.storeOriginalPrices(); // Re-store prices for new variant
           if (this.checkbox.checked) {
             this.updatePrices();
           }
         }, 100);
       });
       
-      // Listen for price updates from Dawn theme
+      // Listen for price updates from Dawn theme with debouncing
       const priceObserver = new MutationObserver((mutations) => {
         if (this.isUpdating) return;
         
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'childList' || mutation.type === 'characterData') {
-            if (this.checkbox.checked && !this.isUpdating) {
-              this.isUpdating = true;
-              setTimeout(() => {
+        // Clear previous timeout
+        if (this.updateTimeout) {
+          clearTimeout(this.updateTimeout);
+        }
+        
+        this.updateTimeout = setTimeout(() => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'childList' || mutation.type === 'characterData') {
+              const target = mutation.target;
+              // Check if this is a price element that needs updating
+              if (target && !target.dataset.subscriptionProcessed && this.checkbox.checked) {
+                this.isUpdating = true;
                 this.updatePrices();
-                this.isUpdating = false;
-              }, 50);
+                setTimeout(() => {
+                  this.isUpdating = false;
+                }, 100);
+              }
             }
-          }
-        });
+          });
+        }, 50);
       });
       
       // Observe all price containers
@@ -443,13 +463,63 @@ It preserves all original styling, layout and functionality.
           priceObserver.observe(container, {
             childList: true,
             subtree: true,
-            characterData: true
+            characterData: true,
+            attributes: false // Don't observe attribute changes to prevent loops
           });
         }
       });
       
       // Listen for quantity break changes
-      document.addEventListener('quantitybreak:change', () => this.updateQuantityBreakPrices());
+      document.addEventListener('quantitybreak:change', () => {
+        this.storeOriginalPrices();
+        this.updateQuantityBreakPrices();
+      });
+    }
+
+    storeOriginalPrices() {
+      // Store all original prices before any modifications
+      const priceSelectors = [
+        '.price__regular .price-item--regular',
+        '.product-page-price .price-item--regular',
+        '.price__sale .price-item--sale',
+        '.product-page-price .price-item--sale',
+        '[class*="price-item"]',
+        '.quantity-break__price',
+        '.sticky-atc__price',
+        '.sticky-atc__button-price'
+      ];
+      
+      priceSelectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+          // Skip if already processed and stored
+          if (element.dataset.originalPriceStored === 'true') return;
+          
+          const priceText = element.textContent.trim();
+          const priceMatch = priceText.match(/\$?([\d,]+\.?\d*)/);
+          
+          if (priceMatch) {
+            const priceValue = parseFloat(priceMatch[1].replace(/,/g, ''));
+            
+            // Validate price to prevent storing invalid values
+            if (!isNaN(priceValue) && priceValue > 0 && priceValue < 10000) {
+              // Store as cents to avoid floating point issues
+              const priceInCents = Math.round(priceValue * 100);
+              
+              // Cache the original price
+              this.priceCache.set(element, {
+                price: priceInCents,
+                html: element.innerHTML,
+                text: element.textContent
+              });
+              
+              element.dataset.originalPrice = priceInCents;
+              element.dataset.originalHtml = element.innerHTML;
+              element.dataset.originalPriceStored = 'true';
+            }
+          }
+        });
+      });
     }
 
     handleSubscriptionToggle(event) {
@@ -474,6 +544,13 @@ It preserves all original styling, layout and functionality.
         bubbles: true
       });
       document.dispatchEvent(customEvent);
+      
+      // Log for debugging
+      console.log('[DEBUG][RedirectCart] Subscription state changed:', {
+        subscribed: isChecked,
+        discount: this.discountPercentage,
+        productId: window.productId
+      });
     }
 
     applySubscriptionDiscount() {
@@ -515,26 +592,50 @@ It preserves all original styling, layout and functionality.
       priceSelectors.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(element => {
-          if (!element.dataset.originalPrice || this.isUpdating) {
-            const priceText = element.textContent.replace(/[^0-9.,]/g, '');
-            const price = parseFloat(priceText.replace(',', '')) * 100;
-            if (!isNaN(price) && price > 0) {
-              element.dataset.originalPrice = price;
-              element.dataset.originalHtml = element.innerHTML;
+          // Skip if element is being processed
+          if (element.dataset.subscriptionProcessed === 'true') return;
+          
+          // Get cached original price or parse from element
+          let originalPrice = null;
+          
+          if (this.priceCache.has(element)) {
+            originalPrice = this.priceCache.get(element).price;
+          } else if (element.dataset.originalPrice) {
+            originalPrice = parseFloat(element.dataset.originalPrice);
+          } else {
+            // Parse price from text
+            const priceText = element.textContent.trim();
+            const priceMatch = priceText.match(/\$?([\d,]+\.?\d*)/);
+            
+            if (priceMatch) {
+              const priceValue = parseFloat(priceMatch[1].replace(/,/g, ''));
+              if (!isNaN(priceValue) && priceValue > 0 && priceValue < 10000) {
+                originalPrice = Math.round(priceValue * 100);
+                // Store for future use
+                element.dataset.originalPrice = originalPrice;
+                element.dataset.originalHtml = element.innerHTML;
+              }
             }
           }
           
-          const originalPrice = parseFloat(element.dataset.originalPrice);
+          // Apply discount if we have a valid original price
           if (originalPrice && originalPrice > 0) {
             const discountedPrice = this.calculateDiscountedPrice(originalPrice);
             this.updatePriceDisplay(element, discountedPrice);
+            element.dataset.subscriptionProcessed = 'true';
           }
         });
       });
     }
 
-    updatePriceDisplay(element, newPrice) {
-      const formattedPrice = this.formatMoney(newPrice);
+    updatePriceDisplay(element, newPriceInCents) {
+      // Validate price before displaying
+      if (newPriceInCents <= 0 || isNaN(newPriceInCents)) {
+        console.error('Invalid price calculated:', newPriceInCents);
+        return;
+      }
+      
+      const formattedPrice = this.formatMoney(newPriceInCents);
       
       // Preserve any structure but update the price text
       if (element.innerHTML.includes('</span>')) {
@@ -562,19 +663,31 @@ It preserves all original styling, layout and functionality.
         
         if (!priceElement) return;
         
-        // Store original data if not already stored
-        if (!priceElement.hasAttribute('data-original-html')) {
-          priceElement.setAttribute('data-original-html', priceElement.innerHTML.trim());
-          
+        // Get original price from cache or element
+        let originalPrice = null;
+        let originalHtml = null;
+        
+        if (this.priceCache.has(priceElement)) {
+          const cached = this.priceCache.get(priceElement);
+          originalPrice = cached.price;
+          originalHtml = cached.html;
+        } else if (priceElement.dataset.originalPrice) {
+          originalPrice = parseFloat(priceElement.dataset.originalPrice);
+          originalHtml = priceElement.dataset.originalHtml;
+        } else {
+          // Parse and store
           const priceMatch = priceElement.textContent.match(/\$?([\d,]+\.?\d*)/);
           if (priceMatch) {
-            const originalPrice = parseFloat(priceMatch[1].replace(',', '')) * 100;
-            priceElement.setAttribute('data-original-price', originalPrice);
+            const priceValue = parseFloat(priceMatch[1].replace(/,/g, ''));
+            if (!isNaN(priceValue) && priceValue > 0) {
+              originalPrice = Math.round(priceValue * 100);
+              originalHtml = priceElement.innerHTML.trim();
+              
+              priceElement.dataset.originalPrice = originalPrice;
+              priceElement.dataset.originalHtml = originalHtml;
+            }
           }
         }
-        
-        const originalPrice = parseFloat(priceElement.getAttribute('data-original-price'));
-        const originalHtml = priceElement.getAttribute('data-original-html');
         
         if (originalPrice && originalHtml) {
           if (isSubscribed) {
@@ -620,15 +733,23 @@ It preserves all original styling, layout and functionality.
       
       priceElements.forEach(element => {
         if (isSubscribed) {
-          if (!element.dataset.originalPrice) {
+          let originalPrice = null;
+          
+          if (this.priceCache.has(element)) {
+            originalPrice = this.priceCache.get(element).price;
+          } else if (element.dataset.originalPrice) {
+            originalPrice = parseFloat(element.dataset.originalPrice);
+          } else {
             const priceText = element.textContent.replace(/[^0-9.,]/g, '');
-            const price = parseFloat(priceText.replace(',', '')) * 100;
-            element.dataset.originalPrice = price;
-            element.dataset.originalHtml = element.innerHTML;
+            const price = parseFloat(priceText.replace(/,/g, ''));
+            if (!isNaN(price) && price > 0 && price < 10000) {
+              originalPrice = Math.round(price * 100);
+              element.dataset.originalPrice = originalPrice;
+              element.dataset.originalHtml = element.innerHTML;
+            }
           }
           
-          const originalPrice = parseFloat(element.dataset.originalPrice);
-          if (originalPrice) {
+          if (originalPrice && originalPrice > 0) {
             const discountedPrice = this.calculateDiscountedPrice(originalPrice);
             this.updatePriceDisplay(element, discountedPrice);
           }
@@ -638,19 +759,44 @@ It preserves all original styling, layout and functionality.
       });
     }
 
-    calculateDiscountedPrice(price) {
+    calculateDiscountedPrice(priceInCents) {
+      // Validate input
+      if (!priceInCents || priceInCents <= 0 || isNaN(priceInCents)) {
+        console.error('Invalid price for discount calculation:', priceInCents);
+        return priceInCents;
+      }
+      
       const discount = 1 - (this.discountPercentage / 100);
-      return Math.round(price * discount);
+      const discountedPrice = Math.round(priceInCents * discount);
+      
+      // Validate output
+      if (discountedPrice <= 0 || isNaN(discountedPrice)) {
+        console.error('Invalid discounted price calculated:', discountedPrice);
+        return priceInCents;
+      }
+      
+      return discountedPrice;
     }
 
     restoreOriginalPrices() {
+      // Clear all subscription processing flags
+      document.querySelectorAll('[data-subscription-processed]').forEach(element => {
+        element.removeAttribute('data-subscription-processed');
+      });
+      
+      // Restore from cache first
+      this.priceCache.forEach((cached, element) => {
+        if (element && cached.html) {
+          element.innerHTML = cached.html;
+          element.removeAttribute('data-subscription-price');
+        }
+      });
+      
       // Restore all elements with stored original HTML
       document.querySelectorAll('[data-original-html]').forEach(element => {
-        if (element.dataset.originalHtml) {
+        if (element.dataset.originalHtml && !this.priceCache.has(element)) {
           element.innerHTML = element.dataset.originalHtml;
-          delete element.dataset.originalHtml;
-          delete element.dataset.originalPrice;
-          delete element.dataset.subscriptionPrice;
+          element.removeAttribute('data-subscription-price');
         }
       });
       
@@ -659,22 +805,38 @@ It preserves all original styling, layout and functionality.
         element.style.display = element.getAttribute('data-original-display');
         element.style.textDecoration = '';
         element.style.opacity = '';
-        element.removeAttribute('data-original-display');
       });
     }
 
     restoreOriginalPrice(element) {
-      if (element.dataset.originalHtml) {
+      // Check cache first
+      if (this.priceCache.has(element)) {
+        const cached = this.priceCache.get(element);
+        element.innerHTML = cached.html;
+      } else if (element.dataset.originalHtml) {
         element.innerHTML = element.dataset.originalHtml;
-        delete element.dataset.originalHtml;
-        delete element.dataset.originalPrice;
-        delete element.dataset.subscriptionPrice;
       }
+      
+      element.removeAttribute('data-subscription-price');
+      element.removeAttribute('data-subscription-processed');
     }
 
     formatMoney(cents) {
-      const value = (cents / 100).toFixed(2);
-      return `$${value}`;
+      // Validate input
+      if (!cents || cents <= 0 || isNaN(cents)) {
+        console.error('Invalid cents value for formatting:', cents);
+        return '$0.00';
+      }
+      
+      const dollars = (cents / 100).toFixed(2);
+      
+      // Final validation
+      if (parseFloat(dollars) <= 0) {
+        console.error('Formatted price is invalid:', dollars);
+        return '$0.00';
+      }
+      
+      return `$${dollars}`;
     }
   }
 
@@ -689,6 +851,10 @@ It preserves all original styling, layout and functionality.
 
   // Reinitialize on section reload (for theme editor)
   document.addEventListener('shopify:section:load', () => {
+    // Clean up existing instance
+    if (window.subscriptionManager) {
+      window.subscriptionManager.restoreOriginalPrices();
+    }
     window.subscriptionManager = new SubscriptionManager();
   });
   </script>
