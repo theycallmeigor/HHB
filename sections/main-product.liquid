@@ -319,14 +319,14 @@
                     </div>
                   </div>
                 </div>
-                 {%- comment -%}
+{%- comment -%}
 ----------------------------------------------------------------------------------------------------------------------
 SUBSCRIPTION CHECKBOX BLOCK
 ----------------------------------------------------------------------------------------------------------------------
 This block displays a subscription checkbox when the product has the custom.cc_sub metafield.
 It preserves all original styling, layout and functionality.
 {%- endcomment -%}
-  {%- when 'subscription_checkbox' -%}
+{%- when 'subscription_checkbox' -%}
 {%- if product.metafields.custom.cc_sub == true -%}
   {%- liquid
     assign subscription_discount = block.settings.default_discount
@@ -407,8 +407,14 @@ It preserves all original styling, layout and functionality.
         }
       }, 100);
 
-      // Listen for variant changes
-      document.addEventListener('variant:change', () => this.updatePrices());
+      // Listen for variant changes and reapply subscription state
+      document.addEventListener('variant:change', () => {
+        setTimeout(() => {
+          if (this.checkbox.checked) {
+            this.updatePrices();
+          }
+        }, 50);
+      });
       
       // Listen for quantity break changes
       document.addEventListener('quantitybreak:change', () => this.updateQuantityBreakPrices());
@@ -447,17 +453,20 @@ It preserves all original styling, layout and functionality.
       
       // Update sticky ATC if present
       this.updateStickyATC();
-      
-      // Add visual indicator
-      this.addDiscountIndicator();
     }
 
     removeSubscriptionDiscount() {
       // Restore original prices
       this.restoreOriginalPrices();
-      
-      // Remove visual indicators
-      this.removeDiscountIndicators();
+    }
+
+    updatePrices() {
+      // Called on variant change - reapply subscription discount if active
+      if (this.checkbox.checked) {
+        this.updateProductPrice();
+        this.updateQuantityBreakPrices();
+        this.updateStickyATC();
+      }
     }
 
     updateProductPrice() {
@@ -467,13 +476,13 @@ It preserves all original styling, layout and functionality.
       priceElements.forEach(element => {
         const originalPrice = this.getOriginalPrice(element);
         const discountedPrice = this.calculateDiscountedPrice(originalPrice);
-        this.updatePriceDisplay(element, discountedPrice, originalPrice);
+        this.updatePriceDisplaySimple(element, discountedPrice);
       });
       
       saleElements.forEach(element => {
         const originalPrice = this.getOriginalPrice(element);
         const discountedPrice = this.calculateDiscountedPrice(originalPrice);
-        this.updatePriceDisplay(element, discountedPrice, originalPrice);
+        this.updatePriceDisplaySimple(element, discountedPrice);
       });
     }
 
@@ -516,15 +525,12 @@ It preserves all original styling, layout and functionality.
             const newHtml = originalHtml.replace(/\$[\d,]+\.?\d*/g, formattedPrice);
             priceElement.innerHTML = newHtml;
             
-            // Add visual styling for subscription price
-            priceElement.style.color = '#00a651';
-            priceElement.style.fontWeight = 'bold';
-            
             // Update compare price element if it exists
             const compareElement = option.querySelector('.quantity-break__compare-price');
             if (compareElement) {
               if (!compareElement.hasAttribute('data-original-display')) {
                 compareElement.setAttribute('data-original-display', compareElement.style.display || 'inline');
+                compareElement.setAttribute('data-original-html', compareElement.innerHTML);
               }
               // Show original price as compare price
               compareElement.innerHTML = this.formatMoney(originalPrice);
@@ -533,57 +539,27 @@ It preserves all original styling, layout and functionality.
               compareElement.style.opacity = '0.6';
             }
             
-            // Update savings caption
-            const captionElement = option.querySelector('.quantity-break__caption');
-            if (captionElement) {
-              if (!captionElement.hasAttribute('data-original-html')) {
-                captionElement.setAttribute('data-original-html', captionElement.innerHTML);
-              }
-              const totalSavings = originalPrice - discountedPrice;
-              captionElement.innerHTML = `You save ${this.formatMoney(totalSavings)} with subscription`;
-              captionElement.style.color = '#00a651';
-            }
+            // Don't modify the caption - keep original savings text
             
           } else {
             // Restore original price
             priceElement.innerHTML = originalHtml;
-            priceElement.style.color = '';
-            priceElement.style.fontWeight = '';
             
             // Restore compare price
             const compareElement = option.querySelector('.quantity-break__compare-price');
-            if (compareElement && compareElement.hasAttribute('data-original-display')) {
+            if (compareElement && compareElement.hasAttribute('data-original-html')) {
+              compareElement.innerHTML = compareElement.getAttribute('data-original-html');
               compareElement.style.display = compareElement.getAttribute('data-original-display');
               compareElement.style.textDecoration = '';
               compareElement.style.opacity = '';
             }
-            
-            // Restore caption
-            const captionElement = option.querySelector('.quantity-break__caption');
-            if (captionElement && captionElement.hasAttribute('data-original-html')) {
-              captionElement.innerHTML = captionElement.getAttribute('data-original-html');
-              captionElement.style.color = '';
-            }
-          }
-        }
-        
-        // Also update any subscription dropdowns within quantity breaks
-        const subscriptionSelect = option.querySelector('select');
-        if (subscriptionSelect) {
-          if (isSubscribed && subscriptionSelect.value === 'One-time purchase') {
-            // Auto-select a subscription frequency
-            subscriptionSelect.value = subscriptionSelect.options[1]?.value || '';
-          } else if (!isSubscribed) {
-            subscriptionSelect.value = 'One-time purchase';
           }
         }
       });
       
       // Trigger any quantity breaks native update functions
       const quantityBreaksElement = document.querySelector('quantity-breaks');
-      if (quantityBreaksElement && typeof quantityBreaksElement.updatePrices === 'function') {
-        // Don't call updatePrices as it might override our changes
-        // Instead, dispatch an event that quantity breaks can listen to
+      if (quantityBreaksElement) {
         quantityBreaksElement.dispatchEvent(new CustomEvent('subscription:updated', {
           detail: { isSubscribed, discount: this.discountPercentage }
         }));
@@ -601,7 +577,7 @@ It preserves all original styling, layout and functionality.
         if (isSubscribed) {
           const originalPrice = this.getOriginalPrice(element);
           const discountedPrice = this.calculateDiscountedPrice(originalPrice);
-          this.updatePriceDisplay(element, discountedPrice, originalPrice);
+          this.updatePriceDisplaySimple(element, discountedPrice);
         } else {
           this.restoreOriginalPrice(element);
         }
@@ -614,44 +590,29 @@ It preserves all original styling, layout and functionality.
     }
 
     getOriginalPrice(element) {
-      if (!element.dataset.originalPrice) {
-        const priceText = element.textContent.replace(/[^0-9.,]/g, '');
-        const price = parseFloat(priceText.replace(',', '')) * 100;
-        element.dataset.originalPrice = price;
-        return price;
-      }
-      return parseFloat(element.dataset.originalPrice);
+      // Always recalculate price on variant change
+      const priceText = element.textContent.replace(/[^0-9.,]/g, '');
+      const price = parseFloat(priceText.replace(',', '')) * 100;
+      element.dataset.originalPrice = price;
+      return price;
     }
 
-    updatePriceDisplay(element, newPrice, originalPrice) {
+    updatePriceDisplaySimple(element, newPrice) {
       const formattedPrice = this.formatMoney(newPrice);
       
-      // Store original content if not already stored
-      if (!element.dataset.originalPrice) {
-        element.dataset.originalPrice = originalPrice;
-      }
+      // Store original HTML if not stored
       if (!element.dataset.originalHtml) {
         element.dataset.originalHtml = element.innerHTML;
       }
       
-      // Update display with subscription price
-      element.innerHTML = `
-        <span class="subscription-price" style="color: #00a651; font-weight: bold;">${formattedPrice}</span>
-        <span class="original-price" style="text-decoration: line-through; opacity: 0.6; margin-left: 0.5rem;">
-          ${this.formatMoney(originalPrice)}
-        </span>
-      `;
-      
-      // Add subscription badge if not present
-      this.addSubscriptionBadge(element);
+      // Simply update the price text - no additional elements
+      element.textContent = formattedPrice;
     }
 
     restoreOriginalPrices() {
-      // Restore all elements with stored original prices
+      // Restore all elements with stored original HTML
       document.querySelectorAll('[data-original-html]').forEach(element => {
         element.innerHTML = element.dataset.originalHtml;
-        element.style.color = '';
-        element.style.fontWeight = '';
         delete element.dataset.originalHtml;
         delete element.dataset.originalPrice;
       });
@@ -671,51 +632,6 @@ It preserves all original styling, layout and functionality.
         delete element.dataset.originalHtml;
         delete element.dataset.originalPrice;
       }
-    }
-
-    addDiscountIndicator() {
-      const priceContainers = document.querySelectorAll('.product-page-price, .sticky-atc__price');
-      priceContainers.forEach(container => {
-        if (!container.querySelector('.subscription-discount-badge')) {
-          const badge = document.createElement('span');
-          badge.className = 'subscription-discount-badge';
-          badge.textContent = `${this.discountPercentage}% OFF - Subscription`;
-          badge.style.cssText = `
-            display: inline-block;
-            background: #4CAF50;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            margin-left: 8px;
-            font-weight: 600;
-          `;
-          container.appendChild(badge);
-        }
-      });
-    }
-
-    addSubscriptionBadge(element) {
-      const parent = element.closest('.price') || element.parentElement;
-      if (parent && !parent.querySelector('.subscription-badge')) {
-        const badge = document.createElement('div');
-        badge.className = 'subscription-badge';
-        badge.innerHTML = `
-          <svg width="16" height="16" style="margin-right: 4px; vertical-align: middle;">
-            <circle cx="8" cy="8" r="8" fill="#4CAF50"/>
-            <path d="M6 8l2 2 4-4" stroke="white" stroke-width="2" fill="none"/>
-          </svg>
-          <span style="font-size: 12px; color: #4CAF50;">Subscription price</span>
-        `;
-        badge.style.marginTop = '4px';
-        parent.appendChild(badge);
-      }
-    }
-
-    removeDiscountIndicators() {
-      document.querySelectorAll('.subscription-discount-badge, .subscription-badge').forEach(badge => {
-        badge.remove();
-      });
     }
 
     formatMoney(cents) {
