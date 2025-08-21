@@ -858,6 +858,381 @@ It preserves all original styling, layout and functionality.
     window.subscriptionManager = new SubscriptionManager();
   });
   </script>
+  <script>
+    class QuantityBreaksManager {
+  constructor() {
+    this.container = document.querySelector('.quantity-breaks-container');
+    if (!this.container) return;
+    
+    // State management
+    this.state = {
+      selectedQuantity: null,
+      selectedVariants: {},
+      isSubscriptionActive: false,
+      subscriptionDiscount: 0,
+      prices: new Map() // Cache for prices
+    };
+    
+    // Initialize
+    this.init();
+  }
+  
+  init() {
+    this.cacheElements();
+    this.bindEvents();
+    this.initializeState();
+    this.setupSubscriptionListener();
+  }
+  
+  cacheElements() {
+    this.quantityOptions = this.container.querySelectorAll('.quantity-break');
+    this.quantityInput = document.querySelector('#Quantity-' + this.container.dataset.section);
+    this.subscriptionCheckbox = document.getElementById('subscription-toggle-checkbox');
+    this.priceElements = {
+      main: document.querySelectorAll('.product-page-price .price-item--regular, .product-page-price .price-item--sale'),
+      sticky: document.querySelectorAll('.sticky-atc__price, .sticky-atc__button-price')
+    };
+  }
+  
+  initializeState() {
+    // Get initial selected quantity
+    const selectedOption = this.container.querySelector('.quantity-break.selected');
+    if (selectedOption) {
+      this.state.selectedQuantity = parseInt(selectedOption.dataset.quantity);
+    }
+    
+    // Get subscription state
+    if (this.subscriptionCheckbox) {
+      this.state.isSubscriptionActive = this.subscriptionCheckbox.checked;
+      this.state.subscriptionDiscount = parseFloat(this.subscriptionCheckbox.dataset.discount) || 0;
+    }
+    
+    // Store original prices for each quantity option
+    this.storeOriginalPrices();
+  }
+  
+  storeOriginalPrices() {
+    this.quantityOptions.forEach(option => {
+      const quantity = parseInt(option.dataset.quantity);
+      const priceElement = option.querySelector('.quantity-break__price');
+      
+      if (priceElement) {
+        const priceText = priceElement.textContent.trim();
+        const priceMatch = priceText.match(/\$?([\d,]+\.?\d*)/);
+        
+        if (priceMatch) {
+          const price = parseFloat(priceMatch[1].replace(/,/g, '')) * 100; // Store as cents
+          
+          this.state.prices.set(`${quantity}_original`, price);
+          
+          // Calculate subscription price
+          if (this.state.subscriptionDiscount > 0) {
+            const discountedPrice = Math.round(price * (1 - this.state.subscriptionDiscount / 100));
+            this.state.prices.set(`${quantity}_subscription`, discountedPrice);
+          }
+        }
+      }
+    });
+  }
+  
+  bindEvents() {
+    // Quantity selection
+    this.quantityOptions.forEach(option => {
+      option.addEventListener('click', (e) => this.handleQuantitySelection(e));
+    });
+    
+    // Variant changes within quantity options
+    const variantSelects = this.container.querySelectorAll('.variant-dropdown');
+    variantSelects.forEach(select => {
+      select.addEventListener('change', (e) => this.handleVariantChange(e));
+    });
+  }
+  
+  setupSubscriptionListener() {
+    if (!this.subscriptionCheckbox) return;
+    
+    // Listen for subscription changes
+    document.addEventListener('subscription:change', (e) => {
+      this.handleSubscriptionChange(e.detail);
+    });
+    
+    // Also listen directly to checkbox
+    this.subscriptionCheckbox.addEventListener('change', (e) => {
+      this.state.isSubscriptionActive = e.target.checked;
+      this.updateAllPrices();
+    });
+  }
+  
+  handleQuantitySelection(event) {
+    const option = event.currentTarget;
+    const quantity = parseInt(option.dataset.quantity);
+    
+    // Update state
+    this.state.selectedQuantity = quantity;
+    
+    // Update UI
+    this.updateSelectedUI(option);
+    
+    // Update prices based on current subscription state
+    this.updateDisplayedPrice(quantity);
+    
+    // Update quantity input
+    if (this.quantityInput) {
+      this.quantityInput.value = quantity;
+      this.quantityInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    
+    // Dispatch event
+    this.dispatchQuantityChangeEvent(quantity);
+  }
+  
+  handleSubscriptionChange(detail) {
+    this.state.isSubscriptionActive = detail.subscribed;
+    this.state.subscriptionDiscount = detail.discount;
+    
+    // Update all prices with current selected quantity
+    if (this.state.selectedQuantity) {
+      this.updateDisplayedPrice(this.state.selectedQuantity);
+      this.updateQuantityBreakPrices();
+    }
+  }
+  
+  updateSelectedUI(selectedOption) {
+    // Remove previous selection
+    this.quantityOptions.forEach(opt => {
+      opt.classList.remove('selected');
+      opt.setAttribute('aria-pressed', 'false');
+    });
+    
+    // Add selection to new option
+    selectedOption.classList.add('selected');
+    selectedOption.setAttribute('aria-pressed', 'true');
+  }
+  
+  updateDisplayedPrice(quantity) {
+    const priceKey = this.state.isSubscriptionActive 
+      ? `${quantity}_subscription` 
+      : `${quantity}_original`;
+    
+    const price = this.state.prices.get(priceKey);
+    
+    if (price) {
+      this.updateMainProductPrice(price);
+      this.updateStickyPrice(price);
+    }
+  }
+  
+  updateMainProductPrice(priceInCents) {
+    const formattedPrice = this.formatMoney(priceInCents);
+    
+    this.priceElements.main.forEach(element => {
+      // Preserve structure but update price
+      if (element.innerHTML.includes('</span>')) {
+        element.innerHTML = element.innerHTML.replace(/\$[\d,]+\.?\d*/g, formattedPrice);
+      } else {
+        element.textContent = formattedPrice;
+      }
+      
+      // Mark as updated
+      element.dataset.quantityBreakPrice = 'true';
+      element.dataset.subscriptionApplied = this.state.isSubscriptionActive ? 'true' : 'false';
+    });
+  }
+  
+  updateStickyPrice(priceInCents) {
+    const formattedPrice = this.formatMoney(priceInCents);
+    
+    this.priceElements.sticky.forEach(element => {
+      element.textContent = formattedPrice;
+      element.dataset.quantityBreakPrice = 'true';
+      element.dataset.subscriptionApplied = this.state.isSubscriptionActive ? 'true' : 'false';
+    });
+  }
+  
+  updateQuantityBreakPrices() {
+    this.quantityOptions.forEach(option => {
+      const quantity = parseInt(option.dataset.quantity);
+      const priceElement = option.querySelector('.quantity-break__price');
+      
+      if (!priceElement) return;
+      
+      const priceKey = this.state.isSubscriptionActive 
+        ? `${quantity}_subscription` 
+        : `${quantity}_original`;
+      
+      const price = this.state.prices.get(priceKey);
+      
+      if (price) {
+        const formattedPrice = this.formatMoney(price);
+        
+        // Update price display
+        if (priceElement.innerHTML.includes('</span>')) {
+          priceElement.innerHTML = priceElement.innerHTML.replace(/\$[\d,]+\.?\d*/g, formattedPrice);
+        } else {
+          priceElement.textContent = formattedPrice;
+        }
+        
+        // Update compare price if subscription is active
+        if (this.state.isSubscriptionActive) {
+          const compareElement = option.querySelector('.quantity-break__compare-price');
+          const originalPrice = this.state.prices.get(`${quantity}_original`);
+          
+          if (compareElement && originalPrice) {
+            compareElement.textContent = this.formatMoney(originalPrice);
+            compareElement.style.display = 'inline';
+            compareElement.style.textDecoration = 'line-through';
+            compareElement.style.opacity = '0.6';
+          }
+        } else {
+          // Hide compare price when subscription is off
+          const compareElement = option.querySelector('.quantity-break__compare-price');
+          if (compareElement) {
+            compareElement.style.display = 'none';
+          }
+        }
+      }
+    });
+  }
+  
+  updateAllPrices() {
+    // Update quantity break display prices
+    this.updateQuantityBreakPrices();
+    
+    // Update main displayed price if quantity is selected
+    if (this.state.selectedQuantity) {
+      this.updateDisplayedPrice(this.state.selectedQuantity);
+    }
+  }
+  
+  dispatchQuantityChangeEvent(quantity) {
+    const event = new CustomEvent('quantitybreak:change', {
+      detail: {
+        quantity: quantity,
+        isSubscription: this.state.isSubscriptionActive,
+        price: this.state.prices.get(
+          this.state.isSubscriptionActive 
+            ? `${quantity}_subscription` 
+            : `${quantity}_original`
+        )
+      },
+      bubbles: true
+    });
+    
+    document.dispatchEvent(event);
+  }
+  
+  formatMoney(cents) {
+    if (!cents || cents <= 0 || isNaN(cents)) {
+      return '$0.00';
+    }
+    return `$${(cents / 100).toFixed(2)}`;
+  }
+  
+  // Public method to get current state
+  getCurrentState() {
+    return {
+      quantity: this.state.selectedQuantity,
+      isSubscription: this.state.isSubscriptionActive,
+      variants: this.state.selectedVariants
+    };
+  }
+  
+  // Public method to restore state
+  restoreState(savedState) {
+    if (savedState.quantity) {
+      const option = this.container.querySelector(`[data-quantity="${savedState.quantity}"]`);
+      if (option) {
+        option.click();
+      }
+    }
+    
+    if (savedState.isSubscription !== undefined) {
+      this.state.isSubscriptionActive = savedState.isSubscription;
+      this.updateAllPrices();
+    }
+  }
+}
+
+// Enhanced Subscription Manager Integration
+class EnhancedSubscriptionManager {
+  constructor() {
+    this.checkbox = document.getElementById('subscription-toggle-checkbox');
+    if (!this.checkbox) return;
+    
+    this.quantityBreaksManager = null;
+    this.init();
+  }
+  
+  init() {
+    // Wait for quantity breaks to initialize
+    setTimeout(() => {
+      this.quantityBreaksManager = window.quantityBreaksManager;
+      this.setupIntegration();
+    }, 100);
+    
+    this.checkbox.addEventListener('change', (e) => {
+      this.handleToggle(e.target.checked);
+    });
+  }
+  
+  setupIntegration() {
+    if (!this.quantityBreaksManager) return;
+    
+    // Sync state on initialization
+    const currentState = this.quantityBreaksManager.getCurrentState();
+    
+    if (this.checkbox.checked && currentState.quantity) {
+      // Ensure prices reflect subscription state
+      this.quantityBreaksManager.handleSubscriptionChange({
+        subscribed: true,
+        discount: parseFloat(this.checkbox.dataset.discount) || 0
+      });
+    }
+  }
+  
+  handleToggle(isChecked) {
+    // Update hidden input
+    const hiddenInput = document.getElementById('subscription-value');
+    if (hiddenInput) {
+      hiddenInput.value = isChecked ? 'true' : 'false';
+    }
+    
+    // Dispatch event for other systems
+    const event = new CustomEvent('subscription:change', {
+      detail: {
+        subscribed: isChecked,
+        discount: parseFloat(this.checkbox.dataset.discount) || 0,
+        productId: window.productId
+      },
+      bubbles: true
+    });
+    
+    document.dispatchEvent(event);
+    
+    // Log state
+    console.log('[QuantityBreaks] Subscription toggled:', {
+      subscribed: isChecked,
+      currentQuantity: this.quantityBreaksManager?.getCurrentState().quantity
+    });
+  }
+}
+
+// Initialize on DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.quantityBreaksManager = new QuantityBreaksManager();
+    window.enhancedSubscriptionManager = new EnhancedSubscriptionManager();
+  });
+} else {
+  window.quantityBreaksManager = new QuantityBreaksManager();
+  window.enhancedSubscriptionManager = new EnhancedSubscriptionManager();
+}
+
+// Handle theme editor reloads
+document.addEventListener('shopify:section:load', () => {
+  window.quantityBreaksManager = new QuantityBreaksManager();
+  window.enhancedSubscriptionManager = new EnhancedSubscriptionManager();
+});</script>
 {%- endif -%}
               {%- when 'quantity_selector' -%}
                 {%- if block.settings.enable_quantity_discounts -%}
