@@ -380,6 +380,7 @@ It preserves all original styling, layout and functionality.
        data-box="true" 
        data-subscription-discount="{{ subscription_discount }}"
        data-subscription-product-id="{{ subscription_product_id }}"
+       data-original-product-id="{{ product.selected_or_first_available_variant.id }}"
        style="padding: 20px 0px 16px; margin-top: 20px; width: 100%;">
     <div data-secondsdelay="" class="form-check fk-form-radio-button-parent" style="display: flex; align-items: center; justify-content: center;">
       <input 
@@ -391,8 +392,8 @@ It preserves all original styling, layout and functionality.
         {% if block.settings.checked_by_default != false %}checked{% endif %}
         data-discount="{{ subscription_discount }}"
         data-subscription-product="{{ subscription_product_id }}"
+        data-original-variant="{{ product.selected_or_first_available_variant.id }}"
         style="margin-right: 8px; width: 20px; height: 20px; cursor: pointer;"
-        form="{{ product_form_id }}"
       >
       <label 
         for="subscription-toggle-checkbox" 
@@ -404,39 +405,23 @@ It preserves all original styling, layout and functionality.
     </div>
   </div>
   
-  {%- comment -%} Hidden inputs to track subscription in cart properties {%- endcomment -%}
+  {%- comment -%} Hidden input to dynamically change the product being added {%- endcomment -%}
   <input 
     type="hidden" 
-    name="properties[_subscription]" 
-    value="{% if block.settings.checked_by_default != false %}true{% else %}false{% endif %}" 
-    id="subscription-value"
-    form="{{ product_form_id }}"
-  >
-  <input 
-    type="hidden" 
-    name="properties[_subscription_discount]" 
-    value="{{ subscription_discount }}" 
-    id="subscription-discount-value"
-    form="{{ product_form_id }}"
-  >
-  {%- comment -%} NEW: Hidden input for subscription product ID {%- endcomment -%}
-  <input 
-    type="hidden" 
-    name="properties[_subscription_product_id]" 
-    value="{{ subscription_product_id }}" 
-    id="subscription-product-id-value"
+    name="id" 
+    id="subscription-product-input" 
+    value="{% if block.settings.checked_by_default != false and subscription_product_id != blank %}{{ subscription_product_id }}{% else %}{{ product.selected_or_first_available_variant.id }}{% endif %}" 
     form="{{ product_form_id }}"
   >
   
   <script>
-  class SubscriptionManager {
+  class SubscriptionProductManager {
     constructor() {
       this.checkbox = document.getElementById('subscription-toggle-checkbox');
-      this.hiddenInput = document.getElementById('subscription-value');
-      this.discountInput = document.getElementById('subscription-discount-value');
-      this.productIdInput = document.getElementById('subscription-product-id-value');
+      this.productInput = document.getElementById('subscription-product-input');
       this.discountPercentage = 0;
       this.subscriptionProductId = '';
+      this.originalVariantId = '';
       this.isUpdating = false;
       this.priceCache = new Map();
       this.updateTimeout = null;
@@ -444,11 +429,18 @@ It preserves all original styling, layout and functionality.
       if (this.checkbox) {
         this.discountPercentage = parseFloat(this.checkbox.dataset.discount) || 15;
         this.subscriptionProductId = this.checkbox.dataset.subscriptionProduct || '';
+        this.originalVariantId = this.checkbox.dataset.originalVariant || '';
         this.init();
       }
     }
 
     init() {
+      console.log('[SubscriptionProductManager] Initializing with:', {
+        subscriptionProductId: this.subscriptionProductId,
+        originalVariantId: this.originalVariantId,
+        discount: this.discountPercentage
+      });
+      
       // Listen for checkbox changes
       this.checkbox.addEventListener('change', (e) => this.handleSubscriptionToggle(e));
       
@@ -458,13 +450,18 @@ It preserves all original styling, layout and functionality.
       // Apply initial state with slight delay to ensure DOM is ready
       setTimeout(() => {
         if (this.checkbox.checked) {
-          this.applySubscriptionDiscount();
+          this.applySubscriptionState();
         }
       }, 100);
 
-      // Listen for variant changes and reapply subscription state
+      // Listen for variant changes
       document.addEventListener('variant:change', (e) => {
         if (this.isUpdating) return;
+        
+        // Update original variant ID
+        if (e.detail && e.detail.variant) {
+          this.originalVariantId = e.detail.variant.id;
+        }
         
         // Clear previous timeout
         if (this.updateTimeout) {
@@ -475,9 +472,17 @@ It preserves all original styling, layout and functionality.
           this.storeOriginalPrices(); // Re-store prices for new variant
           if (this.checkbox.checked) {
             this.updatePrices();
+            // Keep subscription product selected
+            this.setProductId(this.subscriptionProductId);
+          } else {
+            // Update to new variant
+            this.setProductId(this.originalVariantId);
           }
         }, 100);
       });
+      
+      // Override form submission to ensure correct product is added
+      this.interceptFormSubmission();
       
       // Listen for price updates from Dawn theme with debouncing
       const priceObserver = new MutationObserver((mutations) => {
@@ -513,7 +518,7 @@ It preserves all original styling, layout and functionality.
             childList: true,
             subtree: true,
             characterData: true,
-            attributes: false // Don't observe attribute changes to prevent loops
+            attributes: false
           });
         }
       });
@@ -523,26 +528,104 @@ It preserves all original styling, layout and functionality.
         this.storeOriginalPrices();
         this.updateQuantityBreakPrices();
       });
-      
-      // Listen for add to cart to inject subscription product ID
-      this.interceptAddToCart();
     }
     
-    interceptAddToCart() {
-      // Intercept form submissions to add subscription product ID
+    interceptFormSubmission() {
+      // Find all product forms
       const forms = document.querySelectorAll('form[action*="/cart/add"]');
+      
       forms.forEach(form => {
-        form.addEventListener('submit', (e) => {
+        // Remove existing submit listeners and add our own
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        newForm.addEventListener('submit', (e) => {
+          // Ensure correct product ID is set before submission
           if (this.checkbox.checked && this.subscriptionProductId) {
-            // Ensure subscription product ID is in the form data
-            if (this.productIdInput) {
-              this.productIdInput.value = this.subscriptionProductId;
-            }
-            
-            console.log('[DEBUG][SubscriptionManager] Adding to cart with subscription product:', this.subscriptionProductId);
+            this.setProductId(this.subscriptionProductId);
+            console.log('[SubscriptionProductManager] Form submission - using subscription product:', this.subscriptionProductId);
+          } else {
+            this.setProductId(this.originalVariantId);
+            console.log('[SubscriptionProductManager] Form submission - using original product:', this.originalVariantId);
           }
         });
       });
+      
+      // Also intercept AJAX add to cart
+      this.interceptAjaxAddToCart();
+    }
+    
+    interceptAjaxAddToCart() {
+      // Override fetch to intercept add to cart requests
+      const originalFetch = window.fetch;
+      const self = this;
+      
+      window.fetch = function(...args) {
+        const [url, options] = args;
+        
+        // Check if this is an add to cart request
+        if (typeof url === 'string' && url.includes('/cart/add')) {
+          if (options && options.body) {
+            // Parse the body
+            let bodyData;
+            if (typeof options.body === 'string') {
+              try {
+                bodyData = JSON.parse(options.body);
+              } catch (e) {
+                // If not JSON, try to parse as FormData
+                const formData = new URLSearchParams(options.body);
+                bodyData = Object.fromEntries(formData);
+              }
+            } else if (options.body instanceof FormData) {
+              bodyData = Object.fromEntries(options.body);
+            }
+            
+            // Check if subscription is active and modify the product ID
+            if (self.checkbox && self.checkbox.checked && self.subscriptionProductId) {
+              if (bodyData) {
+                // Check if this is the product being added
+                const currentId = bodyData.id || bodyData.variant_id;
+                if (currentId == self.originalVariantId || !currentId) {
+                  bodyData.id = self.subscriptionProductId;
+                  console.log('[SubscriptionProductManager] AJAX intercept - switching to subscription product:', self.subscriptionProductId);
+                  
+                  // Rebuild the body
+                  if (typeof options.body === 'string') {
+                    options.body = JSON.stringify(bodyData);
+                  } else {
+                    const newFormData = new FormData();
+                    Object.entries(bodyData).forEach(([key, value]) => {
+                      newFormData.append(key, value);
+                    });
+                    options.body = newFormData;
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        return originalFetch.apply(this, args);
+      };
+    }
+    
+    setProductId(productId) {
+      // Update all product ID inputs in forms
+      const idInputs = document.querySelectorAll('input[name="id"], input[name="variant_id"]');
+      idInputs.forEach(input => {
+        // Only update if it's for the current product
+        const form = input.closest('form');
+        if (form && form.id === '{{ product_form_id }}') {
+          input.value = productId;
+        }
+      });
+      
+      // Also update our hidden input
+      if (this.productInput) {
+        this.productInput.value = productId;
+      }
+      
+      console.log('[SubscriptionProductManager] Product ID set to:', productId);
     }
 
     storeOriginalPrices() {
@@ -594,26 +677,19 @@ It preserves all original styling, layout and functionality.
     handleSubscriptionToggle(event) {
       const isChecked = event.target.checked;
       
-      // Update hidden inputs
-      this.hiddenInput.value = isChecked ? 'true' : 'false';
-      
-      // Update subscription product ID input
-      if (this.productIdInput) {
-        this.productIdInput.value = isChecked ? this.subscriptionProductId : '';
-      }
-      
       if (isChecked) {
-        this.applySubscriptionDiscount();
+        this.applySubscriptionState();
       } else {
-        this.removeSubscriptionDiscount();
+        this.removeSubscriptionState();
       }
       
-      // Dispatch custom event with subscription product ID
+      // Dispatch custom event
       const customEvent = new CustomEvent('subscription:change', {
         detail: {
           subscribed: isChecked,
           discount: this.discountPercentage,
-          productId: window.productId,
+          productId: isChecked ? this.subscriptionProductId : this.originalVariantId,
+          originalProductId: this.originalVariantId,
           subscriptionProductId: this.subscriptionProductId
         },
         bubbles: true
@@ -621,26 +697,31 @@ It preserves all original styling, layout and functionality.
       document.dispatchEvent(customEvent);
       
       // Log for debugging
-      console.log('[DEBUG][SubscriptionManager] Subscription state changed:', {
+      console.log('[SubscriptionProductManager] Subscription state changed:', {
         subscribed: isChecked,
         discount: this.discountPercentage,
-        productId: window.productId,
-        subscriptionProductId: this.subscriptionProductId
+        productId: isChecked ? this.subscriptionProductId : this.originalVariantId
       });
     }
 
-    applySubscriptionDiscount() {
-      // Update regular product price
+    applySubscriptionState() {
+      // Switch to subscription product
+      if (this.subscriptionProductId) {
+        this.setProductId(this.subscriptionProductId);
+      }
+      
+      // Update prices with discount
       this.updateProductPrice();
-      
-      // Update quantity breaks if present
       this.updateQuantityBreakPrices();
-      
-      // Update sticky ATC if present
       this.updateStickyATC();
     }
 
-    removeSubscriptionDiscount() {
+    removeSubscriptionState() {
+      // Switch back to original product
+      if (this.originalVariantId) {
+        this.setProductId(this.originalVariantId);
+      }
+      
       // Restore original prices
       this.restoreOriginalPrices();
     }
@@ -919,411 +1000,21 @@ It preserves all original styling, layout and functionality.
   // Initialize on DOM ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      window.subscriptionManager = new SubscriptionManager();
+      window.subscriptionProductManager = new SubscriptionProductManager();
     });
   } else {
-    window.subscriptionManager = new SubscriptionManager();
+    window.subscriptionProductManager = new SubscriptionProductManager();
   }
 
   // Reinitialize on section reload (for theme editor)
   document.addEventListener('shopify:section:load', () => {
     // Clean up existing instance
-    if (window.subscriptionManager) {
-      window.subscriptionManager.restoreOriginalPrices();
+    if (window.subscriptionProductManager) {
+      window.subscriptionProductManager.restoreOriginalPrices();
     }
-    window.subscriptionManager = new SubscriptionManager();
+    window.subscriptionProductManager = new SubscriptionProductManager();
   });
   </script>
-  
-  {%- comment -%} Keep existing QuantityBreaksManager code exactly as is {%- endcomment -%}
-  <script>
-    class QuantityBreaksManager {
-  constructor() {
-    this.container = document.querySelector('.quantity-breaks-container');
-    if (!this.container) return;
-    
-    // State management
-    this.state = {
-      selectedQuantity: null,
-      selectedVariants: {},
-      isSubscriptionActive: false,
-      subscriptionDiscount: 0,
-      prices: new Map() // Cache for prices
-    };
-    
-    // Initialize
-    this.init();
-  }
-  
-  init() {
-    this.cacheElements();
-    this.bindEvents();
-    this.initializeState();
-    this.setupSubscriptionListener();
-  }
-  
-  cacheElements() {
-    this.quantityOptions = this.container.querySelectorAll('.quantity-break');
-    this.quantityInput = document.querySelector('#Quantity-' + this.container.dataset.section);
-    this.subscriptionCheckbox = document.getElementById('subscription-toggle-checkbox');
-    this.priceElements = {
-      main: document.querySelectorAll('.product-page-price .price-item--regular, .product-page-price .price-item--sale'),
-      sticky: document.querySelectorAll('.sticky-atc__price, .sticky-atc__button-price')
-    };
-  }
-  
-  initializeState() {
-    // Get initial selected quantity
-    const selectedOption = this.container.querySelector('.quantity-break.selected');
-    if (selectedOption) {
-      this.state.selectedQuantity = parseInt(selectedOption.dataset.quantity);
-    }
-    
-    // Get subscription state
-    if (this.subscriptionCheckbox) {
-      this.state.isSubscriptionActive = this.subscriptionCheckbox.checked;
-      this.state.subscriptionDiscount = parseFloat(this.subscriptionCheckbox.dataset.discount) || 0;
-    }
-    
-    // Store original prices for each quantity option
-    this.storeOriginalPrices();
-  }
-  
-  storeOriginalPrices() {
-    this.quantityOptions.forEach(option => {
-      const quantity = parseInt(option.dataset.quantity);
-      const priceElement = option.querySelector('.quantity-break__price');
-      
-      if (priceElement) {
-        const priceText = priceElement.textContent.trim();
-        const priceMatch = priceText.match(/\$?([\d,]+\.?\d*)/);
-        
-        if (priceMatch) {
-          const price = parseFloat(priceMatch[1].replace(/,/g, '')) * 100; // Store as cents
-          
-          this.state.prices.set(`${quantity}_original`, price);
-          
-          // Calculate subscription price
-          if (this.state.subscriptionDiscount > 0) {
-            const discountedPrice = Math.round(price * (1 - this.state.subscriptionDiscount / 100));
-            this.state.prices.set(`${quantity}_subscription`, discountedPrice);
-          }
-        }
-      }
-    });
-  }
-  
-  bindEvents() {
-    // Quantity selection
-    this.quantityOptions.forEach(option => {
-      option.addEventListener('click', (e) => this.handleQuantitySelection(e));
-    });
-    
-    // Variant changes within quantity options
-    const variantSelects = this.container.querySelectorAll('.variant-dropdown');
-    variantSelects.forEach(select => {
-      select.addEventListener('change', (e) => this.handleVariantChange(e));
-    });
-  }
-  
-  setupSubscriptionListener() {
-    if (!this.subscriptionCheckbox) return;
-    
-    // Listen for subscription changes
-    document.addEventListener('subscription:change', (e) => {
-      this.handleSubscriptionChange(e.detail);
-    });
-    
-    // Also listen directly to checkbox
-    this.subscriptionCheckbox.addEventListener('change', (e) => {
-      this.state.isSubscriptionActive = e.target.checked;
-      this.updateAllPrices();
-    });
-  }
-  
-  handleQuantitySelection(event) {
-    const option = event.currentTarget;
-    const quantity = parseInt(option.dataset.quantity);
-    
-    // Update state
-    this.state.selectedQuantity = quantity;
-    
-    // Update UI
-    this.updateSelectedUI(option);
-    
-    // Update prices based on current subscription state
-    this.updateDisplayedPrice(quantity);
-    
-    // Update quantity input
-    if (this.quantityInput) {
-      this.quantityInput.value = quantity;
-      this.quantityInput.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    
-    // Dispatch event
-    this.dispatchQuantityChangeEvent(quantity);
-  }
-  
-  handleVariantChange(event) {
-    const select = event.target;
-    const optionName = select.dataset.optionName;
-    const value = select.value;
-    
-    // Update state
-    this.state.selectedVariants[optionName] = value;
-    
-    // Additional variant handling logic here if needed
-  }
-  
-  handleSubscriptionChange(detail) {
-    this.state.isSubscriptionActive = detail.subscribed;
-    this.state.subscriptionDiscount = detail.discount;
-    
-    // Update all prices with current selected quantity
-    if (this.state.selectedQuantity) {
-      this.updateDisplayedPrice(this.state.selectedQuantity);
-      this.updateQuantityBreakPrices();
-    }
-  }
-  
-  updateSelectedUI(selectedOption) {
-    // Remove previous selection
-    this.quantityOptions.forEach(opt => {
-      opt.classList.remove('selected');
-      opt.setAttribute('aria-pressed', 'false');
-    });
-    
-    // Add selection to new option
-    selectedOption.classList.add('selected');
-    selectedOption.setAttribute('aria-pressed', 'true');
-  }
-  
-  updateDisplayedPrice(quantity) {
-    const priceKey = this.state.isSubscriptionActive 
-      ? `${quantity}_subscription` 
-      : `${quantity}_original`;
-    
-    const price = this.state.prices.get(priceKey);
-    
-    if (price) {
-      this.updateMainProductPrice(price);
-      this.updateStickyPrice(price);
-    }
-  }
-  
-  updateMainProductPrice(priceInCents) {
-    const formattedPrice = this.formatMoney(priceInCents);
-    
-    this.priceElements.main.forEach(element => {
-      // Preserve structure but update price
-      if (element.innerHTML.includes('</span>')) {
-        element.innerHTML = element.innerHTML.replace(/\$[\d,]+\.?\d*/g, formattedPrice);
-      } else {
-        element.textContent = formattedPrice;
-      }
-      
-      // Mark as updated
-      element.dataset.quantityBreakPrice = 'true';
-      element.dataset.subscriptionApplied = this.state.isSubscriptionActive ? 'true' : 'false';
-    });
-  }
-  
-  updateStickyPrice(priceInCents) {
-    const formattedPrice = this.formatMoney(priceInCents);
-    
-    this.priceElements.sticky.forEach(element => {
-      element.textContent = formattedPrice;
-      element.dataset.quantityBreakPrice = 'true';
-      element.dataset.subscriptionApplied = this.state.isSubscriptionActive ? 'true' : 'false';
-    });
-  }
-  
-  updateQuantityBreakPrices() {
-    this.quantityOptions.forEach(option => {
-      const quantity = parseInt(option.dataset.quantity);
-      const priceElement = option.querySelector('.quantity-break__price');
-      
-      if (!priceElement) return;
-      
-      const priceKey = this.state.isSubscriptionActive 
-        ? `${quantity}_subscription` 
-        : `${quantity}_original`;
-      
-      const price = this.state.prices.get(priceKey);
-      
-      if (price) {
-        const formattedPrice = this.formatMoney(price);
-        
-        // Update price display
-        if (priceElement.innerHTML.includes('</span>')) {
-          priceElement.innerHTML = priceElement.innerHTML.replace(/\$[\d,]+\.?\d*/g, formattedPrice);
-        } else {
-          priceElement.textContent = formattedPrice;
-        }
-        
-        // Update compare price if subscription is active
-        if (this.state.isSubscriptionActive) {
-          const compareElement = option.querySelector('.quantity-break__compare-price');
-          const originalPrice = this.state.prices.get(`${quantity}_original`);
-          
-          if (compareElement && originalPrice) {
-            compareElement.textContent = this.formatMoney(originalPrice);
-            compareElement.style.display = 'inline';
-            compareElement.style.textDecoration = 'line-through';
-            compareElement.style.opacity = '0.6';
-          }
-        } else {
-          // Hide compare price when subscription is off
-          const compareElement = option.querySelector('.quantity-break__compare-price');
-          if (compareElement) {
-            compareElement.style.display = 'none';
-          }
-        }
-      }
-    });
-  }
-  
-  updateAllPrices() {
-    // Update quantity break display prices
-    this.updateQuantityBreakPrices();
-    
-    // Update main displayed price if quantity is selected
-    if (this.state.selectedQuantity) {
-      this.updateDisplayedPrice(this.state.selectedQuantity);
-    }
-  }
-  
-  dispatchQuantityChangeEvent(quantity) {
-    const event = new CustomEvent('quantitybreak:change', {
-      detail: {
-        quantity: quantity,
-        isSubscription: this.state.isSubscriptionActive,
-        price: this.state.prices.get(
-          this.state.isSubscriptionActive 
-            ? `${quantity}_subscription` 
-            : `${quantity}_original`
-        )
-      },
-      bubbles: true
-    });
-    
-    document.dispatchEvent(event);
-  }
-  
-  formatMoney(cents) {
-    if (!cents || cents <= 0 || isNaN(cents)) {
-      return '$0.00';
-    }
-    return `$${(cents / 100).toFixed(2)}`;
-  }
-  
-  // Public method to get current state
-  getCurrentState() {
-    return {
-      quantity: this.state.selectedQuantity,
-      isSubscription: this.state.isSubscriptionActive,
-      variants: this.state.selectedVariants
-    };
-  }
-  
-  // Public method to restore state
-  restoreState(savedState) {
-    if (savedState.quantity) {
-      const option = this.container.querySelector(`[data-quantity="${savedState.quantity}"]`);
-      if (option) {
-        option.click();
-      }
-    }
-    
-    if (savedState.isSubscription !== undefined) {
-      this.state.isSubscriptionActive = savedState.isSubscription;
-      this.updateAllPrices();
-    }
-  }
-}
-
-// Enhanced Subscription Manager Integration
-class EnhancedSubscriptionManager {
-  constructor() {
-    this.checkbox = document.getElementById('subscription-toggle-checkbox');
-    if (!this.checkbox) return;
-    
-    this.quantityBreaksManager = null;
-    this.init();
-  }
-  
-  init() {
-    // Wait for quantity breaks to initialize
-    setTimeout(() => {
-      this.quantityBreaksManager = window.quantityBreaksManager;
-      this.setupIntegration();
-    }, 100);
-    
-    this.checkbox.addEventListener('change', (e) => {
-      this.handleToggle(e.target.checked);
-    });
-  }
-  
-  setupIntegration() {
-    if (!this.quantityBreaksManager) return;
-    
-    // Sync state on initialization
-    const currentState = this.quantityBreaksManager.getCurrentState();
-    
-    if (this.checkbox.checked && currentState.quantity) {
-      // Ensure prices reflect subscription state
-      this.quantityBreaksManager.handleSubscriptionChange({
-        subscribed: true,
-        discount: parseFloat(this.checkbox.dataset.discount) || 0
-      });
-    }
-  }
-  
-  handleToggle(isChecked) {
-    // Update hidden input
-    const hiddenInput = document.getElementById('subscription-value');
-    if (hiddenInput) {
-      hiddenInput.value = isChecked ? 'true' : 'false';
-    }
-    
-    // Dispatch event for other systems
-    const event = new CustomEvent('subscription:change', {
-      detail: {
-        subscribed: isChecked,
-        discount: parseFloat(this.checkbox.dataset.discount) || 0,
-        productId: window.productId,
-        subscriptionProductId: this.checkbox.dataset.subscriptionProduct || ''
-      },
-      bubbles: true
-    });
-    
-    document.dispatchEvent(event);
-    
-    // Log state
-    console.log('[QuantityBreaks] Subscription toggled:', {
-      subscribed: isChecked,
-      currentQuantity: this.quantityBreaksManager?.getCurrentState().quantity,
-      subscriptionProductId: this.checkbox.dataset.subscriptionProduct
-    });
-  }
-}
-
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    window.quantityBreaksManager = new QuantityBreaksManager();
-    window.enhancedSubscriptionManager = new EnhancedSubscriptionManager();
-  });
-} else {
-  window.quantityBreaksManager = new QuantityBreaksManager();
-  window.enhancedSubscriptionManager = new EnhancedSubscriptionManager();
-}
-
-// Handle theme editor reloads
-document.addEventListener('shopify:section:load', () => {
-  window.quantityBreaksManager = new QuantityBreaksManager();
-  window.enhancedSubscriptionManager = new EnhancedSubscriptionManager();
-});</script>
 {%- endif -%}
               {%- when 'quantity_selector' -%}
                 {%- if block.settings.enable_quantity_discounts -%}
