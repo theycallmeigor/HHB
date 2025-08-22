@@ -1,6 +1,6 @@
 {%- comment %}
   Enhanced redirect cart that properly passes products to checkout
-  Now with subscription support using custom.cc_sub_id metafield
+  Now with subscription support using custom.cc_sub_products metafield
   @param cart (cart, mandatory)
   @param checkout_url (string, mandatory) the checkout url
   @param checkout_button_selector (string) the query selector for the checkout button
@@ -18,7 +18,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   var debug = true ? console.log.bind(console, '[DEBUG][RedirectCart]') : function () {};
 
-  debug('Script loaded - Enhanced Version with Subscription Support');
+  debug('Script loaded - Enhanced Version with Subscription Support (cc_sub_products)');
 
   window.RedirectCart = function (options) {
     var self = {};
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
       fetchCartData()
         .then(function(data) {
           var checkoutUrl = getCheckoutURL(data, isSubscribed);
-          debug('Checkout URL:', checkoutUrl);
+          debug('Final Checkout URL:', checkoutUrl);
           window.location.href = checkoutUrl;
         })
         .catch(function(error) {
@@ -105,16 +105,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function fetchCartData() {
       // Try custom view first, then fallback to standard cart
-      return fetch('/cart?view=meta-data.json')
+      return fetch('/cart?view=subscription.json')
         .then(function(response) {
           if (!response.ok) {
-            throw new Error('Meta-data view not found');
+            throw new Error('Subscription view not found');
           }
           return response.json();
         })
         .then(function(data) {
-          debug('Meta-data cart loaded:', data);
-          return { type: 'meta', data: data };
+          debug('Subscription cart loaded:', data);
+          return { type: 'subscription', data: data };
         })
         .catch(function() {
           debug('Falling back to standard cart.json');
@@ -132,40 +132,45 @@ document.addEventListener("DOMContentLoaded", function () {
       var affId = getCartCookie('affId') || getUrlParam('affId');
       var urlLineItems = '';
       
-      if (cartData.type === 'meta' && cartData.data.meta_product_id_array) {
-        // Use meta-data format with subscription support
-        urlLineItems = Object.keys(cartData.data.meta_product_id_array).reduce(function (output, productId) {
-          var item = cartData.data.meta_product_id_array[productId];
+      if (cartData.type === 'subscription' && cartData.data.meta_product_id_array) {
+        // Use subscription cart format with cc_sub_products support
+        urlLineItems = cartData.data.meta_product_id_array.map(function(item) {
           var itemId = item.id;
           
-          // If subscribed and subscription ID exists, use it
-          if (isSubscribed && item.subscription_id) {
-            itemId = item.subscription_id;
-            debug('Using subscription ID:', itemId, 'instead of:', item.id);
+          // If subscribed and subscription product ID exists, use it instead
+          if (isSubscribed && item.subscription_product_id) {
+            itemId = item.subscription_product_id;
+            debug('Using subscription product ID:', itemId, 'instead of:', item.id);
           }
           
-          return output.concat([itemId + ':' + item.quantity]);
-        }, []).join(';');
+          return itemId + ':' + item.quantity;
+        }).filter(function(item) { return item; }).join(';');
         
       } else if (cartData.type === 'standard' && cartData.data.items) {
-        // Use standard cart format with variant IDs and subscription support
+        // Use standard cart format with cc_sub_products support
         urlLineItems = cartData.data.items.map(function(item) {
           var productId = item.variant_id || item.id || item.product_id;
           var quantity = item.quantity;
           
-          // Check for subscription ID if subscribed
+          // Check for subscription product ID if subscribed
           if (isSubscribed) {
-            // Check for subscription ID in properties or metafields
-            if (item.properties && item.properties._subscription_id) {
-              productId = item.properties._subscription_id;
-              debug('Using subscription ID from properties:', productId);
-            } else if (item.subscription_id) {
-              productId = item.subscription_id;
-              debug('Using subscription ID from item:', productId);
+            // Priority 1: Check for cc_sub_products in properties
+            if (item.properties && item.properties._subscription_product_id) {
+              productId = item.properties._subscription_product_id;
+              debug('Using subscription product ID from properties:', productId);
             }
-            // If selling plan exists, it might contain subscription info
-            else if (item.selling_plan_allocation && item.selling_plan_allocation.selling_plan) {
-              productId = productId + '|' + item.selling_plan_allocation.selling_plan.id;
+            // Priority 2: Check if subscription product was passed through cart attributes
+            else if (item.subscription_product_id) {
+              productId = item.subscription_product_id;
+              debug('Using subscription product ID from item:', productId);
+            }
+            // Priority 3: Try to get from Liquid directly for current cart items
+            else {
+              var subscriptionProductId = getSubscriptionProductFromLiquid(item.product_id);
+              if (subscriptionProductId) {
+                productId = subscriptionProductId;
+                debug('Using subscription product ID from liquid:', productId);
+              }
             }
           }
           
@@ -203,6 +208,12 @@ document.addEventListener("DOMContentLoaded", function () {
         if (subscriptionDiscount && subscriptionDiscount.value) {
           params.append('subscription_discount', subscriptionDiscount.value);
         }
+        
+        // Add subscription frequency if selected
+        var subscriptionFrequency = document.getElementById('subscription-frequency');
+        if (subscriptionFrequency && subscriptionFrequency.value) {
+          params.append('subscription_frequency', subscriptionFrequency.value);
+        }
       }
       
       // Add discount code if present
@@ -215,28 +226,47 @@ document.addEventListener("DOMContentLoaded", function () {
       var finalUrl = self.options.checkoutUrl + '?' + params.toString();
       return finalUrl;
     }
+    
+    function getSubscriptionProductFromLiquid(productId) {
+      // This function tries to get subscription product ID from Liquid-generated data
+      var subscriptionProducts = {
+        {%- for item in cart.items -%}
+          {%- if item.product.metafields.custom.cc_sub_products -%}
+            '{{ item.product_id }}': '{{ item.product.metafields.custom.cc_sub_products }}',
+          {%- endif -%}
+        {%- endfor -%}
+      };
+      
+      return subscriptionProducts[productId] || null;
+    }
 
     function extractFromCartItems(isSubscribed) {
       // Fallback method using Liquid to generate product list with subscription support
       var items = [];
       {%- for item in cart.items -%}
-        {%- assign item_id = item.variant_id | default: item.id -%}
-        {%- if item.product.metafields.custom.cc_sub_id and item.properties._subscription == 'true' -%}
-          {%- comment -%} Use subscription ID if subscription is active {%- endcomment -%}
-          items.push('{{ item.product.metafields.custom.cc_sub_id }}:{{ item.quantity }}');
-        {%- elsif item.variant_id -%}
-          items.push('{{ item.variant_id }}:{{ item.quantity }}');
-        {%- elsif item.id -%}
-          items.push('{{ item.id }}:{{ item.quantity }}');
+        {%- liquid
+          assign item_id = item.variant_id | default: item.id
+          assign has_subscription_product = false
+          assign subscription_product_id = nil
+          
+          if item.product.metafields.custom.cc_sub_products
+            assign has_subscription_product = true
+            assign subscription_product_id = item.product.metafields.custom.cc_sub_products
+          endif
+        -%}
+        
+        {%- if has_subscription_product -%}
+          // Item has subscription product available
+          if (isSubscribed && {{ item.properties._subscription | json }} === 'true') {
+            items.push('{{ subscription_product_id }}:{{ item.quantity }}');
+          } else {
+            items.push('{{ item_id }}:{{ item.quantity }}');
+          }
+        {%- else -%}
+          // Regular item without subscription option
+          items.push('{{ item_id }}:{{ item.quantity }}');
         {%- endif -%}
       {%- endfor -%}
-      
-      // Override with subscription IDs if subscribed
-      if (isSubscribed) {
-        debug('Checking for subscription IDs in cart items');
-        // This part would need actual cart item data with metafields
-        // which we'll get from the enhanced meta-data view
-      }
       
       return items.join(';');
     }
@@ -268,6 +298,26 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
       sessionStorage.removeItem('subscription_active');
       sessionStorage.removeItem('subscription_discount');
+    }
+  });
+  
+  // Listen for add to cart events to inject subscription product ID if needed
+  document.addEventListener('cart:add', function(event) {
+    if (event.detail && event.detail.items) {
+      debug('Cart add event detected, checking for subscription products');
+      
+      var isSubscribed = checkSubscriptionStatus();
+      if (isSubscribed) {
+        // Update cart with subscription product IDs
+        event.detail.items.forEach(function(item) {
+          var subscriptionProductId = getSubscriptionProductFromLiquid(item.product_id);
+          if (subscriptionProductId) {
+            item.properties = item.properties || {};
+            item.properties._subscription_product_id = subscriptionProductId;
+            debug('Added subscription product ID to cart item:', subscriptionProductId);
+          }
+        });
+      }
     }
   });
 });

@@ -4,18 +4,27 @@
     {%- for item in cart.items -%}
       {%- liquid
         assign use_subscription = false
-        assign subscription_id = nil
+        assign subscription_product_id = nil
         
+        comment
+        Check if subscription is active for this item
+        endcomment
         if item.properties._subscription == 'true'
           assign use_subscription = true
         endif
         
-        if use_subscription and item.product.metafields.custom.cc_sub_id
-          assign subscription_id = item.product.metafields.custom.cc_sub_id
+        comment
+        Get subscription product ID from cc_sub_products metafield
+        endcomment
+        if use_subscription and item.product.metafields.custom.cc_sub_products
+          assign subscription_product_id = item.product.metafields.custom.cc_sub_products
         endif
         
-        if subscription_id
-          assign item_id = subscription_id
+        comment
+        Determine which ID to use
+        endcomment
+        if subscription_product_id
+          assign item_id = subscription_product_id
         elsif item.variant.metafields.productId.productId
           assign item_id = item.variant.metafields.productId.productId
         else
@@ -27,14 +36,16 @@
         "id": {{ item_id | json }},
         "quantity": {{ item.quantity }},
         "original_id": {{ item.variant_id | default: item.id | json }},
-        {%- if subscription_id -%}
-        "subscription_id": {{ subscription_id | json }},
+        {%- if subscription_product_id -%}
+        "subscription_product_id": {{ subscription_product_id | json }},
         "is_subscription": true,
         {%- endif -%}
-        {%- if item.product.metafields.custom.cc_sub_id -%}
-        "available_subscription_id": {{ item.product.metafields.custom.cc_sub_id | json }},
+        {%- if item.product.metafields.custom.cc_sub_products -%}
+        "available_subscription_product": {{ item.product.metafields.custom.cc_sub_products | json }},
         {%- endif -%}
-        "properties": {{ item.properties | json }}
+        "properties": {{ item.properties | json }},
+        "product_id": {{ item.product_id | json }},
+        "variant_id": {{ item.variant_id | json }}
       }
       {%- unless forloop.last -%},{%- endunless -%}
     {%- endfor -%}

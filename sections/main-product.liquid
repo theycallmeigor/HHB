@@ -357,13 +357,6 @@ SUBSCRIPTION CHECKBOX BLOCK
 This block displays a subscription checkbox when the product has the custom.cc_sub metafield.
 It preserves all original styling, layout and functionality.
 {%- endcomment -%}
-{%- comment -%}
-----------------------------------------------------------------------------------------------------------------------
-SUBSCRIPTION CHECKBOX BLOCK
-----------------------------------------------------------------------------------------------------------------------
-This block displays a subscription checkbox when the product has the custom.cc_sub metafield.
-It preserves all original styling, layout and functionality.
-{%- endcomment -%}
 {%- when 'subscription_checkbox' -%}
 {%- if product.metafields.custom.cc_sub == true -%}
   {%- liquid
@@ -376,41 +369,12 @@ It preserves all original styling, layout and functionality.
     if block.settings.show_discount_in_label
       assign label_text = label_text | replace: '[discount]', subscription_discount | append: '%'
     endif
-    
-    assign enable_frequency = block.settings.enable_frequency_selector
-    assign frequency_options = block.settings.frequency_options | split: ','
-    assign default_frequency = block.settings.default_frequency
-    
-    assign enable_tiered = block.settings.enable_tiered_discounts
-    assign show_badge = block.settings.show_subscription_badge
-    assign show_tooltip = block.settings.show_tooltip
-    assign mobile_friendly = block.settings.mobile_friendly_layout
   -%}
-  
-  {%- comment -%} Subscription Badge (if enabled) {%- endcomment -%}
-  {%- if show_badge -%}
-    <div id="subscription-badge" 
-         class="subscription-badge" 
-         style="display: none; 
-                background-color: {{ block.settings.badge_background_color }}; 
-                color: {{ block.settings.badge_text_color }};
-                padding: 4px 12px;
-                border-radius: 4px;
-                font-size: 12px;
-                font-weight: 600;
-                text-transform: uppercase;
-                margin-bottom: 10px;
-                width: fit-content;">
-      {{ block.settings.badge_text }}
-    </div>
-  {%- endif -%}
   
   <div id="subscription-checkbox-container" 
        data-box="true" 
        data-subscription-discount="{{ subscription_discount }}"
-       data-mobile-friendly="{{ mobile_friendly }}"
        style="padding: 20px 0px 16px; margin-top: 20px; width: 100%;">
-    
     <div data-secondsdelay="" class="form-check fk-form-radio-button-parent" style="display: flex; align-items: center; justify-content: center;">
       <input 
         type="checkbox" 
@@ -420,76 +384,17 @@ It preserves all original styling, layout and functionality.
         class="fk-form-general-radio-checkbox fk-form-checkbox subscribe-checkbox" 
         {% if block.settings.checked_by_default != false %}checked{% endif %}
         data-discount="{{ subscription_discount }}"
-        data-enable-tiered="{{ enable_tiered }}"
-        data-highlight-prices="{{ block.settings.highlight_subscription_prices }}"
-        data-highlight-color="{{ block.settings.highlight_color }}"
         style="margin-right: 8px; width: 20px; height: 20px; cursor: pointer;"
         form="{{ product_form_id }}"
       >
       <label 
         for="subscription-toggle-checkbox" 
-        class="form-check-label subscription-label" 
-        style="cursor: pointer; 
-               font-size: {% if mobile_friendly %}max({{ block.settings.mobile_font_size }}px, {{ block.settings.label_font_size }}px){% else %}{{ block.settings.label_font_size | default: 16 }}px{% endif %}; 
-               color: {{ block.settings.label_color | default: '#333' }}; 
-               font-weight: {{ block.settings.label_font_weight | default: '600' }};"
+        class="form-check-label" 
+        style="cursor: pointer; font-size: {{ block.settings.label_font_size | default: 16 }}px; color: {{ block.settings.label_color | default: '#333' }}; font-weight: {{ block.settings.label_font_weight | default: '600' }};"
       >
         {{ label_text }}
       </label>
-      
-      {%- if show_tooltip -%}
-        <div class="subscription-tooltip" style="display: inline-block; margin-left: 8px; position: relative;">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="cursor: help; opacity: 0.6;">
-            <path d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm1 13H7v-2h2v2zm0-3H7V5h2v5z"/>
-          </svg>
-          <div class="tooltip-content" style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; white-space: nowrap; margin-bottom: 5px; z-index: 100;">
-            {{ block.settings.tooltip_content }}
-            <div style="position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #333;"></div>
-          </div>
-        </div>
-      {%- endif -%}
     </div>
-    
-    {%- comment -%} Frequency Selector (if enabled) {%- endcomment -%}
-    {%- if enable_frequency -%}
-      <div id="subscription-frequency-container" style="display: none; margin-top: 16px; padding: 12px; background: #f7f7f7; border-radius: 8px;">
-        <label for="subscription-frequency" style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: {{ block.settings.label_color }};">
-          Delivery Frequency:
-        </label>
-        <select 
-          id="subscription-frequency" 
-          name="properties[_subscription_frequency]" 
-          class="subscription-frequency-selector"
-          style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
-          form="{{ product_form_id }}"
-        >
-          {%- for option in frequency_options -%}
-            {%- assign option_parts = option | split: ':' -%}
-            {%- assign option_label = option_parts[0] -%}
-            {%- assign option_value = option_parts[1] -%}
-            <option value="{{ option_value }}" {% if option_value == default_frequency %}selected{% endif %}>
-              {{ option_label }}
-            </option>
-          {%- endfor -%}
-        </select>
-      </div>
-    {%- endif -%}
-    
-    {%- comment -%} Tiered Discount Display (if enabled) {%- endcomment -%}
-    {%- if enable_tiered -%}
-      <div id="tiered-discount-info" style="display: none; margin-top: 12px; padding: 10px; background: #f0f8ff; border-radius: 6px; font-size: 13px;">
-        <div class="tiered-discount-message" style="color: #0066cc; font-weight: 500;">
-          <!-- Dynamic tiered message will be inserted here -->
-        </div>
-      </div>
-    {%- endif -%}
-    
-    {%- comment -%} Per Delivery Price (if enabled) {%- endcomment -%}
-    {%- if block.settings.show_per_delivery_price -%}
-      <div id="per-delivery-price" style="display: none; margin-top: 8px; font-size: 14px; color: #666;">
-        <span class="per-delivery-text">{{ block.settings.per_delivery_text }}</span>
-      </div>
-    {%- endif -%}
   </div>
   
   {%- comment -%} Hidden inputs to track subscription in cart properties {%- endcomment -%}
@@ -508,117 +413,6 @@ It preserves all original styling, layout and functionality.
     form="{{ product_form_id }}"
   >
   
-  {%- comment -%} Mobile Sticky Bar (if enabled) {%- endcomment -%}
-  {%- if block.settings.mobile_sticky_bar -%}
-    <div id="mobile-subscription-sticky" 
-         style="display: none; 
-                position: fixed; 
-                bottom: 0; 
-                left: 0; 
-                right: 0; 
-                background: white; 
-                border-top: 1px solid #e0e0e0; 
-                padding: 12px 16px; 
-                z-index: 999; 
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);">
-      <div style="display: flex; align-items: center; justify-content: space-between;">
-        <label style="font-size: {{ block.settings.mobile_font_size }}px; font-weight: 500;">
-          Subscribe & Save {{ subscription_discount }}%
-        </label>
-        <input 
-          type="checkbox" 
-          id="mobile-subscription-checkbox" 
-          style="width: 24px; height: 24px;"
-          {% if block.settings.checked_by_default %}checked{% endif %}
-        >
-      </div>
-    </div>
-  {%- endif -%}
-  
-  <style>
-    /* Tooltip hover styles */
-    .subscription-tooltip:hover .tooltip-content {
-      display: block !important;
-    }
-    
-    /* Animation styles if enabled */
-    {% if block.settings.animate_selection %}
-    #subscription-checkbox-container {
-      transition: all 0.3s ease;
-    }
-    
-    .subscription-checkbox:checked ~ .subscription-label {
-      animation: pulse 0.3s ease;
-    }
-    
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-    
-    #subscription-frequency-container,
-    #tiered-discount-info,
-    #per-delivery-price {
-      animation: slideDown 0.3s ease;
-    }
-    
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    {% endif %}
-    
-    /* Mobile responsive styles */
-    {% if mobile_friendly %}
-    @media (max-width: 768px) {
-      .subscription-label {
-        font-size: {{ block.settings.mobile_font_size }}px !important;
-      }
-      
-      #subscription-checkbox-container {
-        padding: 16px 12px !important;
-      }
-      
-      {% if block.settings.mobile_sticky_bar %}
-      #mobile-subscription-sticky {
-        display: block !important;
-      }
-      
-      @media (min-width: 769px) {
-        #mobile-subscription-sticky {
-          display: none !important;
-        }
-      }
-      {% endif %}
-    }
-    {% endif %}
-    
-    /* Highlight styles when subscription is active */
-    .subscription-price-highlight {
-      color: {{ block.settings.highlight_color }} !important;
-      font-weight: 600 !important;
-    }
-    
-    /* Price display modes */
-    .price-strikethrough {
-      text-decoration: line-through;
-      opacity: 0.6;
-    }
-    
-    .subscription-both-prices {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-  </style>
-  
   <script>
   class SubscriptionManager {
     constructor() {
@@ -630,26 +424,6 @@ It preserves all original styling, layout and functionality.
       this.priceCache = new Map();
       this.updateTimeout = null;
       
-      // Enhanced settings from schema
-      this.settings = {
-        enableTiered: {{ enable_tiered | json }},
-        tierSettings: {
-          tier1: '{{ block.settings.tier_1_settings }}',
-          tier2: '{{ block.settings.tier_2_settings }}',
-          tier3: '{{ block.settings.tier_3_settings }}',
-          tier4: '{{ block.settings.tier_4_settings }}'
-        },
-        priceDisplayMode: '{{ block.settings.price_display_mode }}',
-        showPerDelivery: {{ block.settings.show_per_delivery_price | json }},
-        perDeliveryText: '{{ block.settings.per_delivery_text }}',
-        highlightPrices: {{ block.settings.highlight_subscription_prices | json }},
-        highlightColor: '{{ block.settings.highlight_color }}',
-        showBadge: {{ show_badge | json }},
-        rememberPreference: {{ block.settings.remember_preference | json }},
-        combineDiscounts: {{ block.settings.combine_discounts | json }},
-        showCombinedSavings: {{ block.settings.show_combined_savings | json }}
-      };
-      
       if (this.checkbox) {
         this.discountPercentage = parseFloat(this.checkbox.dataset.discount) || 15;
         this.init();
@@ -659,17 +433,6 @@ It preserves all original styling, layout and functionality.
     init() {
       // Listen for checkbox changes
       this.checkbox.addEventListener('change', (e) => this.handleSubscriptionToggle(e));
-      
-      // Initialize mobile sticky bar if present
-      this.initMobileStickyBar();
-      
-      // Initialize frequency selector
-      this.initFrequencySelector();
-      
-      // Load saved preference if enabled
-      if (this.settings.rememberPreference) {
-        this.loadSavedPreference();
-      }
       
       // Store original prices first before any modifications
       this.storeOriginalPrices();
@@ -696,17 +459,6 @@ It preserves all original styling, layout and functionality.
             this.updatePrices();
           }
         }, 100);
-      });
-      
-      // Listen for quantity changes for tiered discounts
-      document.addEventListener('quantity:change', (e) => {
-        if (this.settings.enableTiered) {
-          this.updateTieredDiscount(e.detail.quantity);
-        }
-        
-        if (this.settings.showPerDelivery) {
-          this.updatePerDeliveryPrice(e.detail.quantity);
-        }
       });
       
       // Listen for price updates from Dawn theme with debouncing
@@ -753,138 +505,6 @@ It preserves all original styling, layout and functionality.
         this.storeOriginalPrices();
         this.updateQuantityBreakPrices();
       });
-    }
-    
-    initMobileStickyBar() {
-      const mobileCheckbox = document.getElementById('mobile-subscription-checkbox');
-      if (mobileCheckbox) {
-        // Sync with main checkbox
-        mobileCheckbox.addEventListener('change', (e) => {
-          this.checkbox.checked = e.target.checked;
-          this.checkbox.dispatchEvent(new Event('change'));
-        });
-        
-        // Keep in sync
-        this.checkbox.addEventListener('change', (e) => {
-          if (mobileCheckbox) {
-            mobileCheckbox.checked = e.target.checked;
-          }
-        });
-      }
-    }
-    
-    initFrequencySelector() {
-      const frequencyContainer = document.getElementById('subscription-frequency-container');
-      const frequencySelector = document.getElementById('subscription-frequency');
-      
-      if (frequencyContainer) {
-        // Show/hide based on checkbox state
-        this.checkbox.addEventListener('change', (e) => {
-          frequencyContainer.style.display = e.target.checked ? 'block' : 'none';
-        });
-        
-        // Set initial display
-        if (this.checkbox.checked) {
-          frequencyContainer.style.display = 'block';
-        }
-      }
-      
-      if (frequencySelector) {
-        frequencySelector.addEventListener('change', (e) => {
-          // Dispatch custom event
-          const event = new CustomEvent('subscription:frequency:change', {
-            detail: { frequency: e.target.value },
-            bubbles: true
-          });
-          document.dispatchEvent(event);
-        });
-      }
-    }
-    
-    loadSavedPreference() {
-      const savedPref = localStorage.getItem('subscription_preference_' + window.productId);
-      if (savedPref !== null) {
-        this.checkbox.checked = savedPref === 'true';
-        if (this.checkbox.checked) {
-          this.applySubscriptionDiscount();
-        }
-      }
-    }
-    
-    savePreference(isSubscribed) {
-      if (this.settings.rememberPreference && window.productId) {
-        localStorage.setItem('subscription_preference_' + window.productId, isSubscribed.toString());
-      }
-    }
-    
-    updateTieredDiscount(quantity) {
-      if (!this.settings.enableTiered) return;
-      
-      // Parse tier settings
-      const tiers = {};
-      Object.entries(this.settings.tierSettings).forEach(([key, value]) => {
-        if (value) {
-          const [qty, discount] = value.split(':');
-          tiers[parseInt(qty)] = parseFloat(discount);
-        }
-      });
-      
-      // Find applicable discount
-      let applicableDiscount = this.discountPercentage;
-      const sortedQuantities = Object.keys(tiers).map(Number).sort((a, b) => b - a);
-      
-      for (const tierQty of sortedQuantities) {
-        if (quantity >= tierQty) {
-          applicableDiscount = tiers[tierQty];
-          break;
-        }
-      }
-      
-      // Update discount if different
-      if (applicableDiscount !== this.discountPercentage) {
-        this.discountPercentage = applicableDiscount;
-        this.discountInput.value = applicableDiscount;
-        
-        // Update display
-        const tieredInfo = document.getElementById('tiered-discount-info');
-        if (tieredInfo && this.checkbox.checked) {
-          tieredInfo.style.display = 'block';
-          const message = tieredInfo.querySelector('.tiered-discount-message');
-          if (message) {
-            message.textContent = `You're saving ${applicableDiscount}% with Subscribe & Save for ${quantity} items!`;
-          }
-        }
-        
-        // Reapply discount with new percentage
-        if (this.checkbox.checked) {
-          this.updatePrices();
-        }
-      }
-    }
-    
-    updatePerDeliveryPrice(quantity) {
-      if (!this.settings.showPerDelivery || !this.checkbox.checked) return;
-      
-      const perDeliveryDiv = document.getElementById('per-delivery-price');
-      if (!perDeliveryDiv) return;
-      
-      // Get current price
-      const priceElement = document.querySelector('.price-item--regular, .price-item--sale');
-      if (!priceElement) return;
-      
-      const priceMatch = priceElement.textContent.match(/\$?([\d,]+\.?\d*)/);
-      if (!priceMatch) return;
-      
-      const totalPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
-      const perDeliveryPrice = (totalPrice / quantity).toFixed(2);
-      
-      // Update display
-      perDeliveryDiv.style.display = 'block';
-      const textElement = perDeliveryDiv.querySelector('.per-delivery-text');
-      if (textElement) {
-        const text = this.settings.perDeliveryText.replace('[price]', `$${perDeliveryPrice}`);
-        textElement.textContent = text;
-      }
     }
 
     storeOriginalPrices() {
@@ -939,29 +559,6 @@ It preserves all original styling, layout and functionality.
       // Update hidden inputs
       this.hiddenInput.value = isChecked ? 'true' : 'false';
       
-      // Save preference if enabled
-      this.savePreference(isChecked);
-      
-      // Show/hide badge
-      if (this.settings.showBadge) {
-        const badge = document.getElementById('subscription-badge');
-        if (badge) {
-          badge.style.display = isChecked ? 'block' : 'none';
-        }
-      }
-      
-      // Show/hide tiered info
-      const tieredInfo = document.getElementById('tiered-discount-info');
-      if (tieredInfo) {
-        tieredInfo.style.display = isChecked && this.settings.enableTiered ? 'block' : 'none';
-      }
-      
-      // Show/hide per delivery price
-      const perDelivery = document.getElementById('per-delivery-price');
-      if (perDelivery) {
-        perDelivery.style.display = isChecked && this.settings.showPerDelivery ? 'block' : 'none';
-      }
-      
       if (isChecked) {
         this.applySubscriptionDiscount();
       } else {
@@ -996,33 +593,11 @@ It preserves all original styling, layout and functionality.
       
       // Update sticky ATC if present
       this.updateStickyATC();
-      
-      // Apply highlights if enabled
-      if (this.settings.highlightPrices) {
-        this.applyPriceHighlights();
-      }
     }
 
     removeSubscriptionDiscount() {
       // Restore original prices
       this.restoreOriginalPrices();
-      
-      // Remove highlights
-      this.removePriceHighlights();
-    }
-    
-    applyPriceHighlights() {
-      const priceElements = document.querySelectorAll('.price-item--regular, .price-item--sale');
-      priceElements.forEach(element => {
-        element.classList.add('subscription-price-highlight');
-      });
-    }
-    
-    removePriceHighlights() {
-      const priceElements = document.querySelectorAll('.subscription-price-highlight');
-      priceElements.forEach(element => {
-        element.classList.remove('subscription-price-highlight');
-      });
     }
 
     updatePrices() {
@@ -1031,10 +606,6 @@ It preserves all original styling, layout and functionality.
         this.updateProductPrice();
         this.updateQuantityBreakPrices();
         this.updateStickyATC();
-        
-        if (this.settings.highlightPrices) {
-          this.applyPriceHighlights();
-        }
       }
     }
 
@@ -1081,16 +652,7 @@ It preserves all original styling, layout and functionality.
           // Apply discount if we have a valid original price
           if (originalPrice && originalPrice > 0) {
             const discountedPrice = this.calculateDiscountedPrice(originalPrice);
-            
-            // Apply based on display mode
-            if (this.settings.priceDisplayMode === 'both') {
-              this.updatePriceDisplayBoth(element, originalPrice, discountedPrice);
-            } else if (this.settings.priceDisplayMode === 'strikethrough') {
-              this.updatePriceDisplayStrikethrough(element, originalPrice, discountedPrice);
-            } else {
-              this.updatePriceDisplay(element, discountedPrice);
-            }
-            
+            this.updatePriceDisplay(element, discountedPrice);
             element.dataset.subscriptionProcessed = 'true';
           }
         });
@@ -1116,39 +678,6 @@ It preserves all original styling, layout and functionality.
       }
       
       // Add a data attribute to indicate this price has been modified
-      element.dataset.subscriptionPrice = 'true';
-    }
-    
-    updatePriceDisplayBoth(element, originalPriceInCents, discountedPriceInCents) {
-      const originalFormatted = this.formatMoney(originalPriceInCents);
-      const discountedFormatted = this.formatMoney(discountedPriceInCents);
-      
-      element.innerHTML = `
-        <span class="subscription-both-prices">
-          <span class="price-strikethrough">${originalFormatted}</span>
-          <span class="subscription-price">${discountedFormatted}</span>
-        </span>
-      `;
-      element.dataset.subscriptionPrice = 'true';
-    }
-    
-    updatePriceDisplayStrikethrough(element, originalPriceInCents, discountedPriceInCents) {
-      const discountedFormatted = this.formatMoney(discountedPriceInCents);
-      
-      // Create wrapper if not exists
-      const wrapper = element.parentElement;
-      let comparePrice = wrapper.querySelector('.subscription-compare-price');
-      
-      if (!comparePrice) {
-        comparePrice = document.createElement('span');
-        comparePrice.className = 'subscription-compare-price price-strikethrough';
-        element.parentElement.insertBefore(comparePrice, element);
-      }
-      
-      comparePrice.textContent = this.formatMoney(originalPriceInCents);
-      comparePrice.style.display = 'inline';
-      
-      element.textContent = discountedFormatted;
       element.dataset.subscriptionPrice = 'true';
     }
 
@@ -1193,24 +722,10 @@ It preserves all original styling, layout and functionality.
         
         if (originalPrice && originalHtml) {
           if (isSubscribed) {
-            // Check for tiered discount
-            let discountToApply = this.discountPercentage;
-            if (this.settings.enableTiered) {
-              const tieredDiscount = this.getTieredDiscountForQuantity(quantity);
-              if (tieredDiscount) {
-                discountToApply = tieredDiscount;
-              }
-            }
-            
-            const discountedPrice = Math.round(originalPrice * (1 - discountToApply / 100));
+            const discountedPrice = this.calculateDiscountedPrice(originalPrice);
             const formattedPrice = this.formatMoney(discountedPrice);
             const newHtml = originalHtml.replace(/\$[\d,]+\.?\d*/g, formattedPrice);
             priceElement.innerHTML = newHtml;
-            
-            // Show combined savings if enabled
-            if (this.settings.showCombinedSavings && this.settings.combineDiscounts) {
-              this.showCombinedSavings(option, originalPrice, discountedPrice);
-            }
             
             // Update compare price if exists
             const compareElement = option.querySelector('.quantity-break__compare-price');
@@ -1238,43 +753,6 @@ It preserves all original styling, layout and functionality.
           }
         }
       });
-    }
-    
-    getTieredDiscountForQuantity(quantity) {
-      if (!this.settings.enableTiered) return null;
-      
-      const tiers = {};
-      Object.entries(this.settings.tierSettings).forEach(([key, value]) => {
-        if (value) {
-          const [qty, discount] = value.split(':');
-          tiers[parseInt(qty)] = parseFloat(discount);
-        }
-      });
-      
-      const sortedQuantities = Object.keys(tiers).map(Number).sort((a, b) => b - a);
-      
-      for (const tierQty of sortedQuantities) {
-        if (quantity >= tierQty) {
-          return tiers[tierQty];
-        }
-      }
-      
-      return null;
-    }
-    
-    showCombinedSavings(optionElement, originalPrice, discountedPrice) {
-      const savingsAmount = originalPrice - discountedPrice;
-      const savingsPercent = Math.round((savingsAmount / originalPrice) * 100);
-      
-      let savingsElement = optionElement.querySelector('.combined-savings');
-      if (!savingsElement) {
-        savingsElement = document.createElement('div');
-        savingsElement.className = 'combined-savings';
-        savingsElement.style.cssText = 'color: #00a651; font-size: 12px; margin-top: 4px; font-weight: 500;';
-        optionElement.appendChild(savingsElement);
-      }
-      
-      savingsElement.textContent = `Save ${this.formatMoney(savingsAmount)} (${savingsPercent}% off)`;
     }
 
     updateStickyATC() {
@@ -1335,16 +813,6 @@ It preserves all original styling, layout and functionality.
       // Clear all subscription processing flags
       document.querySelectorAll('[data-subscription-processed]').forEach(element => {
         element.removeAttribute('data-subscription-processed');
-      });
-      
-      // Remove subscription compare prices
-      document.querySelectorAll('.subscription-compare-price').forEach(element => {
-        element.remove();
-      });
-      
-      // Remove combined savings displays
-      document.querySelectorAll('.combined-savings').forEach(element => {
-        element.remove();
       });
       
       // Restore from cache first
@@ -1421,8 +889,6 @@ It preserves all original styling, layout and functionality.
     window.subscriptionManager = new SubscriptionManager();
   });
   </script>
-  
-  {%- comment -%} Keep existing QuantityBreaksManager code {%- endcomment -%}
   <script>
     class QuantityBreaksManager {
   constructor() {
@@ -1547,26 +1013,8 @@ It preserves all original styling, layout and functionality.
       this.quantityInput.dispatchEvent(new Event('change', { bubbles: true }));
     }
     
-    // Dispatch events
+    // Dispatch event
     this.dispatchQuantityChangeEvent(quantity);
-    
-    // Dispatch quantity:change for tiered discounts
-    const quantityEvent = new CustomEvent('quantity:change', {
-      detail: { quantity: quantity },
-      bubbles: true
-    });
-    document.dispatchEvent(quantityEvent);
-  }
-  
-  handleVariantChange(event) {
-    const select = event.target;
-    const optionName = select.dataset.optionName;
-    const value = select.value;
-    
-    // Update state
-    this.state.selectedVariants[optionName] = value;
-    
-    // Additional variant handling logic here if needed
   }
   
   handleSubscriptionChange(detail) {
@@ -1736,20 +1184,86 @@ It preserves all original styling, layout and functionality.
   }
 }
 
+// Enhanced Subscription Manager Integration
+class EnhancedSubscriptionManager {
+  constructor() {
+    this.checkbox = document.getElementById('subscription-toggle-checkbox');
+    if (!this.checkbox) return;
+    
+    this.quantityBreaksManager = null;
+    this.init();
+  }
+  
+  init() {
+    // Wait for quantity breaks to initialize
+    setTimeout(() => {
+      this.quantityBreaksManager = window.quantityBreaksManager;
+      this.setupIntegration();
+    }, 100);
+    
+    this.checkbox.addEventListener('change', (e) => {
+      this.handleToggle(e.target.checked);
+    });
+  }
+  
+  setupIntegration() {
+    if (!this.quantityBreaksManager) return;
+    
+    // Sync state on initialization
+    const currentState = this.quantityBreaksManager.getCurrentState();
+    
+    if (this.checkbox.checked && currentState.quantity) {
+      // Ensure prices reflect subscription state
+      this.quantityBreaksManager.handleSubscriptionChange({
+        subscribed: true,
+        discount: parseFloat(this.checkbox.dataset.discount) || 0
+      });
+    }
+  }
+  
+  handleToggle(isChecked) {
+    // Update hidden input
+    const hiddenInput = document.getElementById('subscription-value');
+    if (hiddenInput) {
+      hiddenInput.value = isChecked ? 'true' : 'false';
+    }
+    
+    // Dispatch event for other systems
+    const event = new CustomEvent('subscription:change', {
+      detail: {
+        subscribed: isChecked,
+        discount: parseFloat(this.checkbox.dataset.discount) || 0,
+        productId: window.productId
+      },
+      bubbles: true
+    });
+    
+    document.dispatchEvent(event);
+    
+    // Log state
+    console.log('[QuantityBreaks] Subscription toggled:', {
+      subscribed: isChecked,
+      currentQuantity: this.quantityBreaksManager?.getCurrentState().quantity
+    });
+  }
+}
+
 // Initialize on DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     window.quantityBreaksManager = new QuantityBreaksManager();
+    window.enhancedSubscriptionManager = new EnhancedSubscriptionManager();
   });
 } else {
   window.quantityBreaksManager = new QuantityBreaksManager();
+  window.enhancedSubscriptionManager = new EnhancedSubscriptionManager();
 }
 
 // Handle theme editor reloads
 document.addEventListener('shopify:section:load', () => {
   window.quantityBreaksManager = new QuantityBreaksManager();
-});
-  </script>
+  window.enhancedSubscriptionManager = new EnhancedSubscriptionManager();
+});</script>
 {%- endif -%}
               {%- when 'quantity_selector' -%}
                 {%- if block.settings.enable_quantity_discounts -%}
