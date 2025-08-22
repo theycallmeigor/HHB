@@ -371,16 +371,26 @@ It preserves all original styling, layout and functionality.
     endif
     
     comment
-    Get subscription product ID from cc_sub_products metafield
+    Get subscription product VARIANT ID from cc_sub_products metafield
+    The metafield should contain a variant ID, not a product ID
     endcomment
-    assign subscription_product_id = product.metafields.custom.cc_sub_products | default: ''
+    assign subscription_variant_id = product.metafields.custom.cc_sub_products | default: ''
+    
+    comment
+    If it's a product GID, extract just the ID number
+    endcomment
+    if subscription_variant_id contains 'gid://shopify/Product/'
+      assign subscription_variant_id = subscription_variant_id | remove: 'gid://shopify/Product/' 
+    elsif subscription_variant_id contains 'gid://shopify/ProductVariant/'
+      assign subscription_variant_id = subscription_variant_id | remove: 'gid://shopify/ProductVariant/'
+    endif
   -%}
   
   <div id="subscription-checkbox-container" 
        data-box="true" 
        data-subscription-discount="{{ subscription_discount }}"
-       data-subscription-product-id="{{ subscription_product_id }}"
-       data-original-product-id="{{ product.selected_or_first_available_variant.id }}"
+       data-subscription-variant-id="{{ subscription_variant_id }}"
+       data-original-variant-id="{{ product.selected_or_first_available_variant.id }}"
        style="padding: 20px 0px 16px; margin-top: 20px; width: 100%;">
     <div data-secondsdelay="" class="form-check fk-form-radio-button-parent" style="display: flex; align-items: center; justify-content: center;">
       <input 
@@ -391,7 +401,7 @@ It preserves all original styling, layout and functionality.
         class="fk-form-general-radio-checkbox fk-form-checkbox subscribe-checkbox" 
         {% if block.settings.checked_by_default != false %}checked{% endif %}
         data-discount="{{ subscription_discount }}"
-        data-subscription-product="{{ subscription_product_id }}"
+        data-subscription-variant="{{ subscription_variant_id }}"
         data-original-variant="{{ product.selected_or_first_available_variant.id }}"
         style="margin-right: 8px; width: 20px; height: 20px; cursor: pointer;"
       >
@@ -405,12 +415,26 @@ It preserves all original styling, layout and functionality.
     </div>
   </div>
   
-  {%- comment -%} Hidden input to dynamically change the product being added {%- endcomment -%}
+  {%- comment -%} Hidden inputs to track subscription in cart properties {%- endcomment -%}
   <input 
     type="hidden" 
-    name="id" 
-    id="subscription-product-input" 
-    value="{% if block.settings.checked_by_default != false and subscription_product_id != blank %}{{ subscription_product_id }}{% else %}{{ product.selected_or_first_available_variant.id }}{% endif %}" 
+    name="properties[_subscription]" 
+    value="{% if block.settings.checked_by_default != false %}true{% else %}false{% endif %}" 
+    id="subscription-value"
+    form="{{ product_form_id }}"
+  >
+  <input 
+    type="hidden" 
+    name="properties[_subscription_discount]" 
+    value="{{ subscription_discount }}" 
+    id="subscription-discount-value"
+    form="{{ product_form_id }}"
+  >
+  <input 
+    type="hidden" 
+    name="properties[_subscription_variant_id]" 
+    value="{{ subscription_variant_id }}" 
+    id="subscription-variant-id-value"
     form="{{ product_form_id }}"
   >
   
@@ -418,28 +442,50 @@ It preserves all original styling, layout and functionality.
   class SubscriptionProductManager {
     constructor() {
       this.checkbox = document.getElementById('subscription-toggle-checkbox');
-      this.productInput = document.getElementById('subscription-product-input');
+      this.hiddenInput = document.getElementById('subscription-value');
+      this.discountInput = document.getElementById('subscription-discount-value');
+      this.variantIdInput = document.getElementById('subscription-variant-id-value');
       this.discountPercentage = 0;
-      this.subscriptionProductId = '';
+      this.subscriptionVariantId = '';
       this.originalVariantId = '';
       this.isUpdating = false;
       this.priceCache = new Map();
       this.updateTimeout = null;
+      this.originalIdInput = null;
       
       if (this.checkbox) {
         this.discountPercentage = parseFloat(this.checkbox.dataset.discount) || 15;
-        this.subscriptionProductId = this.checkbox.dataset.subscriptionProduct || '';
+        this.subscriptionVariantId = this.checkbox.dataset.subscriptionVariant || '';
         this.originalVariantId = this.checkbox.dataset.originalVariant || '';
+        
+        // Clean up the variant ID if it has any GID prefix
+        this.subscriptionVariantId = this.cleanVariantId(this.subscriptionVariantId);
+        
         this.init();
       }
+    }
+    
+    cleanVariantId(id) {
+      if (!id) return '';
+      
+      // Remove Shopify GID prefixes
+      id = id.toString()
+        .replace('gid://shopify/Product/', '')
+        .replace('gid://shopify/ProductVariant/', '')
+        .replace('gid://shopify/Variant/', '');
+      
+      return id;
     }
 
     init() {
       console.log('[SubscriptionProductManager] Initializing with:', {
-        subscriptionProductId: this.subscriptionProductId,
+        subscriptionVariantId: this.subscriptionVariantId,
         originalVariantId: this.originalVariantId,
         discount: this.discountPercentage
       });
+      
+      // Find the original ID input
+      this.originalIdInput = document.querySelector(`form#${document.querySelector('[data-product-form]')?.id || 'product-form'} input[name="id"]`);
       
       // Listen for checkbox changes
       this.checkbox.addEventListener('change', (e) => this.handleSubscriptionToggle(e));
@@ -461,6 +507,11 @@ It preserves all original styling, layout and functionality.
         // Update original variant ID
         if (e.detail && e.detail.variant) {
           this.originalVariantId = e.detail.variant.id;
+          
+          // Don't change the product if subscription is active
+          if (!this.checkbox.checked) {
+            this.setProductId(this.originalVariantId);
+          }
         }
         
         // Clear previous timeout
@@ -472,11 +523,6 @@ It preserves all original styling, layout and functionality.
           this.storeOriginalPrices(); // Re-store prices for new variant
           if (this.checkbox.checked) {
             this.updatePrices();
-            // Keep subscription product selected
-            this.setProductId(this.subscriptionProductId);
-          } else {
-            // Update to new variant
-            this.setProductId(this.originalVariantId);
           }
         }, 100);
       });
@@ -535,20 +581,16 @@ It preserves all original styling, layout and functionality.
       const forms = document.querySelectorAll('form[action*="/cart/add"]');
       
       forms.forEach(form => {
-        // Remove existing submit listeners and add our own
-        const newForm = form.cloneNode(true);
-        form.parentNode.replaceChild(newForm, form);
-        
-        newForm.addEventListener('submit', (e) => {
+        form.addEventListener('submit', (e) => {
           // Ensure correct product ID is set before submission
-          if (this.checkbox.checked && this.subscriptionProductId) {
-            this.setProductId(this.subscriptionProductId);
-            console.log('[SubscriptionProductManager] Form submission - using subscription product:', this.subscriptionProductId);
+          if (this.checkbox.checked && this.subscriptionVariantId) {
+            this.setProductId(this.subscriptionVariantId);
+            console.log('[SubscriptionProductManager] Form submission - using subscription variant:', this.subscriptionVariantId);
           } else {
             this.setProductId(this.originalVariantId);
-            console.log('[SubscriptionProductManager] Form submission - using original product:', this.originalVariantId);
+            console.log('[SubscriptionProductManager] Form submission - using original variant:', this.originalVariantId);
           }
-        });
+        }, true); // Use capture phase
       });
       
       // Also intercept AJAX add to cart
@@ -556,23 +598,27 @@ It preserves all original styling, layout and functionality.
     }
     
     interceptAjaxAddToCart() {
-      // Override fetch to intercept add to cart requests
+      // Store original fetch
       const originalFetch = window.fetch;
       const self = this;
       
+      // Create our wrapper
       window.fetch = function(...args) {
-        const [url, options] = args;
+        let [url, options] = args;
         
         // Check if this is an add to cart request
         if (typeof url === 'string' && url.includes('/cart/add')) {
           if (options && options.body) {
             // Parse the body
             let bodyData;
+            let isJson = false;
+            
             if (typeof options.body === 'string') {
               try {
                 bodyData = JSON.parse(options.body);
+                isJson = true;
               } catch (e) {
-                // If not JSON, try to parse as FormData
+                // If not JSON, try to parse as URLSearchParams
                 const formData = new URLSearchParams(options.body);
                 bodyData = Object.fromEntries(formData);
               }
@@ -580,25 +626,56 @@ It preserves all original styling, layout and functionality.
               bodyData = Object.fromEntries(options.body);
             }
             
-            // Check if subscription is active and modify the product ID
-            if (self.checkbox && self.checkbox.checked && self.subscriptionProductId) {
-              if (bodyData) {
-                // Check if this is the product being added
-                const currentId = bodyData.id || bodyData.variant_id;
-                if (currentId == self.originalVariantId || !currentId) {
-                  bodyData.id = self.subscriptionProductId;
-                  console.log('[SubscriptionProductManager] AJAX intercept - switching to subscription product:', self.subscriptionProductId);
-                  
-                  // Rebuild the body
-                  if (typeof options.body === 'string') {
-                    options.body = JSON.stringify(bodyData);
-                  } else {
-                    const newFormData = new FormData();
-                    Object.entries(bodyData).forEach(([key, value]) => {
+            // Check if subscription is active and this is our product
+            if (self.checkbox && self.checkbox.checked && self.subscriptionVariantId && bodyData) {
+              const currentId = bodyData.id || bodyData.variant_id;
+              
+              // Check if this is our product being added (compare as strings)
+              if (currentId && (currentId.toString() === self.originalVariantId.toString() || 
+                               currentId.toString() === self.subscriptionVariantId.toString())) {
+                
+                // Replace with subscription variant
+                bodyData.id = self.subscriptionVariantId;
+                delete bodyData.variant_id; // Remove variant_id if present
+                
+                console.log('[SubscriptionProductManager] AJAX intercept - switching to subscription variant:', self.subscriptionVariantId);
+                
+                // Add subscription properties
+                if (!bodyData.properties) {
+                  bodyData.properties = {};
+                }
+                bodyData.properties._subscription = 'true';
+                bodyData.properties._subscription_discount = self.discountPercentage.toString();
+                bodyData.properties._subscription_variant_id = self.subscriptionVariantId;
+                
+                // Rebuild the body
+                if (isJson) {
+                  options.body = JSON.stringify(bodyData);
+                } else if (options.body instanceof FormData) {
+                  const newFormData = new FormData();
+                  Object.entries(bodyData).forEach(([key, value]) => {
+                    if (key === 'properties' && typeof value === 'object') {
+                      Object.entries(value).forEach(([propKey, propValue]) => {
+                        newFormData.append(`properties[${propKey}]`, propValue);
+                      });
+                    } else {
                       newFormData.append(key, value);
-                    });
-                    options.body = newFormData;
-                  }
+                    }
+                  });
+                  options.body = newFormData;
+                } else {
+                  // URLSearchParams
+                  const params = new URLSearchParams();
+                  Object.entries(bodyData).forEach(([key, value]) => {
+                    if (key === 'properties' && typeof value === 'object') {
+                      Object.entries(value).forEach(([propKey, propValue]) => {
+                        params.append(`properties[${propKey}]`, propValue);
+                      });
+                    } else {
+                      params.append(key, value);
+                    }
+                  });
+                  options.body = params.toString();
                 }
               }
             }
@@ -609,23 +686,26 @@ It preserves all original styling, layout and functionality.
       };
     }
     
-    setProductId(productId) {
+    setProductId(variantId) {
+      // Clean the variant ID
+      variantId = this.cleanVariantId(variantId);
+      
       // Update all product ID inputs in forms
-      const idInputs = document.querySelectorAll('input[name="id"], input[name="variant_id"]');
+      const idInputs = document.querySelectorAll('form[action*="/cart/add"] input[name="id"]');
       idInputs.forEach(input => {
-        // Only update if it's for the current product
+        // Check if this is the main product form
         const form = input.closest('form');
-        if (form && form.id === '{{ product_form_id }}') {
-          input.value = productId;
+        if (form && (form.id === 'product-form' || form.classList.contains('product-form'))) {
+          input.value = variantId;
         }
       });
       
-      // Also update our hidden input
-      if (this.productInput) {
-        this.productInput.value = productId;
+      // Also update the original input if we have it
+      if (this.originalIdInput) {
+        this.originalIdInput.value = variantId;
       }
       
-      console.log('[SubscriptionProductManager] Product ID set to:', productId);
+      console.log('[SubscriptionProductManager] Variant ID set to:', variantId);
     }
 
     storeOriginalPrices() {
@@ -677,6 +757,9 @@ It preserves all original styling, layout and functionality.
     handleSubscriptionToggle(event) {
       const isChecked = event.target.checked;
       
+      // Update hidden input
+      this.hiddenInput.value = isChecked ? 'true' : 'false';
+      
       if (isChecked) {
         this.applySubscriptionState();
       } else {
@@ -688,9 +771,9 @@ It preserves all original styling, layout and functionality.
         detail: {
           subscribed: isChecked,
           discount: this.discountPercentage,
-          productId: isChecked ? this.subscriptionProductId : this.originalVariantId,
-          originalProductId: this.originalVariantId,
-          subscriptionProductId: this.subscriptionProductId
+          variantId: isChecked ? this.subscriptionVariantId : this.originalVariantId,
+          originalVariantId: this.originalVariantId,
+          subscriptionVariantId: this.subscriptionVariantId
         },
         bubbles: true
       });
@@ -700,14 +783,14 @@ It preserves all original styling, layout and functionality.
       console.log('[SubscriptionProductManager] Subscription state changed:', {
         subscribed: isChecked,
         discount: this.discountPercentage,
-        productId: isChecked ? this.subscriptionProductId : this.originalVariantId
+        variantId: isChecked ? this.subscriptionVariantId : this.originalVariantId
       });
     }
 
     applySubscriptionState() {
-      // Switch to subscription product
-      if (this.subscriptionProductId) {
-        this.setProductId(this.subscriptionProductId);
+      // Switch to subscription variant
+      if (this.subscriptionVariantId) {
+        this.setProductId(this.subscriptionVariantId);
       }
       
       // Update prices with discount
@@ -717,7 +800,7 @@ It preserves all original styling, layout and functionality.
     }
 
     removeSubscriptionState() {
-      // Switch back to original product
+      // Switch back to original variant
       if (this.originalVariantId) {
         this.setProductId(this.originalVariantId);
       }
