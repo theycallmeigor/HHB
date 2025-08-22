@@ -369,11 +369,17 @@ It preserves all original styling, layout and functionality.
     if block.settings.show_discount_in_label
       assign label_text = label_text | replace: '[discount]', subscription_discount | append: '%'
     endif
+    
+    comment
+    Get subscription product ID from cc_sub_products metafield
+    endcomment
+    assign subscription_product_id = product.metafields.custom.cc_sub_products | default: ''
   -%}
   
   <div id="subscription-checkbox-container" 
        data-box="true" 
        data-subscription-discount="{{ subscription_discount }}"
+       data-subscription-product-id="{{ subscription_product_id }}"
        style="padding: 20px 0px 16px; margin-top: 20px; width: 100%;">
     <div data-secondsdelay="" class="form-check fk-form-radio-button-parent" style="display: flex; align-items: center; justify-content: center;">
       <input 
@@ -384,6 +390,7 @@ It preserves all original styling, layout and functionality.
         class="fk-form-general-radio-checkbox fk-form-checkbox subscribe-checkbox" 
         {% if block.settings.checked_by_default != false %}checked{% endif %}
         data-discount="{{ subscription_discount }}"
+        data-subscription-product="{{ subscription_product_id }}"
         style="margin-right: 8px; width: 20px; height: 20px; cursor: pointer;"
         form="{{ product_form_id }}"
       >
@@ -412,6 +419,14 @@ It preserves all original styling, layout and functionality.
     id="subscription-discount-value"
     form="{{ product_form_id }}"
   >
+  {%- comment -%} NEW: Hidden input for subscription product ID {%- endcomment -%}
+  <input 
+    type="hidden" 
+    name="properties[_subscription_product_id]" 
+    value="{{ subscription_product_id }}" 
+    id="subscription-product-id-value"
+    form="{{ product_form_id }}"
+  >
   
   <script>
   class SubscriptionManager {
@@ -419,13 +434,16 @@ It preserves all original styling, layout and functionality.
       this.checkbox = document.getElementById('subscription-toggle-checkbox');
       this.hiddenInput = document.getElementById('subscription-value');
       this.discountInput = document.getElementById('subscription-discount-value');
+      this.productIdInput = document.getElementById('subscription-product-id-value');
       this.discountPercentage = 0;
+      this.subscriptionProductId = '';
       this.isUpdating = false;
       this.priceCache = new Map();
       this.updateTimeout = null;
       
       if (this.checkbox) {
         this.discountPercentage = parseFloat(this.checkbox.dataset.discount) || 15;
+        this.subscriptionProductId = this.checkbox.dataset.subscriptionProduct || '';
         this.init();
       }
     }
@@ -505,6 +523,26 @@ It preserves all original styling, layout and functionality.
         this.storeOriginalPrices();
         this.updateQuantityBreakPrices();
       });
+      
+      // Listen for add to cart to inject subscription product ID
+      this.interceptAddToCart();
+    }
+    
+    interceptAddToCart() {
+      // Intercept form submissions to add subscription product ID
+      const forms = document.querySelectorAll('form[action*="/cart/add"]');
+      forms.forEach(form => {
+        form.addEventListener('submit', (e) => {
+          if (this.checkbox.checked && this.subscriptionProductId) {
+            // Ensure subscription product ID is in the form data
+            if (this.productIdInput) {
+              this.productIdInput.value = this.subscriptionProductId;
+            }
+            
+            console.log('[DEBUG][SubscriptionManager] Adding to cart with subscription product:', this.subscriptionProductId);
+          }
+        });
+      });
     }
 
     storeOriginalPrices() {
@@ -559,28 +597,35 @@ It preserves all original styling, layout and functionality.
       // Update hidden inputs
       this.hiddenInput.value = isChecked ? 'true' : 'false';
       
+      // Update subscription product ID input
+      if (this.productIdInput) {
+        this.productIdInput.value = isChecked ? this.subscriptionProductId : '';
+      }
+      
       if (isChecked) {
         this.applySubscriptionDiscount();
       } else {
         this.removeSubscriptionDiscount();
       }
       
-      // Dispatch custom event
+      // Dispatch custom event with subscription product ID
       const customEvent = new CustomEvent('subscription:change', {
         detail: {
           subscribed: isChecked,
           discount: this.discountPercentage,
-          productId: window.productId
+          productId: window.productId,
+          subscriptionProductId: this.subscriptionProductId
         },
         bubbles: true
       });
       document.dispatchEvent(customEvent);
       
       // Log for debugging
-      console.log('[DEBUG][RedirectCart] Subscription state changed:', {
+      console.log('[DEBUG][SubscriptionManager] Subscription state changed:', {
         subscribed: isChecked,
         discount: this.discountPercentage,
-        productId: window.productId
+        productId: window.productId,
+        subscriptionProductId: this.subscriptionProductId
       });
     }
 
@@ -889,6 +934,8 @@ It preserves all original styling, layout and functionality.
     window.subscriptionManager = new SubscriptionManager();
   });
   </script>
+  
+  {%- comment -%} Keep existing QuantityBreaksManager code exactly as is {%- endcomment -%}
   <script>
     class QuantityBreaksManager {
   constructor() {
@@ -1015,6 +1062,17 @@ It preserves all original styling, layout and functionality.
     
     // Dispatch event
     this.dispatchQuantityChangeEvent(quantity);
+  }
+  
+  handleVariantChange(event) {
+    const select = event.target;
+    const optionName = select.dataset.optionName;
+    const value = select.value;
+    
+    // Update state
+    this.state.selectedVariants[optionName] = value;
+    
+    // Additional variant handling logic here if needed
   }
   
   handleSubscriptionChange(detail) {
@@ -1233,7 +1291,8 @@ class EnhancedSubscriptionManager {
       detail: {
         subscribed: isChecked,
         discount: parseFloat(this.checkbox.dataset.discount) || 0,
-        productId: window.productId
+        productId: window.productId,
+        subscriptionProductId: this.checkbox.dataset.subscriptionProduct || ''
       },
       bubbles: true
     });
@@ -1243,7 +1302,8 @@ class EnhancedSubscriptionManager {
     // Log state
     console.log('[QuantityBreaks] Subscription toggled:', {
       subscribed: isChecked,
-      currentQuantity: this.quantityBreaksManager?.getCurrentState().quantity
+      currentQuantity: this.quantityBreaksManager?.getCurrentState().quantity,
+      subscriptionProductId: this.checkbox.dataset.subscriptionProduct
     });
   }
 }
