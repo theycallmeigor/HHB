@@ -110,7 +110,7 @@
             "headline": "BUNDLE & SAVE",
             "style": "normal",
             "preselected": "none",
-            "update_pdp_prices": false,
+            "update_pdp_prices": true,
             "prices_layout": "price-first-vertical",
             "display_selected_indicator": true,
             "border_radius": 10,
