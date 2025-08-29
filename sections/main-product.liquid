@@ -34,7 +34,29 @@
       }
     }
   {%- endstyle -%}
-
+{%- style -%}
+.subscription-checkbox-wrapper { cursor:pointer; display:block; }
+.subscription-checkbox-wrapper.selected { /* state styling if needed */ }
+.subscription-checkbox__content { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+.subscription-checkbox__left { display:flex; align-items:center; gap:0.75rem; }
+.subscription-checkbox__checkbox { position:relative; display:flex; align-items:center; }
+.subscription-checkbox__checkbox input { position:absolute; opacity:0; width:100%; height:100%; cursor:pointer; }
+.subscription-checkbox__checkmark {
+  width:22px; height:22px; border:2px solid currentColor; border-radius:4px;
+  display:inline-flex; align-items:center; justify-content:center;
+  transition:background .2s,border-color .2s;
+}
+.subscription-checkbox__checkbox input:checked + .subscription-checkbox__checkmark {
+  background: currentColor; color: #fff;
+}
+.subscription-checkbox__checkmark svg {
+  width:14px; height:14px; stroke:currentColor; stroke-width:3px;
+  fill:none; stroke-linecap:round; stroke-linejoin:round;
+}
+.subscription-checkbox__checkbox input:checked + .subscription-checkbox__checkmark svg { stroke:#fff; }
+.subscription-checkbox__label { font-size:1.4rem; line-height:1.3; }
+.subscription-toggle-block { }
+{%- endstyle -%}
   {% if section.settings.image_zoom == 'hover' %}
     <script id="EnableZoomOnHover-main" src="{{ 'magnify.js' | asset_url }}" defer="defer"></script>
   {% endif %}
@@ -161,6 +183,108 @@
                   {%- endform -%}
                 </div>
                 {% endcomment %}
+                 {%- when 'subscription_toggle' -%}
+  {%- comment %}
+    Subscription toggle block.
+    Pull subscription product from metafield custom.cc_sub_products.
+    Accepts either a product reference or a list of product references.
+  {% endcomment -%}
+  {%- liquid
+    assign subscription_product = nil
+    assign raw_sub = product.metafields.custom.cc_sub_products.value
+    if raw_sub
+      if raw_sub.object_type == 'product'
+        assign subscription_product = raw_sub
+      elsif raw_sub.size > 0
+        assign subscription_product = raw_sub.first
+      endif
+    endif
+  -%}
+  {%- if subscription_product -%}
+    {%- assign subscription_variant = subscription_product.selected_or_first_available_variant -%}
+    <div class="subscription-toggle-block {{ block.settings.outer_css_class }}"
+         {{ block.shopify_attributes }}
+         style="--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;">
+      <div id="subscription-checkbox-container-{{ section.id }}"
+           class="subscription-checkbox-container{% if block.settings.default_checked %} is-active{% endif %}"
+           data-section-id="{{ section.id }}"
+           data-original-product-id="{{ product.id }}"
+           data-subscription-product-id="{{ subscription_product.id }}"
+           data-original-variant-id="{{ product.selected_or_first_available_variant.id }}"
+           data-subscription-variant-id="{{ subscription_variant.id }}"
+           data-discount="{{ block.settings.discount_percentage }}"
+           data-default-checked="{{ block.settings.default_checked }}"
+           data-switch-qb="{{ block.settings.switch_quantity_breaks }}">
+        <label class="subscription-checkbox-wrapper{% if block.settings.default_checked %} selected{% endif %}"
+               for="subscription-toggle-checkbox-{{ section.id }}">
+          <div class="subscription-checkbox__content">
+            <div class="subscription-checkbox__left">
+              <div class="subscription-checkbox__checkbox">
+                <input type="checkbox"
+                       id="subscription-toggle-checkbox-{{ section.id }}"
+                       class="subscribe-checkbox"
+                       {% if block.settings.default_checked %}checked{% endif %}
+                       data-original-variant="{{ product.selected_or_first_available_variant.id }}"
+                       data-subscription-variant="{{ subscription_variant.id }}">
+                <span class="subscription-checkbox__checkmark">
+                  <svg viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </span>
+              </div>
+              <div class="subscription-checkbox__text">
+                <div class="subscription-checkbox__label"
+                     data-label-checked="{{ block.settings.label_checked | escape }}"
+                     data-label-unchecked="{{ block.settings.label_unchecked | escape }}">
+                  {% if block.settings.default_checked %}
+                    {{ block.settings.label_checked }}
+                  {% else %}
+                    {{ block.settings.label_unchecked }}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="subscription-checkbox__right"></div>
+          </div>
+        </label>
+
+        {%- comment %}
+          Pre-render subscription price & original price HTML for fast swaps.
+          We duplicate the 'price' snippet output for the subscription product.
+        {% endcomment -%}
+        <div class="subscription-hidden-assets" style="display:none;">
+          <div id="subscription-price-html-{{ section.id }}">
+            {%- render 'price',
+              product: subscription_product,
+              use_variant: true,
+              show_badges: true,
+              price_class: 'price--large',
+              main_price: true,
+              layout: 'price-first'
+            -%}
+          </div>
+          <div id="original-price-html-{{ section.id }}">
+            {%- comment %} We capture current product price block later via JS if needed {% endcomment -%}
+          </div>
+
+          {%- if block.settings.switch_quantity_breaks and subscription_product != blank -%}
+            {%- comment %}
+              Render quantity breaks for subscription product (only if your theme’s quantity-breaks snippet
+              can accept a dynamic product). We mimic the quantity_selector block environment.
+              NOTE: If your quantity-breaks snippet requires additional params, add them here.
+            {% endcomment -%}
+            <div id="subscription-quantity-breaks-{{ section.id }}">
+              {%- render 'quantity-breaks',
+                 product: subscription_product,
+                 product_form_id: product_form_id,
+                 block: block
+              -%}
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+    </div>
+  {%- endif -%}
               {% when 'clickable_discount' %}
                 <div style='--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;' {{ block.shopify_attributes }}>
                   {% if block.settings.discount_code != blank %}
@@ -1204,6 +1328,112 @@
       ]
     }
   </script>
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  const sectionId = '{{ section.id }}';
+  const container = document.querySelector('#subscription-checkbox-container-' + sectionId);
+  if (!container) return;
+
+  const checkbox = container.querySelector('.subscribe-checkbox');
+  const priceWrapper = document.querySelector('#price-{{ section.id }}');
+  const originalVariantId = container.dataset.originalVariantId;
+  const subscriptionVariantId = container.dataset.subscriptionVariantId;
+  const discountPct = parseFloat(container.dataset.discount || '0');
+  const labelEl = container.querySelector('.subscription-checkbox__label');
+
+  // Capture original price HTML (once)
+  let originalPriceHTMLCaptured = false;
+  let originalPriceHTML = '';
+  if (priceWrapper) {
+    originalPriceHTML = priceWrapper.innerHTML;
+    originalPriceHTMLCaptured = true;
+  }
+
+  const subPriceHTMLHolder = document.querySelector('#subscription-price-html-{{ section.id }}');
+  const subscriptionPriceHTML = subPriceHTMLHolder ? subPriceHTMLHolder.innerHTML : '';
+
+  // Sticky ATC / main ATC price spans
+  const atcPriceSpans = document.querySelectorAll('.main-atc-price-span-{{ section.id }}');
+
+  // Quantity breaks (main vs subscription)
+  const switchQB = container.dataset.switchQb === 'true';
+  const subscriptionQB = document.getElementById('subscription-quantity-breaks-{{ section.id }}');
+  // We attempt to identify the existing (original) quantity breaks wrapper by a known selector inside your theme.
+  let originalQB = null;
+  if (switchQB) {
+    originalQB = document.querySelector('#Quantity-Form-{{ section.id }}')?.closest('.quantity-breaks-wrapper') ||
+                 document.querySelector('[data-quantity-breaks-original="{{ section.id }}"]');
+    if (subscriptionQB) {
+      subscriptionQB.style.display = checkbox.checked ? 'block' : 'none';
+      if (originalQB) originalQB.style.display = checkbox.checked ? 'none' : 'block';
+    }
+  }
+
+  // Product form hidden input(s)
+  const productForm = document.getElementById('product-form-{{ section.id }}');
+  const hiddenIdInput = productForm ? productForm.querySelector('input[name="id"]') : null;
+
+  // Sticky ATC variant pickers (separate)
+  const stickyAtc = document.getElementById('sticky-atc-{{ section.id }}');
+  const stickyHiddenVariantEls = stickyAtc ? stickyAtc.querySelectorAll('input[name="id"]') : [];
+
+  function updateState(isSub) {
+    // Label swap
+    const checkedLabel = labelEl.getAttribute('data-label-checked');
+    const uncheckedLabel = labelEl.getAttribute('data-label-unchecked');
+    labelEl.textContent = isSub ? checkedLabel : uncheckedLabel;
+
+    // Checkbox wrapper selected class
+    const wrapper = container.querySelector('.subscription-checkbox-wrapper');
+    wrapper.classList.toggle('selected', isSub);
+    container.classList.toggle('is-active', isSub);
+
+    // Variant ID swap
+    if (hiddenIdInput) {
+      hiddenIdInput.value = isSub ? subscriptionVariantId : originalVariantId;
+      hiddenIdInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    stickyHiddenVariantEls.forEach(el => {
+      el.value = isSub ? subscriptionVariantId : originalVariantId;
+    });
+
+    // Price HTML swap
+    if (priceWrapper && subscriptionPriceHTML && originalPriceHTMLCaptured) {
+      priceWrapper.innerHTML = isSub ? subscriptionPriceHTML : originalPriceHTML;
+    }
+
+    // ATC inline price numbers
+    atcPriceSpans.forEach(span => {
+      if (isSub) {
+        span.dataset.originalText = span.dataset.originalText || span.textContent;
+        // We rely on the rendered subscription price snippet above; parse first price occurrence:
+        const temp = document.createElement('div');
+        temp.innerHTML = subscriptionPriceHTML;
+        const moneyEl = temp.querySelector('.price__regular .price-item--regular, .price .price-item--final, .price__sale .price-item--sale') || temp.querySelector('.price');
+        if (moneyEl) span.textContent = moneyEl.textContent.trim();
+      } else if (span.dataset.originalText) {
+        span.textContent = span.dataset.originalText;
+      }
+    });
+
+    // Quantity breaks visibility
+    if (switchQB && subscriptionQB) {
+      subscriptionQB.style.display = isSub ? 'block' : 'none';
+      if (originalQB) originalQB.style.display = isSub ? 'none' : 'block';
+    }
+
+    // Add a data attribute for external scripts (e.g., currency converters or analytics)
+    document.documentElement.setAttribute('data-subscription-mode-' + sectionId, isSub ? 'on' : 'off');
+  }
+
+  // Initialize based on default state
+  updateState(checkbox.checked);
+
+  checkbox.addEventListener('change', function() {
+    updateState(checkbox.checked);
+  });
+});
+</script>
 </section>
 
 {% schema %}
@@ -1629,6 +1859,83 @@
         }
       ]
     },
+    {
+  "type": "subscription_toggle",
+  "name": "Subscription toggle",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "header",
+      "content": "General"
+    },
+    {
+      "type": "text",
+      "id": "label_checked",
+      "label": "Checked label (subscription ON)",
+      "default": "YES! I want to Subscribe & Save 15% discount today!"
+    },
+    {
+      "type": "text",
+      "id": "label_unchecked",
+      "label": "Unchecked label (subscription OFF)",
+      "default": "One-time purchase"
+    },
+    {
+      "type": "range",
+      "id": "discount_percentage",
+      "label": "Displayed discount percentage",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 15
+    },
+    {
+      "type": "checkbox",
+      "id": "default_checked",
+      "label": "Start in subscription (checked) state",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "switch_quantity_breaks",
+      "label": "Show separate quantity breaks for subscription product",
+      "default": false
+    },
+    {
+      "type": "paragraph",
+      "content": "Subscription product is pulled from metafield custom.cc_sub_products (single product reference or first in a list)."
+    },
+    {
+      "type": "header",
+      "content": "Styling hooks"
+    },
+    {
+      "type": "text",
+      "id": "outer_css_class",
+      "label": "Outer container extra CSS class"
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "min": 0,
+      "max": 45,
+      "step": 3,
+      "unit": "px",
+      "label": "Top margin",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "min": 0,
+      "max": 45,
+      "step": 3,
+      "unit": "px",
+      "label": "Bottom margin",
+      "default": 15
+    }
+  ]
+},
     {
       "type": "rating_stars",
       "name": "Rating stars",
