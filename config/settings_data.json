@@ -609,6 +609,11 @@
         "disabled": false,
         "settings": {}
       },
+      "12509190167029697241": {
+        "type": "shopify://apps/blotout-edgetag/blocks/app-embed/ae22d985-ba57-41f5-94c5-18d3dd98ea3c",
+        "disabled": false,
+        "settings": {}
+      },
       "12572425388294658448": {
         "type": "shopify://apps/upnova/blocks/cart-builder/790eb623-439a-447b-9042-d1ebd7062ab9",
         "disabled": false,
@@ -632,6 +637,11 @@
           "allowed_templates": ""
         }
       },
+      "3868600829136772411": {
+        "type": "shopify://apps/lyve-shoppable-video-stream/blocks/app-embed/59c1ba16-2c38-422a-a2a9-23074d5a3fd9",
+        "disabled": false,
+        "settings": {}
+      },
       "6478312753674380289": {
         "type": "shopify://apps/gempages-builder/blocks/embed-gp-script-head/20b379d4-1b20-474c-a6ca-665c331919f3",
         "disabled": false,
@@ -643,21 +653,6 @@
         "settings": {
           "show_preview_data": true
         }
-      },
-      "17428600031447253342": {
-        "type": "shopify://apps/attentive/blocks/attn-tag/8df62c72-8fe4-407e-a5b3-72132be30a0d",
-        "disabled": false,
-        "settings": {}
-      },
-      "3868600829136772411": {
-        "type": "shopify://apps/lyve-shoppable-video-stream/blocks/app-embed/59c1ba16-2c38-422a-a2a9-23074d5a3fd9",
-        "disabled": false,
-        "settings": {}
-      },
-      "12509190167029697241": {
-        "type": "shopify://apps/blotout-edgetag/blocks/app-embed/ae22d985-ba57-41f5-94c5-18d3dd98ea3c",
-        "disabled": false,
-        "settings": {}
       },
       "855628211100114053": {
         "type": "shopify://apps/klaviyo-email-marketing-sms/blocks/klaviyo-onsite-embed/2632fe16-c075-4321-a88b-50b567f42507",
