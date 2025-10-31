@@ -156,6 +156,52 @@
       "submit": "Reset password"
     }
   },
+  "gempages": {
+    "Carousel": {
+      "no_slider": "No Slider"
+    },
+    "Newsletter": {
+      "err_msg_default": "Can’t send email. Please try again later.",
+      "success_msg_default": "Thanks for subscribing"
+    },
+    "IconListV2": {
+      "icons_not_found": "Icons not found"
+    },
+    "IconList": {
+      "icons_not_found": "Icons not found"
+    },
+    "IconListHoz": {
+      "icons_not_found": "Icons not found"
+    },
+    "Product": {
+      "product_not_found": "Product not found"
+    },
+    "ProductList": {
+      "product_not_found": "Product Not Found!",
+      "no_products_found": "No products found!",
+      "no_related_products": "No related products!"
+    },
+    "ProductTitle": {
+      "product_not_found": "Product Not Found"
+    },
+    "ProductVariants": {
+      "please_select": "Please select an option"
+    },
+    "StockCounter": {
+      "let_buy_now": "<mark>HURRY!</mark> LET BUY NOW"
+    },
+    "Breadcrumb": {
+      "home": "Home"
+    },
+    "CarouselV3": {
+      "no_slider": "No Slider"
+    },
+    "ProductListV3": {
+      "product_not_found": "Product Not Found!",
+      "no_products_found": "No products found!",
+      "no_related_products": "No related products!"
+    }
+  },
   "general": {
     "password_page": {
       "login_form_heading": "Enter store using password:",
@@ -243,6 +289,22 @@
   "onboarding": {
     "product_title": "Example product title",
     "collection_title": "Your collection's name"
+  },
+  "product": {
+    "purchase_options": "Purchase Options",
+    "one_time_purchase": "One-time purchase",
+    "subscribe_save": "Subscribe & Save",
+    "save_percentage": "Save {{ percentage }}%",
+    "delivery_frequency": "Delivered every 30 days",
+    "delivery_every": "Deliver every",
+    "frequency_15_days": "15 days",
+    "frequency_30_days": "30 days",
+    "frequency_45_days": "45 days",
+    "frequency_60_days": "60 days",
+    "frequency_90_days": "90 days",
+    "free_shipping": "Free shipping on all orders",
+    "cancel_anytime": "Cancel or pause anytime",
+    "exclusive_offers": "Exclusive subscriber-only offers"
   },
   "products": {
     "product": {
@@ -341,22 +403,6 @@
       "clear_filter": "Remove filter"
     }
   },
-  "product": {
-      "purchase_options": "Purchase Options",
-      "one_time_purchase": "One-time purchase",
-      "subscribe_save": "Subscribe & Save",
-      "save_percentage": "Save {{ percentage }}%",
-      "delivery_frequency": "Delivered every 30 days",
-      "delivery_every": "Deliver every",
-      "frequency_15_days": "15 days",
-      "frequency_30_days": "30 days",
-      "frequency_45_days": "45 days",
-      "frequency_60_days": "60 days",
-      "frequency_90_days": "90 days",
-      "free_shipping": "Free shipping on all orders",
-      "cancel_anytime": "Cancel or pause anytime",
-      "exclusive_offers": "Exclusive subscriber-only offers"
-    },
   "sections": {
     "header": {
       "announcement": "Announcement",
@@ -502,44 +548,6 @@
         "post_success": "Thanks for contacting us. We'll get back to you as soon as possible.",
         "error_heading": "Please adjust the following:"
       }
-    }
-  },
-  "gempages": {
-    "Carousel": {
-      "no_slider": "No Slider"
-    },
-    "Newsletter": {
-      "err_msg_default": "Can’t send email. Please try again later.",
-      "success_msg_default": "Thanks for subscribing"
-    },
-    "IconListV2": {
-      "icons_not_found": "Icons not found"
-    },
-    "IconList": {
-      "icons_not_found": "Icons not found"
-    },
-    "IconListHoz": {
-      "icons_not_found": "Icons not found"
-    },
-    "Product": {
-      "product_not_found": "Product not found"
-    },
-    "ProductList": {
-      "product_not_found": "Product Not Found!",
-      "no_products_found": "No products found!",
-      "no_related_products": "No related products!"
-    },
-    "ProductTitle": {
-      "product_not_found": "Product Not Found"
-    },
-    "ProductVariants": {
-      "please_select": "Please select an option"
-    },
-    "StockCounter": {
-      "let_buy_now": "<mark>HURRY!</mark> LET BUY NOW"
-    },
-    "Breadcrumb": {
-      "home": "Home"
     }
   }
 }
