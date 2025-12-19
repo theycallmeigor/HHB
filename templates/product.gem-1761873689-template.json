@@ -27,7 +27,7 @@
           }
         },
         "loox_reviews_loox_rating_fYJ3aG": {
-          "type": "shopify:\/\/apps\/loox-reviews\/blocks\/loox-rating\/5c3b337f-fd14-4df5-b1d6-80ec13e6e28e",
+          "type": "shopify://apps/loox-reviews/blocks/loox-rating/5c3b337f-fd14-4df5-b1d6-80ec13e6e28e",
           "settings": {
             "contentSize": 16,
             "pattern": "",
@@ -121,7 +121,7 @@
             "pickers_label": "",
             "enable_variant_selectors_on_quantity_of_1": false,
             "update_prices": false,
-            "pickers_number_text": "<strong>#[index]<\/strong>",
+            "pickers_number_text": "<strong>#[index]</strong>",
             "show_selected_variant_images": false,
             "variant_images_position": "middle",
             "skip_unavailable": false,
@@ -155,7 +155,7 @@
             "upsell_2_design": "primary",
             "upsell_2_badge_position": "left",
             "upsell_2_text_left": "Add [title]",
-            "upsell_2_text_right": "<strong>[price]<\/strong>",
+            "upsell_2_text_right": "<strong>[price]</strong>",
             "upsell_2_badge_text": "",
             "upsell_3_product": "",
             "upsell_3_min_offer": "2",
@@ -163,7 +163,7 @@
             "upsell_3_design": "primary",
             "upsell_3_badge_position": "left",
             "upsell_3_text_left": "Add [title]",
-            "upsell_3_text_right": "<strong>[price]<\/strong>",
+            "upsell_3_text_right": "<strong>[price]</strong>",
             "upsell_3_badge_text": "",
             "option_1_quantity": 1,
             "option_1_percentage_off_text": "0",
@@ -272,13 +272,13 @@
         "custom_liquid_6F3UNA": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "{% assign in_products = product.metafields.included_product.included_product_key | split: \"|\" %}\n{% if in_products != blank and in_products.size > 0 %}\n  <div class=\"huzi-included-product\" {{ block.shopify_attributes }}>\n    <h3 class=\"huzi-inc_p-title\">\n      {{ block.settings.title_text | default: 'INCLUDES THESE' }} \n      (<span>{{ in_products.size }}<\/span>) \n      {{ block.settings.items_text | default: 'ITEMS:' }}\n    <\/h3>\n    \n    {% for in_product in in_products %}\n      {% assign pdp = all_products[in_product] %}\n      <div class=\"huzi-inc_p-item\">\n        <div class=\"product-inc_p-count\" style=\"display:none;\">{{ forloop.index }}<\/div>\n        <div class=\"product-inc_p-img\">\n          {% if pdp.featured_image %}\n            <img src=\"{{ pdp.featured_image | img_url: '104x104' }}\">\n          {% else %}\n            <img src=\"\/\/hollywoodhairbar.com\/cdn\/shopifycloud\/storefront\/assets\/no-image-160-46f2d4a0_104x104.gif\">\n          {% endif %}\n        <\/div>\n        <div class=\"product-inc_p-title\">\n          <h4>{{ pdp.title }}<\/h4>\n          <div class=\"product-inc_p-qty\">\n            {{ block.settings.qty_text | default: 'QTY:' }} \n            <span>{{ block.settings.default_qty | default: 1 }}<\/span>\n          <\/div>\n        <\/div>\n      <\/div>\n    {% endfor %}\n  <\/div>\n{% endif %}\n\n<style>\n  \/* Exact styling from your implementation *\/\n  .huzi-included-product {\n    -webkit-text-size-adjust: 100%;\n    -webkit-tap-highlight-color: rgba(0,0,0,0);\n    --text: #222222;\n    --bg: #ffffff;\n    --primary: #fd01de;\n    --secondary: #2fffff;\n    --borderRadius: 12px;\n    --f_weight: 400;\n    --f_fallback: sans-serif;\n    --f_style: normal;\n    font: normal var(--f_weight) 1.4rem\/1.86 var(--f_family),var(--f_fallback);\n    font-style: var(--f_style);\n    color: var(--text);\n    font-size: 1.4rem;\n    line-height: 1.86;\n    -webkit-font-smoothing: antialiased;\n    --f_family: Manrope;\n    font-family: \"interstate\", sans-serif;\n    box-sizing: border-box;\n    flex: 0 0 100%;\n    padding-top: 5px;\n    padding-bottom: 25px;\n    width: 100%;\n  }\n  \n  \/* Title styling *\/\n  .huzi-inc_p-title {\n    font-size: 14px;\n    font-weight: 700;\n    letter-spacing: 1.5px;\n    text-transform: uppercase;\n    color: #222222;\n    margin: 0 0 20px;\n    padding-bottom: 15px;\n    border-bottom: 1px solid #e5e5e5;\n    font-family: \"interstate\", \"Manrope\", sans-serif;\n    line-height: 1.4;\n  }\n  \n  .huzi-inc_p-title span {\n    color: #222222;\n    font-weight: 700;\n  }\n  \n  \/* Product item styling *\/\n  .huzi-inc_p-item {\n    display: flex;\n    align-items: center;\n    gap: 15px;\n    padding: 15px 0;\n    border-bottom: 1px solid #f0f0f0;\n    transition: background-color 0.2s ease;\n    box-sizing: border-box;\n  }\n  \n  .huzi-inc_p-item:last-child {\n    border-bottom: none;\n    padding-bottom: 0;\n  }\n  \n  .huzi-inc_p-item:first-of-type {\n    padding-top: 0;\n  }\n  \n  .huzi-inc_p-item:hover {\n    background-color: #fafafa;\n    margin: 0 -15px;\n    padding-left: 15px;\n    padding-right: 15px;\n  }\n  \n  \/* Product image *\/\n  .product-inc_p-img {\n    flex-shrink: 0;\n    width: 104px;\n    height: 104px;\n    border-radius: 4px;\n    overflow: hidden;\n    border: 1px solid #e5e5e5;\n    background: #fff;\n  }\n  \n  .product-inc_p-img img {\n    width: 100%;\n    height: 100%;\n    object-fit: cover;\n    display: block;\n  }\n  \n  \/* Product title container *\/\n  .product-inc_p-title {\n    flex-grow: 1;\n    min-width: 0;\n  }\n  \n  .product-inc_p-title h4 {\n    font-size: 14px;\n    font-weight: 600;\n    color: #222222;\n    margin: 0 0 8px;\n    line-height: 1.4;\n    font-family: \"interstate\", \"Manrope\", sans-serif;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    display: -webkit-box;\n    -webkit-line-clamp: 2;\n    -webkit-box-orient: vertical;\n  }\n  \n  \/* Quantity display *\/\n  .product-inc_p-qty {\n    font-size: 12px;\n    color: #666666;\n    font-weight: 500;\n    text-transform: uppercase;\n    letter-spacing: 0.5px;\n    font-family: \"interstate\", \"Manrope\", sans-serif;\n  }\n  \n  .product-inc_p-qty span {\n    font-weight: 700;\n    color: #222222;\n  }\n  \n  \/* Hidden count *\/\n  .product-inc_p-count {\n    display: none !important;\n  }\n  \n  \/* Mobile responsive *\/\n  @media screen and (max-width: 768px) {\n    .huzi-included-product {\n      font-size: 1.3rem;\n      padding-top: 3px;\n      padding-bottom: 20px;\n    }\n    \n    .huzi-inc_p-title {\n      font-size: 13px;\n      margin-bottom: 15px;\n      padding-bottom: 12px;\n    }\n    \n    .huzi-inc_p-item {\n      padding: 12px 0;\n      gap: 12px;\n    }\n    \n    .product-inc_p-img {\n      width: 80px;\n      height: 80px;\n    }\n    \n    .product-inc_p-title h4 {\n      font-size: 13px;\n      margin-bottom: 6px;\n    }\n    \n    .product-inc_p-qty {\n      font-size: 11px;\n    }\n    \n    .huzi-inc_p-item:hover {\n      margin: 0 -10px;\n      padding-left: 10px;\n      padding-right: 10px;\n    }\n  }\n  \n  @media screen and (max-width: 480px) {\n    .huzi-included-product {\n      max-width: 100%;\n      padding: 3px 10px 15px;\n    }\n    \n    .huzi-inc_p-item {\n      padding: 10px 0;\n      gap: 10px;\n    }\n    \n    .product-inc_p-img {\n      width: 60px;\n      height: 60px;\n    }\n    \n    .product-inc_p-title h4 {\n      font-size: 12px;\n      -webkit-line-clamp: 1;\n    }\n  }\n<\/style>"
+            "custom_liquid": "{% assign in_products = product.metafields.included_product.included_product_key | split: \"|\" %}\n{% if in_products != blank and in_products.size > 0 %}\n  <div class=\"huzi-included-product\" {{ block.shopify_attributes }}>\n    <h3 class=\"huzi-inc_p-title\">\n      {{ block.settings.title_text | default: 'INCLUDES THESE' }} \n      (<span>{{ in_products.size }}</span>) \n      {{ block.settings.items_text | default: 'ITEMS:' }}\n    </h3>\n    \n    {% for in_product in in_products %}\n      {% assign pdp = all_products[in_product] %}\n      <div class=\"huzi-inc_p-item\">\n        <div class=\"product-inc_p-count\" style=\"display:none;\">{{ forloop.index }}</div>\n        <div class=\"product-inc_p-img\">\n          {% if pdp.featured_image %}\n            <img src=\"{{ pdp.featured_image | img_url: '104x104' }}\">\n          {% else %}\n            <img src=\"//hollywoodhairbar.com/cdn/shopifycloud/storefront/assets/no-image-160-46f2d4a0_104x104.gif\">\n          {% endif %}\n        </div>\n        <div class=\"product-inc_p-title\">\n          <h4>{{ pdp.title }}</h4>\n          <div class=\"product-inc_p-qty\">\n            {{ block.settings.qty_text | default: 'QTY:' }} \n            <span>{{ block.settings.default_qty | default: 1 }}</span>\n          </div>\n        </div>\n      </div>\n    {% endfor %}\n  </div>\n{% endif %}\n\n<style>\n  /* Exact styling from your implementation */\n  .huzi-included-product {\n    -webkit-text-size-adjust: 100%;\n    -webkit-tap-highlight-color: rgba(0,0,0,0);\n    --text: #222222;\n    --bg: #ffffff;\n    --primary: #fd01de;\n    --secondary: #2fffff;\n    --borderRadius: 12px;\n    --f_weight: 400;\n    --f_fallback: sans-serif;\n    --f_style: normal;\n    font: normal var(--f_weight) 1.4rem/1.86 var(--f_family),var(--f_fallback);\n    font-style: var(--f_style);\n    color: var(--text);\n    font-size: 1.4rem;\n    line-height: 1.86;\n    -webkit-font-smoothing: antialiased;\n    --f_family: Manrope;\n    font-family: \"interstate\", sans-serif;\n    box-sizing: border-box;\n    flex: 0 0 100%;\n    padding-top: 5px;\n    padding-bottom: 25px;\n    width: 100%;\n  }\n  \n  /* Title styling */\n  .huzi-inc_p-title {\n    font-size: 14px;\n    font-weight: 700;\n    letter-spacing: 1.5px;\n    text-transform: uppercase;\n    color: #222222;\n    margin: 0 0 20px;\n    padding-bottom: 15px;\n    border-bottom: 1px solid #e5e5e5;\n    font-family: \"interstate\", \"Manrope\", sans-serif;\n    line-height: 1.4;\n  }\n  \n  .huzi-inc_p-title span {\n    color: #222222;\n    font-weight: 700;\n  }\n  \n  /* Product item styling */\n  .huzi-inc_p-item {\n    display: flex;\n    align-items: center;\n    gap: 15px;\n    padding: 15px 0;\n    border-bottom: 1px solid #f0f0f0;\n    transition: background-color 0.2s ease;\n    box-sizing: border-box;\n  }\n  \n  .huzi-inc_p-item:last-child {\n    border-bottom: none;\n    padding-bottom: 0;\n  }\n  \n  .huzi-inc_p-item:first-of-type {\n    padding-top: 0;\n  }\n  \n  .huzi-inc_p-item:hover {\n    background-color: #fafafa;\n    margin: 0 -15px;\n    padding-left: 15px;\n    padding-right: 15px;\n  }\n  \n  /* Product image */\n  .product-inc_p-img {\n    flex-shrink: 0;\n    width: 104px;\n    height: 104px;\n    border-radius: 4px;\n    overflow: hidden;\n    border: 1px solid #e5e5e5;\n    background: #fff;\n  }\n  \n  .product-inc_p-img img {\n    width: 100%;\n    height: 100%;\n    object-fit: cover;\n    display: block;\n  }\n  \n  /* Product title container */\n  .product-inc_p-title {\n    flex-grow: 1;\n    min-width: 0;\n  }\n  \n  .product-inc_p-title h4 {\n    font-size: 14px;\n    font-weight: 600;\n    color: #222222;\n    margin: 0 0 8px;\n    line-height: 1.4;\n    font-family: \"interstate\", \"Manrope\", sans-serif;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    display: -webkit-box;\n    -webkit-line-clamp: 2;\n    -webkit-box-orient: vertical;\n  }\n  \n  /* Quantity display */\n  .product-inc_p-qty {\n    font-size: 12px;\n    color: #666666;\n    font-weight: 500;\n    text-transform: uppercase;\n    letter-spacing: 0.5px;\n    font-family: \"interstate\", \"Manrope\", sans-serif;\n  }\n  \n  .product-inc_p-qty span {\n    font-weight: 700;\n    color: #222222;\n  }\n  \n  /* Hidden count */\n  .product-inc_p-count {\n    display: none !important;\n  }\n  \n  /* Mobile responsive */\n  @media screen and (max-width: 768px) {\n    .huzi-included-product {\n      font-size: 1.3rem;\n      padding-top: 3px;\n      padding-bottom: 20px;\n    }\n    \n    .huzi-inc_p-title {\n      font-size: 13px;\n      margin-bottom: 15px;\n      padding-bottom: 12px;\n    }\n    \n    .huzi-inc_p-item {\n      padding: 12px 0;\n      gap: 12px;\n    }\n    \n    .product-inc_p-img {\n      width: 80px;\n      height: 80px;\n    }\n    \n    .product-inc_p-title h4 {\n      font-size: 13px;\n      margin-bottom: 6px;\n    }\n    \n    .product-inc_p-qty {\n      font-size: 11px;\n    }\n    \n    .huzi-inc_p-item:hover {\n      margin: 0 -10px;\n      padding-left: 10px;\n      padding-right: 10px;\n    }\n  }\n  \n  @media screen and (max-width: 480px) {\n    .huzi-included-product {\n      max-width: 100%;\n      padding: 3px 10px 15px;\n    }\n    \n    .huzi-inc_p-item {\n      padding: 10px 0;\n      gap: 10px;\n    }\n    \n    .product-inc_p-img {\n      width: 60px;\n      height: 60px;\n    }\n    \n    .product-inc_p-title h4 {\n      font-size: 12px;\n      -webkit-line-clamp: 1;\n    }\n  }\n</style>"
           }
         },
         "image_ndBkxH": {
           "type": "image",
           "settings": {
-            "image": "shopify:\/\/shop_images\/untitled-800-x-200-px-800-x-215-px_1_40254fb3-03f6-4155-b35e-69b6e226830a.png",
+            "image": "shopify://shop_images/untitled-800-x-200-px-800-x-215-px_1_40254fb3-03f6-4155-b35e-69b6e226830a.png",
             "width": 100,
             "Full_mobile_width": false,
             "alignment": "center",
@@ -292,19 +292,19 @@
           "settings": {
             "icon_1": "add_shopping_cart",
             "filled_icon_1": false,
-            "top_text_1": "<strong>[start_date]<\/strong>",
+            "top_text_1": "<strong>[start_date]</strong>",
             "bottom_text_1": "Ordered",
             "min_days_1": 0,
             "max_days_1": 0,
             "icon_2": "local_shipping",
             "filled_icon_2": false,
-            "top_text_2": "<strong>[start_date] - [end_date]<\/strong>",
+            "top_text_2": "<strong>[start_date] - [end_date]</strong>",
             "bottom_text_2": "Order Ready",
             "min_days_2": 1,
             "max_days_2": 2,
             "icon_3": "redeem",
             "filled_icon_3": false,
-            "top_text_3": "<strong>[start_date] - [end_date]<\/strong>",
+            "top_text_3": "<strong>[start_date] - [end_date]</strong>",
             "bottom_text_3": "Delivered",
             "min_days_3": 10,
             "max_days_3": 12,
@@ -321,7 +321,7 @@
           }
         },
         "loox_reviews_loox_snippets_widget_3VgpbK": {
-          "type": "shopify:\/\/apps\/loox-reviews\/blocks\/loox-snippets-widget\/5c3b337f-fd14-4df5-b1d6-80ec13e6e28e",
+          "type": "shopify://apps/loox-reviews/blocks/loox-snippets-widget/5c3b337f-fd14-4df5-b1d6-80ec13e6e28e",
           "settings": {
             "alignment": "left",
             "max-width": "",
@@ -453,7 +453,7 @@
       "type": "apps",
       "blocks": {
         "rebuy_personalization_engine_rebuy_widget_ygEqX9": {
-          "type": "shopify:\/\/apps\/rebuy-personalization-engine\/blocks\/rebuy-widget\/a26ae9b9-933b-40bf-bbc6-bf1220bbc4dc",
+          "type": "shopify://apps/rebuy-personalization-engine/blocks/rebuy-widget/a26ae9b9-933b-40bf-bbc6-bf1220bbc4dc",
           "settings": {
             "enabled": true,
             "id": "177525",
@@ -462,7 +462,7 @@
           }
         },
         "rebuy_personalization_engine_rebuy_widget_gNpbta": {
-          "type": "shopify:\/\/apps\/rebuy-personalization-engine\/blocks\/rebuy-widget\/a26ae9b9-933b-40bf-bbc6-bf1220bbc4dc",
+          "type": "shopify://apps/rebuy-personalization-engine/blocks/rebuy-widget/a26ae9b9-933b-40bf-bbc6-bf1220bbc4dc",
           "settings": {
             "enabled": true,
             "id": "17119",
@@ -484,7 +484,7 @@
       "type": "apps",
       "blocks": {
         "loox_reviews_loox_dynamic_section_QicQxG": {
-          "type": "shopify:\/\/apps\/loox-reviews\/blocks\/loox-dynamic-section\/5c3b337f-fd14-4df5-b1d6-80ec13e6e28e",
+          "type": "shopify://apps/loox-reviews/blocks/loox-dynamic-section/5c3b337f-fd14-4df5-b1d6-80ec13e6e28e",
           "settings": {
             "only_photos": false,
             "aggregated": false,
