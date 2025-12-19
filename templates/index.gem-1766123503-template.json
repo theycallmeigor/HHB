@@ -15,8 +15,8 @@
         "template--21507361505575__cfca4268-6358-426c-98ab-d292aeef11e5-slide-1": {
           "type": "slide",
           "settings": {
-            "image": "shopify://shop_images/GIF_from_Shopify_to_WebP_converter.webp",
-            "mobile_image": "shopify://shop_images/Hollywood_Hair_Bar_Customize_GIF_Aug_27_2024.webp",
+            "image": "shopify:\/\/shop_images\/GIF_from_Shopify_to_WebP_converter.webp",
+            "mobile_image": "shopify:\/\/shop_images\/Hollywood_Hair_Bar_Customize_GIF_Aug_27_2024.webp",
             "image_overlay_opacity": 0,
             "heading": "",
             "title_highlight_color": "#6d388b",
@@ -63,7 +63,7 @@
       "type": "apps",
       "blocks": {
         "rebuy_personalization_engine_rebuy_widget_dVLdaE": {
-          "type": "shopify://apps/rebuy-personalization-engine/blocks/rebuy-widget/a26ae9b9-933b-40bf-bbc6-bf1220bbc4dc",
+          "type": "shopify:\/\/apps\/rebuy-personalization-engine\/blocks\/rebuy-widget\/a26ae9b9-933b-40bf-bbc6-bf1220bbc4dc",
           "settings": {
             "enabled": true,
             "id": "183906",
@@ -122,7 +122,7 @@
       "settings": {
         "display_id": false,
         "visibility": "always-display",
-        "custom_liquid": "<script data-lyvecom async src=\"https://dashboard.lyvecom.com/widget/widget.js\"></script>\n      <div class=\"lyvecom_carousel--component-new\" data-lyvecom-id=\"66fdc86a0ab164a9e224a23b\"></div>\n      <script>\n          (() => {\n                  const scriptElement = document.querySelector('script[data-lyvecom]');\n                  const mountCarousel = () => {\n                      LyveComWidget.mountCarouselComponentV2({\n                        carouselID: '66fdc86a0ab164a9e224a23b',\n                        carousel: true,\n                        lng: 'en'\n                    });\n                  }\n                      \n                  if (window.LyveComWidget) {\n                        mountCarousel();\n                    } else {\n                        scriptElement.addEventListener('load', mountCarousel);\n                    }\n          })()\n      </script>",
+        "custom_liquid": "<script data-lyvecom async src=\"https:\/\/dashboard.lyvecom.com\/widget\/widget.js\"><\/script>\n      <div class=\"lyvecom_carousel--component-new\" data-lyvecom-id=\"66fdc86a0ab164a9e224a23b\"><\/div>\n      <script>\n          (() => {\n                  const scriptElement = document.querySelector('script[data-lyvecom]');\n                  const mountCarousel = () => {\n                      LyveComWidget.mountCarouselComponentV2({\n                        carouselID: '66fdc86a0ab164a9e224a23b',\n                        carousel: true,\n                        lng: 'en'\n                    });\n                  }\n                      \n                  if (window.LyveComWidget) {\n                        mountCarousel();\n                    } else {\n                        scriptElement.addEventListener('load', mountCarousel);\n                    }\n          })()\n      <\/script>",
         "color_scheme": "background-1",
         "padding_top": 40,
         "padding_bottom": 52
@@ -195,7 +195,7 @@
           "type": "featured_collection",
           "settings": {
             "collection": "growth-products",
-            "custom_image": "shopify://shop_images/6_41bfaba7-7015-4c99-9fba-09ddf98a897e.png",
+            "custom_image": "shopify:\/\/shop_images\/6_41bfaba7-7015-4c99-9fba-09ddf98a897e.png",
             "custom_title": ""
           }
         },
@@ -210,7 +210,7 @@
           "type": "featured_collection",
           "settings": {
             "collection": "grow-my-edges",
-            "custom_image": "shopify://shop_images/7_e565d4da-1ee6-4da8-98c9-3c8fd8a7fd19.png",
+            "custom_image": "shopify:\/\/shop_images\/7_e565d4da-1ee6-4da8-98c9-3c8fd8a7fd19.png",
             "custom_title": "Edge Control"
           }
         },
@@ -218,7 +218,7 @@
           "type": "featured_collection",
           "settings": {
             "collection": "all",
-            "custom_image": "shopify://shop_images/Celebrating_600_x_600_px_-2.png",
+            "custom_image": "shopify:\/\/shop_images\/Celebrating_600_x_600_px_-2.png",
             "custom_title": ""
           }
         }
@@ -349,7 +349,7 @@
       "type": "apps",
       "blocks": {
         "loox_reviews_loox_agg_section_fhneQY": {
-          "type": "shopify://apps/loox-reviews/blocks/loox-agg-section/5c3b337f-fd14-4df5-b1d6-80ec13e6e28e",
+          "type": "shopify:\/\/apps\/loox-reviews\/blocks\/loox-agg-section\/5c3b337f-fd14-4df5-b1d6-80ec13e6e28e",
           "settings": {
             "only_photos": true,
             "hide_thumbnails": false,
@@ -436,9 +436,9 @@
           "type": "1",
           "settings": {
             "featured_product": "regrowth-serum-extra-strength",
-            "cpf_img": "shopify://shop_images/photo_2023-03-16_14.14.09.jpg",
-            "mob_img": "shopify://shop_images/photo_2023-03-16_14.15.00.jpg",
-            "f_img": "shopify://shop_images/TiffanyRose_1.png",
+            "cpf_img": "shopify:\/\/shop_images\/photo_2023-03-16_14.14.09.jpg",
+            "mob_img": "shopify:\/\/shop_images\/photo_2023-03-16_14.15.00.jpg",
+            "f_img": "shopify:\/\/shop_images\/TiffanyRose_1.png",
             "sub_title": "",
             "title": "EXTRA STRENGTH REGROWTH SERUM"
           }
@@ -541,15 +541,15 @@
       "type": "NWS-hero-secton-2",
       "name": "Three Boxes Hero 2",
       "settings": {
-        "logo-id": "shopify://shop_images/TiffanyRose1.png",
+        "logo-id": "shopify:\/\/shop_images\/TiffanyRose1.png",
         "sub-heading": "INTRODUCING...",
         "heading": "THE BIGGEST THING IN SKINCARE",
         "Promo-code": "THE “GLOW UP”<br>\nHAS FINALLY ARRIVED\n<br><br>\nXOXO",
         "btn-shop": "SHOP SKINCARE",
-        "btn-shop-link": "shopify://pages/hollywood-skin-bar",
+        "btn-shop-link": "shopify:\/\/pages\/hollywood-skin-bar",
         "shop-code": "",
-        "side-left": "shopify://shop_images/skinbar-hero-left-min_8306a7c7-4da5-429a-9eac-46cdb03a70b9_600x_1.webp",
-        "side-right": "shopify://shop_images/Untitled_640_x_955_px.png",
+        "side-left": "shopify:\/\/shop_images\/skinbar-hero-left-min_8306a7c7-4da5-429a-9eac-46cdb03a70b9_600x_1.webp",
+        "side-right": "shopify:\/\/shop_images\/Untitled_640_x_955_px.png",
         "custom_class": "huzi-3-col-sec-2 nws-middle-same"
       }
     },
@@ -620,9 +620,9 @@
           "type": "1",
           "settings": {
             "featured_product": "growth-edge-control",
-            "cpf_img": "shopify://shop_images/photo_2023-03-16_14.16.31.jpg",
-            "mob_img": "shopify://shop_images/Untitled_design-34.png",
-            "f_img": "shopify://shop_images/Group_97.png",
+            "cpf_img": "shopify:\/\/shop_images\/photo_2023-03-16_14.16.31.jpg",
+            "mob_img": "shopify:\/\/shop_images\/Untitled_design-34.png",
+            "f_img": "shopify:\/\/shop_images\/Group_97.png",
             "sub_title": "",
             "title": "THE BEST EDGE GROWTH   KIT... EVER"
           }
@@ -668,8 +668,8 @@
           "type": "1",
           "settings": {
             "featured_product": "hair-care-bears-launch-date-2-28",
-            "cpf_img": "shopify://shop_images/photo_2023-03-16_14.17.30.jpg",
-            "mob_img": "shopify://shop_images/photo_2023-03-16_14.18.12.jpg",
+            "cpf_img": "shopify:\/\/shop_images\/photo_2023-03-16_14.17.30.jpg",
+            "mob_img": "shopify:\/\/shop_images\/photo_2023-03-16_14.18.12.jpg",
             "sub_title": "HAIR VITAMINS",
             "title": "HAIR CARE BEARS"
           }
@@ -727,11 +727,11 @@
         "text_col_padding": 0,
         "inner_content_bg_color": "",
         "inner_content_border_radius": 0,
-        "sidebar-img": "shopify://shop_images/Celebrating_600_x_600_px.png",
+        "sidebar-img": "shopify:\/\/shop_images\/Celebrating_600_x_600_px.png",
         "heading": "JOIN OUR CLIQUE",
         "text": "Get Exclusive Discounts, Plus Tips & Tricks on how to Grow your Hair! Our Top \"Hollywood\" Celebrity Hair Stylists will personally email you!",
         "btn-text": "JOIN OUR CLIQUE’",
-        "btn-link": "https://hhb.attn.tv/p/Th7/landing-page",
+        "btn-link": "https:\/\/hhb.attn.tv\/p\/Th7\/landing-page",
         "open_new_window": true,
         "text_alignment": "left",
         "image_max_width": 800,
@@ -768,7 +768,7 @@
         "text_V44P9w": {
           "type": "text",
           "settings": {
-            "text": "<p>Tiffany Rose was inspired to create Hollywood Hair Bar, Hollywood Skin Bar & Hollywood Bath Bar after years of looking for the perfect beauty products that really worked and were formulated with all natural ingredients—and still seeing a void in the industry for products that performed!  Starting with her #1 regrowth product, the Regrowth Serum, she launched a full Regrowth Hair Care Line so that women, men and kids everywhere would be able to grow their hair naturally. </p><p><br/>Tiffany focused on a wide range of All Natural Products that traditionally were not available on the market, and created formulas that work for all hair types. She historically changed the game in the area of hair growth products. Hollywood Hair Bar products are designed to work and offer Mind Blowing Results. Most importantly, Tiffany Rose creates Beauty Products to inspire.</p>"
+            "text": "<p>Tiffany Rose was inspired to create Hollywood Hair Bar, Hollywood Skin Bar & Hollywood Bath Bar after years of looking for the perfect beauty products that really worked and were formulated with all natural ingredients—and still seeing a void in the industry for products that performed!  Starting with her #1 regrowth product, the Regrowth Serum, she launched a full Regrowth Hair Care Line so that women, men and kids everywhere would be able to grow their hair naturally. <\/p><p><br\/>Tiffany focused on a wide range of All Natural Products that traditionally were not available on the market, and created formulas that work for all hair types. She historically changed the game in the area of hair growth products. Hollywood Hair Bar products are designed to work and offer Mind Blowing Results. Most importantly, Tiffany Rose creates Beauty Products to inspire.<\/p>"
           }
         }
       },
@@ -801,11 +801,11 @@
       "name": "Founder Section",
       "settings": {
         "sub_title": "",
-        "title": "<p>HEAR FROM OUR FOUNDER: TIFFANYROSE</p>",
-        "para": "<p>“Why Cover up the problem when you can fix it? I am helping women and children grow their hair naturally. Every day I am blown away by how many lives I am affecting and changing with my amazing beauty products.\"<br/><br/><br/><br/> \"This is a total dream come true!\"<br/><br/><br/>TiffanyRose, CEO & Founder</p>",
-        "img": "shopify://shop_images/Vector_1.png",
+        "title": "<p>HEAR FROM OUR FOUNDER: TIFFANYROSE<\/p>",
+        "para": "<p>“Why Cover up the problem when you can fix it? I am helping women and children grow their hair naturally. Every day I am blown away by how many lives I am affecting and changing with my amazing beauty products.\"<br\/><br\/><br\/><br\/> \"This is a total dream come true!\"<br\/><br\/><br\/>TiffanyRose, CEO & Founder<\/p>",
+        "img": "shopify:\/\/shop_images\/Vector_1.png",
         "signature_alt": "Founder Signature",
-        "bg_img": "shopify://shop_images/tiff-image_1.webp",
+        "bg_img": "shopify:\/\/shop_images\/tiff-image_1.webp",
         "bg_img_alt": "",
         "reverse_layout": false,
         "content_alignment": "center",
@@ -862,9 +862,9 @@
       "settings": {
         "display_id": false,
         "visibility": "always-display",
-        "image": "shopify://shop_images/photo_2023-01-28_14-20-36.jpg",
+        "image": "shopify:\/\/shop_images\/photo_2023-01-28_14-20-36.jpg",
         "image_1_visibility": "mobile-hidden",
-        "image_2": "shopify://shop_images/reviews_800x800_67a66776-dd50-42a0-8107-5f0b71f49ed3.png",
+        "image_2": "shopify:\/\/shop_images\/reviews_800x800_67a66776-dd50-42a0-8107-5f0b71f49ed3.png",
         "image_2_visibility": "desktop-hidden",
         "image_overlay_opacity": 0,
         "image_height": "adapt",
@@ -893,9 +893,9 @@
           "settings": {
             "icon": "check_circle",
             "filled_icon": false,
-            "image": "shopify://shop_images/icon-clean_1.png",
+            "image": "shopify:\/\/shop_images\/icon-clean_1.png",
             "title": "CLEAN",
-            "text": "<p></p><p></p>"
+            "text": "<p><\/p><p><\/p>"
           }
         },
         "column_LwNeUp": {
@@ -903,7 +903,7 @@
           "settings": {
             "icon": "check_circle",
             "filled_icon": false,
-            "image": "shopify://shop_images/icon-gluten-free_1.png",
+            "image": "shopify:\/\/shop_images\/icon-gluten-free_1.png",
             "title": "GLUTEN-FREE",
             "text": ""
           }
@@ -913,9 +913,9 @@
           "settings": {
             "icon": "check_circle",
             "filled_icon": false,
-            "image": "shopify://shop_images/icon-cruelty-free_1.png",
+            "image": "shopify:\/\/shop_images\/icon-cruelty-free_1.png",
             "title": "CRUELTY-FREE",
-            "text": "<p></p><p></p>"
+            "text": "<p><\/p><p><\/p>"
           }
         },
         "column_TPRPCp": {
@@ -923,9 +923,9 @@
           "settings": {
             "icon": "check_circle",
             "filled_icon": false,
-            "image": "shopify://shop_images/icon-vegan_1.png",
+            "image": "shopify:\/\/shop_images\/icon-vegan_1.png",
             "title": "VEGAN-FRIENDLY",
-            "text": "<p></p><p></p>"
+            "text": "<p><\/p><p><\/p>"
           }
         },
         "column_gHLEj6": {
@@ -933,9 +933,9 @@
           "settings": {
             "icon": "check_circle",
             "filled_icon": false,
-            "image": "shopify://shop_images/icon-recyclable_1.png",
+            "image": "shopify:\/\/shop_images\/icon-recyclable_1.png",
             "title": "RECYCLABLE",
-            "text": "<p></p><p></p>"
+            "text": "<p><\/p><p><\/p>"
           }
         }
       },
