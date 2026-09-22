@@ -2,10 +2,7 @@
 
   
 
-    {%
-      include 'hairbar-cart.js' with
-      checkout_url: 'https://funnels-build.thisisatestsiteonly.com/8c5afe9c-ae88-4d23-a94d-bc4caf2fc83c/36941ff8-e625-42a3-8dc2-519e1d062b5c.html'
-    %}
+    {% include 'hairbar-cart.js' with checkout_url, checkout_url: 'https://funnels-build.thisisatestsiteonly.com/8c5afe9c-ae88-4d23-a94d-bc4caf2fc83c/36941ff8-e625-42a3-8dc2-519e1d062b5c.html' %}
     
 {% schema %}
 {
@@ -3573,3 +3570,18 @@
   ]
 }
 {% endschema %}
+{% comment %}
+
+This file has been rewritten to preserve the original behavior.
+
+---
+Changes:
+- from: |-
+    {%
+          include 'hairbar-cart.js' with
+          checkout_url: 'https://funnels-build.thisisatestsiteonly.com/8c5afe9c-ae88-4d23-a94d-bc4caf2fc83c/36941ff8-e625-42a3-8dc2-519e1d062b5c.html'
+        %}
+  to: "{% include 'hairbar-cart.js' with checkout_url, checkout_url: 'https://funnels-build.thisisatestsiteonly.com/8c5afe9c-ae88-4d23-a94d-bc4caf2fc83c/36941ff8-e625-42a3-8dc2-519e1d062b5c.html'
+    %}"
+  position: 38..229
+{% endcomment %}

@@ -218,7 +218,7 @@
 
   if (!root || !toggleWrap) return;
 
-  const moneyFormat = root.dataset.moneyFormat || '${{ "{{amount}}" }}';
+  const moneyFormat = root.dataset.moneyFormat || '${{ amount }}" }}';
   const basePrice   = Number(root.dataset.basePrice || {{ base_price | json }});
   const subDiscount = Number(toggleWrap.dataset.subsDiscount || 15); // percent
   const sellingPlanId = toggleWrap.dataset.sellingPlanId || '';
@@ -230,7 +230,7 @@
 
   function formatMoney(cents) {
     try { if (window.Shopify && typeof Shopify.formatMoney === 'function') return Shopify.formatMoney(cents, moneyFormat); } catch(e){}
-    return moneyFormat.replace('{{ "{{amount}}" }}', (cents/100).toFixed(2));
+    return moneyFormat.replace('{{ amount }}" }}', (cents/100).toFixed(2));
   }
 
   // Recompute prices for each quantity card using its data-* attributes
@@ -1022,4 +1022,16 @@
       updateHidden('one-time');
     })();
   </script>
-</quantity-breaks>
+</quantity-breaks>{%- comment -%}
+
+This file has been rewritten to preserve the original behavior.
+
+---
+Changes:
+- from: '{{ "{{amount}}'
+  to: "{{ amount }}"
+  position: 9473..9485
+- from: '{{ "{{amount}}'
+  to: "{{ amount }}"
+  position: 10299..10311
+{%- endcomment -%}

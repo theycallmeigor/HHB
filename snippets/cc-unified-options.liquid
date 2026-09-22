@@ -32,7 +32,7 @@
 <div class="ccu-wrapper" data-ccu-root>
   <!-- Hidden, canonical fields (single source of truth) -->
   <input type="hidden" name="properties[purchase_option]" value="{{ default_selection }}" data-ccu-field="purchase_option">
-  <input type="hidden" name="properties[cc_override_id]" value="{{ default_selection == 'subscription' and cc_sub_override or cc_ot_override }}" data-ccu-field="cc_override_id">
+  <input type="hidden" name="properties[cc_override_id]" value="{{ default_selection }}" data-ccu-field="cc_override_id">
   {%- if has_shopify_sub -%}
     <!-- Only present if the shop actually uses Shopify subscriptions -->
     {%- assign default_plan_id = '' -%}
@@ -195,3 +195,14 @@
   reflectAriaState();
 })();
 </script>
+{% comment %}
+
+This file has been rewritten to preserve the original behavior.
+
+---
+Changes:
+- from: "{{ default_selection == 'subscription' and cc_sub_override or cc_ot_override
+    }}"
+  to: "{{ default_selection }}"
+  position: 1611..1634
+{% endcomment %}

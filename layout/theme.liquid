@@ -25,10 +25,7 @@
 
       <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 
-    {%
-      include 'hairbar-cart.js' with
-      checkout_url: 'https://funnels-build.thisisatestsiteonly.com/8c5afe9c-ae88-4d23-a94d-bc4caf2fc83c/36941ff8-e625-42a3-8dc2-519e1d062b5c.html'
-    %}
+    {% include 'hairbar-cart.js' with checkout_url, checkout_url: 'https://funnels-build.thisisatestsiteonly.com/8c5afe9c-ae88-4d23-a94d-bc4caf2fc83c/36941ff8-e625-42a3-8dc2-519e1d062b5c.html' %}
 
     <script src="https://js.shrinetheme.com/js/v2/main.js?version=1" defer="defer" data-defer="true" data-is-rtl="{{ is_rtl }}" data-country-list-function="{{ settings.country_list_function }}" data-country-list="{{ settings.country_list }}" data-country-list-error="{{ settings.country_invalid_error_msg }}" data-animations-type="{{ settings.animations_type }}"></script>
     <script src="{{ 'secondary.js' | asset_url }}" defer="defer" data-defer="true" data-is-rtl="{{ is_rtl }}"></script>
@@ -652,3 +649,18 @@
 <!--End_Gem_Page_Footer_Script-->
 </body>
 </html>
+{% comment %}
+
+This file has been rewritten to preserve the original behavior.
+
+---
+Changes:
+- from: |-
+    {%
+          include 'hairbar-cart.js' with
+          checkout_url: 'https://funnels-build.thisisatestsiteonly.com/8c5afe9c-ae88-4d23-a94d-bc4caf2fc83c/36941ff8-e625-42a3-8dc2-519e1d062b5c.html'
+        %}
+  to: "{% include 'hairbar-cart.js' with checkout_url, checkout_url: 'https://funnels-build.thisisatestsiteonly.com/8c5afe9c-ae88-4d23-a94d-bc4caf2fc83c/36941ff8-e625-42a3-8dc2-519e1d062b5c.html'
+    %}"
+  position: 1038..1229
+{% endcomment %}
